@@ -3,6 +3,14 @@ node_modules/
 vendor/
 .env
 .env.local
+<<<<<<< HEAD
+=======
+tests/.tmp_sessions/
+tests/screenshots/
+tests/edge-profile/
+storage/source_docs/
+storage/backups/
+>>>>>>> 98147e3 (upload pertama)
 public/uploads/news/*
 public/uploads/gallery/*
 public/uploads/profile/*

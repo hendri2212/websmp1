@@ -6,7 +6,10 @@
     </div>
 </section>
 
+<<<<<<< HEAD
 <?php $relatedNews = related_news_items($newsItem['slug'], $newsItem['category'], 3); ?>
+=======
+>>>>>>> 98147e3 (upload pertama)
 <section class="section">
     <div class="container narrow-content">
         <img class="feature-image-photo" src="<?= asset(ltrim($newsItem['image_path'], '/')); ?>" alt="<?= e($newsItem['title']); ?>">
@@ -19,6 +22,7 @@
         </article>
     </div>
 </section>
+<<<<<<< HEAD
 
 <?php if ($relatedNews): ?>
 <section class="section alt">
@@ -41,3 +45,5 @@
     </div>
 </section>
 <?php endif; ?>
+=======
+>>>>>>> 98147e3 (upload pertama)

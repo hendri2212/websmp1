@@ -33,6 +33,7 @@ $rows = ppdb_entries();
 $pageTitle = 'Kelola PPDB';
 require __DIR__ . '/../templates/admin_header.php';
 ?>
+<<<<<<< HEAD
 <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
 
@@ -67,6 +68,33 @@ require __DIR__ . '/../templates/admin_header.php';
             </form>
         </details>
     </div>
+=======
+<div class="admin-card">
+    <h1>Kelola PPDB</h1>
+    <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
+    <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
+    <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar CRUD PPDB aktif.</div><?php endif; ?>
+    <form method="post" class="form-grid">
+        <?= csrf_field(); ?>
+        <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">
+        <label>
+            <span>Seksi</span>
+            <input type="text" name="section" placeholder="informasi / kriteria / catatan / persyaratan" value="<?= e($editRow['section'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?>>
+        </label>
+        <label><span>Urutan</span><input type="number" name="sort_order" value="<?= e((string) ($editRow['sort_order'] ?? 0)); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
+        <label class="full"><span>Judul</span><input type="text" name="title" value="<?= e($editRow['title'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
+        <label class="full"><span>Konten</span><textarea name="content" <?= db_available() ? '' : 'disabled'; ?>><?= e($editRow['content'] ?? ''); ?></textarea></label>
+        <div class="action-bar">
+            <button class="button primary" type="submit" <?= db_available() ? '' : 'disabled'; ?>><?= $editRow ? 'Update Entry' : 'Simpan Entry'; ?></button>
+            <?php if ($editRow): ?>
+                <a class="button secondary" href="<?= base_url('admin/ppdb.php'); ?>">Batal Edit</a>
+            <?php endif; ?>
+        </div>
+    </form>
+</div>
+<div class="admin-card">
+    <h2>Daftar Entry PPDB</h2>
+>>>>>>> 98147e3 (upload pertama)
     <?php if (!$rows): ?>
         <p class="muted">Belum ada data PPDB di database.</p>
     <?php else: ?>

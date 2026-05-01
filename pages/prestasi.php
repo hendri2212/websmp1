@@ -1,7 +1,12 @@
 <?php
 $selectedCategory = trim($_GET['category'] ?? '');
+<<<<<<< HEAD
 $categories = achievement_categories_all_years();
 $achievementRows = achievement_rows_all_years($selectedCategory !== '' ? $selectedCategory : null);
+=======
+$categories = achievement_categories();
+$achievementRows = achievements($selectedCategory !== '' ? $selectedCategory : null);
+>>>>>>> 98147e3 (upload pertama)
 ?>
 <section class="page-hero">
     <div class="container">
@@ -16,7 +21,11 @@ $achievementRows = achievement_rows_all_years($selectedCategory !== '' ? $select
         <div class="section-heading">
             <span class="eyebrow">Kabar Baik</span>
             <h2>Jejak prestasi sekolah</h2>
+<<<<<<< HEAD
             <p>Daftar prestasi yang dipublikasikan melalui panel admin agar informasi pencapaian sekolah tetap relevan.</p>
+=======
+            <p>Daftar prestasi tahun ajaran <?= e(current_academic_year()); ?> dapat diperbarui melalui panel admin agar informasi pencapaian sekolah tetap relevan.</p>
+>>>>>>> 98147e3 (upload pertama)
         </div>
 
         <?php if ($categories): ?>
@@ -50,7 +59,10 @@ $achievementRows = achievement_rows_all_years($selectedCategory !== '' ? $select
                             <p class="staff-role"><?= e($achievement['achiever_name']); ?></p>
                             <p class="muted"><?= date('d F Y', strtotime($achievement['achievement_date'])); ?></p>
                             <p><?= e($achievement['description']); ?></p>
+<<<<<<< HEAD
                             <a class="text-link" href="<?= base_url('prestasi/' . (int) $achievement['id']); ?>">Baca selengkapnya</a>
+=======
+>>>>>>> 98147e3 (upload pertama)
                         </div>
                     </article>
                 <?php endforeach; ?>

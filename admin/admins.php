@@ -5,8 +5,18 @@ require_admin_permission('admins');
 $message = '';
 $error = '';
 $editRow = null;
+<<<<<<< HEAD
 $roleOptions = admin_role_options();
 $roleDescriptions = admin_role_descriptions();
+=======
+$roleOptions = [
+    'superadmin' => 'Superadmin',
+    'editor' => 'Editor Konten',
+    'ppdb' => 'Operator PPDB',
+];
+$roleDescriptions = admin_role_descriptions();
+$permissionLabels = admin_permission_labels();
+>>>>>>> 98147e3 (upload pertama)
 $rolePermissions = admin_permissions();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
@@ -52,7 +62,11 @@ require __DIR__ . '/../templates/admin_header.php';
 ?>
 <div class="admin-card">
     <h1>Kelola Akun Admin</h1>
+<<<<<<< HEAD
     <p>Buat akun operator sesuai tugasnya. Superadmin memiliki akses penuh, editor mengelola konten umum, dan operator PPDB fokus pada informasi PPDB.</p>
+=======
+    <p>Buat akun operator sesuai tugasnya. Superadmin memiliki akses penuh, editor mengelola konten, dan operator PPDB fokus pada pendaftaran.</p>
+>>>>>>> 98147e3 (upload pertama)
     <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
     <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
     <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar akun admin bisa dikelola.</div><?php endif; ?>
@@ -97,7 +111,11 @@ require __DIR__ . '/../templates/admin_header.php';
                     <td>
                         <div class="access-chip-list">
                             <?php foreach ($visiblePermissions as $permission): ?>
+<<<<<<< HEAD
                                 <span class="status-badge <?= in_array($permission, admin_sensitive_permissions(), true) ? 'status-ditolak' : 'status-selesai'; ?>"><?= e(admin_role_permission_label($role, $permission)); ?></span>
+=======
+                                <span class="status-badge <?= in_array($permission, ['settings', 'admins', 'db_backup', 'activity_logs', 'production_check'], true) ? 'status-ditolak' : 'status-selesai'; ?>"><?= e($permissionLabels[$permission] ?? $permission); ?></span>
+>>>>>>> 98147e3 (upload pertama)
                             <?php endforeach; ?>
                         </div>
                     </td>

@@ -2,11 +2,19 @@
 <?php $logoPath = $school['logoPath'] ?? '/public/logo-sekolah.png'; ?>
 <?php $principalPhotoPath = $content['principalMessage']['photoPath'] ?? '/public/kepala-sekolah.jpeg'; ?>
 <?php $homeSettings = $content['siteHome'] ?? []; ?>
+<<<<<<< HEAD
 <?php $homeAchievements = home_achievements(); ?>
 <?php
 $teacherLimit = max(4, min(24, (int) ($homeSettings['teacherLimit'] ?? 12)));
 $agendaLimit = max(1, min(9, (int) ($homeSettings['agendaLimit'] ?? 3)));
 $upcomingAgenda = upcoming_agenda_items($agendaLimit);
+=======
+<?php $announcements = active_announcements(); ?>
+<?php
+$teacherLimit = max(4, min(24, (int) ($homeSettings['teacherLimit'] ?? 12)));
+$agendaLimit = max(1, min(9, (int) ($homeSettings['agendaLimit'] ?? 3)));
+$upcomingAgenda = agenda_items($agendaLimit);
+>>>>>>> 98147e3 (upload pertama)
 $homeStaffMembers = array_slice(staff_members(), 0, $teacherLimit);
 $heroTitle = trim($homeSettings['heroTitle'] ?? '') ?: $school['name'];
 $heroSubtitle = trim($homeSettings['heroSubtitle'] ?? '') ?: $school['heroDescription'];
@@ -14,15 +22,19 @@ $primaryButtonLabel = trim($homeSettings['primaryButtonLabel'] ?? '') ?: 'Lihat 
 $primaryButtonUrl = trim($homeSettings['primaryButtonUrl'] ?? '') ?: '/profil';
 $secondaryButtonLabel = trim($homeSettings['secondaryButtonLabel'] ?? '') ?: 'Informasi PPDB';
 $secondaryButtonUrl = trim($homeSettings['secondaryButtonUrl'] ?? '') ?: '/ppdb';
+<<<<<<< HEAD
 $profileVideoUrl = video_embed_url($homeSettings['profileVideoUrl'] ?? '');
 $profileVideoTitle = trim($homeSettings['profileVideoTitle'] ?? '') ?: 'Profil sekolah dalam satu tayangan';
 $profileVideoDescription = trim($homeSettings['profileVideoDescription'] ?? '') ?: 'Ruang ini disiapkan untuk menampilkan video profil resmi sekolah, mulai dari lingkungan belajar, kegiatan siswa, fasilitas, hingga budaya sekolah.';
+=======
+>>>>>>> 98147e3 (upload pertama)
 $primaryButtonHref = str_starts_with($primaryButtonUrl, 'http') ? $primaryButtonUrl : base_url(ltrim($primaryButtonUrl, '/'));
 $secondaryButtonHref = str_starts_with($secondaryButtonUrl, 'http') ? $secondaryButtonUrl : base_url(ltrim($secondaryButtonUrl, '/'));
 $showLogoCard = $homeSettings['showLogoCard'] ?? true;
 $showStats = $homeSettings['showStats'] ?? true;
 $showPrincipalCard = $homeSettings['showPrincipalCard'] ?? true;
 $showHeroSide = $showLogoCard || $showStats || $showPrincipalCard;
+<<<<<<< HEAD
 
 if (!function_exists('home_quick_link_icon')) {
     function home_quick_link_icon(string $href): string
@@ -46,10 +58,15 @@ if (!function_exists('home_quick_link_icon')) {
 }
 ?>
 <?php if (($homeSettings['showAnnouncements'] ?? true) && $homeAchievements): ?>
+=======
+?>
+<?php if (($homeSettings['showAnnouncements'] ?? true) && $announcements): ?>
+>>>>>>> 98147e3 (upload pertama)
 <section class="announcement-band">
     <div class="container">
         <div class="announcement-head">
             <div>
+<<<<<<< HEAD
                 <span class="eyebrow">Prestasi Terbaru</span>
                 <h2>Prestasi Sekolah</h2>
             </div>
@@ -76,6 +93,30 @@ if (!function_exists('home_quick_link_icon')) {
                             <img src="<?= image_asset_path($achievement['image_path']); ?>" alt="<?= e($achievement['title']); ?>" loading="lazy">
                         <?php endif; ?>
                     </a>
+=======
+                <span class="eyebrow">Informasi Terbaru</span>
+                <h2>Pengumuman Sekolah</h2>
+            </div>
+            <?php if (count($announcements) > 1): ?>
+                <div class="carousel-actions" aria-label="Navigasi pengumuman">
+                    <button class="carousel-button" type="button" data-carousel-prev="home-announcement-carousel" aria-label="Geser pengumuman ke kiri">&#8249;</button>
+                    <button class="carousel-button" type="button" data-carousel-next="home-announcement-carousel" aria-label="Geser pengumuman ke kanan">&#8250;</button>
+                </div>
+            <?php endif; ?>
+        </div>
+        <div class="announcement-carousel" id="home-announcement-carousel">
+            <?php foreach ($announcements as $announcement): ?>
+                <article class="announcement-card">
+                    <div>
+                        <span class="eyebrow">Pengumuman</span>
+                        <h3><?= e($announcement['title']); ?></h3>
+                        <p><?= e($announcement['content']); ?></p>
+                    </div>
+                    <?php if (!empty($announcement['link_label']) && !empty($announcement['link_url'])): ?>
+                        <?php $link = str_starts_with($announcement['link_url'], 'http') ? $announcement['link_url'] : base_url(ltrim($announcement['link_url'], '/')); ?>
+                        <a class="button primary blue" href="<?= e($link); ?>"><?= e($announcement['link_label']); ?></a>
+                    <?php endif; ?>
+>>>>>>> 98147e3 (upload pertama)
                 </article>
             <?php endforeach; ?>
         </div>
@@ -93,17 +134,39 @@ if (!function_exists('home_quick_link_icon')) {
                 <a class="button primary" href="<?= e($primaryButtonHref); ?>"><?= e($primaryButtonLabel); ?></a>
                 <a class="button ghost" href="<?= e($secondaryButtonHref); ?>"><?= e($secondaryButtonLabel); ?></a>
             </div>
+<<<<<<< HEAD
         </div>
         <?php if ($showHeroSide): ?>
         <div class="hero-side hero-showcase home-mobile-rail hero-side-rail">
             <?php if ($showLogoCard): ?>
             <div class="logo-card home-rail-item">
+=======
+            <?php if (($homeSettings['showQuickLinks'] ?? true) && !empty($content['quickLinks'])): ?>
+            <div class="quick-grid">
+                <?php foreach ($content['quickLinks'] as $item): ?>
+                    <a class="quick-card" href="<?= base_url(ltrim($item['href'], '/')); ?>">
+                        <strong><?= e($item['title']); ?></strong>
+                        <span><?= e($item['desc']); ?></span>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+        </div>
+        <?php if ($showHeroSide): ?>
+        <div class="hero-side hero-showcase">
+            <?php if ($showLogoCard): ?>
+            <div class="logo-card">
+>>>>>>> 98147e3 (upload pertama)
                 <img src="<?= asset(ltrim($logoPath, '/')); ?>" alt="Logo sekolah">
                 <span>Website Resmi</span>
             </div>
             <?php endif; ?>
             <?php if ($showStats): ?>
+<<<<<<< HEAD
             <div class="stats-card home-rail-item">
+=======
+            <div class="stats-card">
+>>>>>>> 98147e3 (upload pertama)
                 <?php foreach ($content['stats'] as $item): ?>
                     <div>
                         <strong><?= e($item['value']); ?></strong>
@@ -113,7 +176,11 @@ if (!function_exists('home_quick_link_icon')) {
             </div>
             <?php endif; ?>
             <?php if ($showPrincipalCard): ?>
+<<<<<<< HEAD
             <div class="principal-card home-rail-item">
+=======
+            <div class="principal-card">
+>>>>>>> 98147e3 (upload pertama)
                 <img src="<?= asset(ltrim($principalPhotoPath, '/')); ?>" alt="Kepala sekolah">
                 <div>
                     <span class="eyebrow">Sambutan Singkat</span>
@@ -124,6 +191,7 @@ if (!function_exists('home_quick_link_icon')) {
             <?php endif; ?>
         </div>
         <?php endif; ?>
+<<<<<<< HEAD
         <?php if (($homeSettings['showQuickLinks'] ?? true) && !empty($content['quickLinks'])): ?>
         <div class="quick-grid quick-icon-grid hero-quick-grid home-mobile-rail" aria-label="Menu informasi cepat">
             <?php foreach ($content['quickLinks'] as $item): ?>
@@ -160,6 +228,8 @@ if (!function_exists('home_quick_link_icon')) {
                 </div>
             <?php endif; ?>
         </article>
+=======
+>>>>>>> 98147e3 (upload pertama)
     </div>
 </section>
 
@@ -171,12 +241,21 @@ if (!function_exists('home_quick_link_icon')) {
             <h2>Ruang digital resmi untuk menampilkan identitas dan arah sekolah</h2>
             <p>Website ini menjadi pintu masuk utama menuju halaman profil, akademik, kesiswaan, berita, galeri, PPDB, dan kontak.</p>
         </div>
+<<<<<<< HEAD
         <div class="two-grid home-mobile-rail">
             <article class="panel home-rail-item">
                 <h3>Sekolah yang mendukung pembelajaran, karakter, dan kreativitas siswa</h3>
                 <p>SMP Negeri 1 Kotabaru berkomitmen menyelenggarakan layanan pendidikan yang mendorong perkembangan akademik, kedisiplinan, kepemimpinan, serta penguatan potensi non-akademik peserta didik.</p>
             </article>
             <article class="panel dark home-rail-item">
+=======
+        <div class="two-grid">
+            <article class="panel">
+                <h3>Sekolah yang mendukung pembelajaran, karakter, dan kreativitas siswa</h3>
+                <p>SMP Negeri 1 Kotabaru berkomitmen menyelenggarakan layanan pendidikan yang mendorong perkembangan akademik, kedisiplinan, kepemimpinan, serta penguatan potensi non-akademik peserta didik.</p>
+            </article>
+            <article class="panel dark">
+>>>>>>> 98147e3 (upload pertama)
                 <span class="eyebrow inverse">Keunggulan</span>
                 <ul class="feature-list">
                     <?php foreach ($content['excellencePrograms'] as $item): ?>
@@ -224,6 +303,7 @@ if (!function_exists('home_quick_link_icon')) {
 </section>
 <?php endif; ?>
 
+<<<<<<< HEAD
 <?php if ($homeSettings['showAgenda'] ?? true): ?>
 <section class="section home-agenda-section">
     <div class="container">
@@ -253,6 +333,46 @@ if (!function_exists('home_quick_link_icon')) {
                         <p><?= e(plain_text_excerpt($agenda['description'], 120)); ?></p>
                         <p class="muted">Lokasi: <?= e($agenda['location'] ?? 'Sekolah'); ?></p>
                     </div>
+=======
+<?php if ($homeSettings['showFeaturedAreas'] ?? true): ?>
+<section class="section alt home-featured-section">
+    <div class="container">
+        <div class="section-head-row compact">
+            <div class="section-heading">
+                <span class="eyebrow">Program Unggulan</span>
+                <h2>Area utama yang ditonjolkan di website</h2>
+            </div>
+        </div>
+        <div class="card-grid three">
+            <?php foreach ($content['featuredAreas'] as $item): ?>
+                <a class="card" href="<?= base_url(ltrim($item['href'], '/')); ?>">
+                    <h3><?= e($item['title']); ?></h3>
+                    <p><?= e($item['desc']); ?></p>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
+
+<?php if ($homeSettings['showAgenda'] ?? true): ?>
+<section class="section home-agenda-section">
+    <div class="container">
+        <div class="section-heading">
+            <span class="eyebrow">Agenda Terdekat</span>
+            <h2>Kalender kegiatan sekolah</h2>
+            <p>Ringkasan kegiatan terdekat yang sedang ditayangkan oleh admin sekolah.</p>
+        </div>
+        <div class="card-grid three">
+            <?php foreach ($upcomingAgenda as $agenda): ?>
+                <?php $dateLabel = $agenda['date_label'] ?? date('d F Y H:i', strtotime($agenda['starts_at'])); ?>
+                <article class="card agenda-mini">
+                    <span class="eyebrow"><?= e($agenda['category'] ?? 'Agenda'); ?></span>
+                    <h3><?= e($agenda['title']); ?></h3>
+                    <p><strong><?= e($dateLabel); ?></strong></p>
+                    <p><?= e($agenda['description']); ?></p>
+                    <p class="muted">Lokasi: <?= e($agenda['location'] ?? 'Sekolah'); ?></p>
+>>>>>>> 98147e3 (upload pertama)
                 </article>
             <?php endforeach; ?>
         </div>

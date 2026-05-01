@@ -1,5 +1,14 @@
 Options -Indexes
 
+<<<<<<< HEAD
+=======
+<IfModule mod_php.c>
+    php_value upload_max_filesize 20M
+    php_value post_max_size 25M
+    php_value memory_limit 256M
+</IfModule>
+
+>>>>>>> 98147e3 (upload pertama)
 <FilesMatch "(^\.|\.sql$|\.md$|\.env$|\.ini$|\.log$|\.bak$|\.backup$|composer\.(json|lock)$|package(-lock)?\.json$)">
     Require all denied
 </FilesMatch>

@@ -4,8 +4,11 @@ $content = $content ?? site_content();
 $logoPath = $content['schoolProfile']['logoPath'] ?? '/public/logo-sekolah.png';
 $stylesheetPath = __DIR__ . '/../public/assets/css/style.css';
 $stylesheetVersion = is_file($stylesheetPath) ? (string) filemtime($stylesheetPath) : (string) time();
+<<<<<<< HEAD
 $faviconPath = __DIR__ . '/../public/favicon.png';
 $faviconVersion = is_file($faviconPath) ? (string) filemtime($faviconPath) : $stylesheetVersion;
+=======
+>>>>>>> 98147e3 (upload pertama)
 $adminNotificationCounts = [
     'ppdb_applications' => db_available() ? ppdb_application_count('baru') : 0,
     'contact_messages' => db_available() ? contact_message_count('baru') : 0,
@@ -17,8 +20,11 @@ $adminNotificationCounts = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($pageTitle); ?></title>
+<<<<<<< HEAD
     <link rel="icon" type="image/png" href="<?= asset('public/favicon.png?v=' . $faviconVersion); ?>">
     <link rel="apple-touch-icon" href="<?= asset('public/favicon.png?v=' . $faviconVersion); ?>">
+=======
+>>>>>>> 98147e3 (upload pertama)
     <link rel="stylesheet" href="<?= asset('public/assets/css/style.css?v=' . $stylesheetVersion); ?>">
     <style><?= theme_css_variables($content['siteTheme'] ?? []); ?></style>
 </head>
@@ -26,7 +32,11 @@ $adminNotificationCounts = [
 <div class="admin-shell">
     <aside class="admin-sidebar">
         <a class="admin-brand" href="<?= base_url('admin/dashboard.php'); ?>">
+<<<<<<< HEAD
             <img src="<?= asset('public/favicon.png?v=' . $faviconVersion); ?>" alt="Logo sekolah">
+=======
+            <img src="<?= asset(ltrim($logoPath, '/')); ?>" alt="Logo sekolah">
+>>>>>>> 98147e3 (upload pertama)
             <span>Admin Sekolah</span>
         </a>
         <nav class="admin-nav">

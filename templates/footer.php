@@ -64,7 +64,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 return;
             }
 
+<<<<<<< HEAD
             var firstSlide = carousel.querySelector('.announcement-card, .teacher-slide, .staff-slide, .content-slide, .home-rail-item, .quick-card, .card, .panel, li');
+=======
+            var firstSlide = carousel.querySelector('.announcement-card, .teacher-slide, .staff-slide, .content-slide, li');
+>>>>>>> 98147e3 (upload pertama)
             var gap = parseFloat(window.getComputedStyle(carousel).columnGap || window.getComputedStyle(carousel).gap || 14) || 14;
             var isVertical = control.hasAttribute('data-carousel-up') || control.hasAttribute('data-carousel-down');
             var distance = firstSlide

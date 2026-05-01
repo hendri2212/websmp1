@@ -65,6 +65,7 @@ $rows = admin_document_rows();
 $pageTitle = 'Kelola Dokumen';
 require __DIR__ . '/../templates/admin_header.php';
 ?>
+<<<<<<< HEAD
 <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
 
@@ -114,6 +115,49 @@ require __DIR__ . '/../templates/admin_header.php';
             </form>
         </details>
     </div>
+=======
+<div class="admin-card">
+    <h1>Kelola Dokumen</h1>
+    <p>Unggah PDF seperti kalender akademik, formulir, surat edaran, tata tertib, dan dokumen resmi sekolah.</p>
+    <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
+    <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
+    <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar dokumen bisa dikelola.</div><?php endif; ?>
+    <form method="post" enctype="multipart/form-data" class="form-grid two-col">
+        <?= csrf_field(); ?>
+        <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">
+        <label class="full"><span>Judul Dokumen</span><input type="text" name="title" value="<?= e($editRow['title'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?> required></label>
+        <label>
+            <span>Kategori</span>
+            <input type="text" name="category" list="document-categories" value="<?= e($editRow['category'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?> required>
+            <datalist id="document-categories">
+                <?php foreach ($defaultCategories as $category): ?>
+                    <option value="<?= e($category); ?>">
+                <?php endforeach; ?>
+            </datalist>
+        </label>
+        <label><span>Tahun Ajaran</span><input type="text" name="academic_year" value="<?= e($editRow['academic_year'] ?? $currentAcademicYear); ?>" placeholder="2025/2026" <?= db_available() ? '' : 'disabled'; ?>></label>
+        <label><span>Urutan</span><input type="number" name="sort_order" value="<?= e((string) ($editRow['sort_order'] ?? 0)); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
+        <label class="full"><span>Deskripsi</span><textarea name="description" <?= db_available() ? '' : 'disabled'; ?> required><?= e($editRow['description'] ?? ''); ?></textarea></label>
+        <label>
+            <span>File PDF</span>
+            <input type="file" name="document_file" accept=".pdf,application/pdf" <?= db_available() ? '' : 'disabled'; ?> <?= $editRow ? '' : 'required'; ?>>
+            <?php if ($editRow && !empty($editRow['original_filename'])): ?>
+                <span class="muted">File saat ini: <?= e($editRow['original_filename']); ?></span>
+            <?php endif; ?>
+        </label>
+        <label class="checkbox-label"><input type="checkbox" name="is_active" value="1" <?= (int) ($editRow['is_active'] ?? 1) === 1 ? 'checked' : ''; ?> <?= db_available() ? '' : 'disabled'; ?>> <span>Publish ke halaman publik</span></label>
+        <div class="action-bar full">
+            <button class="button primary blue" type="submit" <?= db_available() ? '' : 'disabled'; ?>><?= $editRow ? 'Update Dokumen' : 'Simpan Dokumen'; ?></button>
+            <?php if ($editRow): ?>
+                <a class="button secondary" href="<?= base_url('admin/documents.php'); ?>">Batal Edit</a>
+            <?php endif; ?>
+        </div>
+    </form>
+</div>
+
+<div class="admin-card">
+    <h2>Daftar Dokumen</h2>
+>>>>>>> 98147e3 (upload pertama)
     <?php if (!$rows): ?>
         <p class="muted">Belum ada dokumen.</p>
     <?php else: ?>

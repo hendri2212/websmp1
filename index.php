@@ -10,7 +10,10 @@ $metaImage = $content['schoolProfile']['logoPath'] ?? '/public/logo-sekolah.png'
 $news = news_items();
 $gallery = gallery_items();
 $newsItem = null;
+<<<<<<< HEAD
 $achievementItem = null;
+=======
+>>>>>>> 98147e3 (upload pertama)
 
 if (!empty($content['siteMaintenance']['enabled']) && !in_array($path, ['/robots.txt', '/sitemap.xml'], true)) {
     http_response_code(503);
@@ -65,6 +68,7 @@ switch (true) {
         $metaDescription = 'Daftar prestasi akademik dan non-akademik peserta didik, guru, dan sekolah.';
         $view = 'pages/prestasi.php';
         break;
+<<<<<<< HEAD
     case $path === '/cari':
         $searchQuery = trim($_GET['q'] ?? '');
         $pageTitle = 'Pencarian - ' . $content['schoolProfile']['name'];
@@ -86,6 +90,8 @@ switch (true) {
             $view = 'pages/prestasi_detail.php';
         }
         break;
+=======
+>>>>>>> 98147e3 (upload pertama)
     case $path === '/dokumen/unduh':
         require __DIR__ . '/pages/document_download.php';
         exit;

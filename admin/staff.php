@@ -60,6 +60,7 @@ $rows = admin_staff_rows();
 $pageTitle = 'Kelola Guru & Staf';
 require __DIR__ . '/../templates/admin_header.php';
 ?>
+<<<<<<< HEAD
 <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
 
@@ -105,6 +106,45 @@ require __DIR__ . '/../templates/admin_header.php';
             </form>
         </details>
     </div>
+=======
+<div class="admin-card">
+    <h1>Kelola Guru & Staf</h1>
+    <p>Tambahkan data pendidik dan tenaga kependidikan yang akan tampil di halaman publik Guru & Staf.</p>
+    <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
+    <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
+    <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar data guru dan staf bisa dikelola.</div><?php endif; ?>
+    <form method="post" enctype="multipart/form-data" class="form-grid two-col">
+        <?= csrf_field(); ?>
+        <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">
+        <input type="hidden" name="existing_photo_path" value="<?= e($editRow['photo_path'] ?? '/public/logo-sekolah.png'); ?>">
+        <label><span>Nama</span><input type="text" name="name" value="<?= e($editRow['name'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?> required></label>
+        <label><span>Jabatan</span><input type="text" name="position" value="<?= e($editRow['position'] ?? ''); ?>" placeholder="Guru / Kepala Sekolah / Staf TU" <?= db_available() ? '' : 'disabled'; ?> required></label>
+        <label><span>Mapel/Bidang</span><input type="text" name="subject" value="<?= e($editRow['subject'] ?? ''); ?>" placeholder="Matematika / Administrasi / BK" <?= db_available() ? '' : 'disabled'; ?> required></label>
+        <label><span>Urutan</span><input type="number" name="sort_order" value="<?= e((string) ($editRow['sort_order'] ?? 0)); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
+        <label><span>Email</span><input type="email" name="email" value="<?= e($editRow['email'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
+        <label><span>Telepon/WhatsApp</span><input type="text" name="phone" value="<?= e($editRow['phone'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
+        <label>
+            <span>Foto</span>
+            <input type="file" name="photo_file" accept=".jpg,.jpeg,.png,.webp" <?= db_available() ? '' : 'disabled'; ?>>
+            <span class="muted"><?= e(image_upload_help_text()); ?></span>
+            <?php if ($editRow && !empty($editRow['photo_path'])): ?>
+                <img class="admin-preview" src="<?= asset(ltrim($editRow['photo_path'], '/')); ?>" alt="Preview foto guru/staf">
+            <?php endif; ?>
+        </label>
+        <label class="checkbox-label"><input type="checkbox" name="is_active" value="1" <?= (int) ($editRow['is_active'] ?? 1) === 1 ? 'checked' : ''; ?> <?= db_available() ? '' : 'disabled'; ?>> <span>Aktif tampil di publik</span></label>
+        <label class="full"><span>Profil Singkat</span><textarea name="bio" <?= db_available() ? '' : 'disabled'; ?>><?= e($editRow['bio'] ?? ''); ?></textarea></label>
+        <div class="action-bar full">
+            <button class="button primary blue" type="submit" <?= db_available() ? '' : 'disabled'; ?>><?= $editRow ? 'Update Data' : 'Simpan Data'; ?></button>
+            <?php if ($editRow): ?>
+                <a class="button secondary" href="<?= base_url('admin/staff.php'); ?>">Batal Edit</a>
+            <?php endif; ?>
+        </div>
+    </form>
+</div>
+
+<div class="admin-card">
+    <h2>Daftar Guru & Staf</h2>
+>>>>>>> 98147e3 (upload pertama)
     <?php if (!$rows): ?>
         <p class="muted">Belum ada data guru dan staf.</p>
     <?php else: ?>

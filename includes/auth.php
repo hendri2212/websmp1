@@ -21,16 +21,23 @@ function admin_role(): string
 
 function admin_role_label(?string $role = null): string
 {
+<<<<<<< HEAD
     return admin_role_options()[$role ?? admin_role()] ?? 'Editor Konten';
 }
 
 function admin_role_options(): array
 {
+=======
+>>>>>>> 98147e3 (upload pertama)
     return [
         'superadmin' => 'Superadmin',
         'editor' => 'Editor Konten',
         'ppdb' => 'Operator PPDB',
+<<<<<<< HEAD
     ];
+=======
+    ][$role ?? admin_role()] ?? 'Editor Konten';
+>>>>>>> 98147e3 (upload pertama)
 }
 
 function admin_permissions(): array
@@ -39,12 +46,17 @@ function admin_permissions(): array
         'superadmin' => [
             'dashboard', 'settings', 'admins', 'db_backup', 'activity_logs', 'production_check', 'facilities', 'agenda', 'documents', 'achievements',
             'extracurriculars', 'staff', 'news', 'announcements', 'gallery', 'faqs', 'ppdb_content',
+<<<<<<< HEAD
             'contact_messages', 'change_password',
+=======
+            'ppdb_applications', 'contact_messages', 'change_password',
+>>>>>>> 98147e3 (upload pertama)
         ],
         'editor' => [
             'dashboard', 'facilities', 'agenda', 'documents', 'achievements', 'extracurriculars',
             'staff', 'news', 'announcements', 'gallery', 'faqs', 'contact_messages', 'change_password',
         ],
+<<<<<<< HEAD
         'ppdb' => ['dashboard', 'ppdb_content', 'documents', 'change_password'],
     ];
 }
@@ -54,6 +66,12 @@ function admin_sensitive_permissions(): array
     return ['settings', 'admins', 'db_backup', 'activity_logs', 'production_check'];
 }
 
+=======
+        'ppdb' => ['dashboard', 'ppdb_content', 'ppdb_applications', 'change_password'],
+    ];
+}
+
+>>>>>>> 98147e3 (upload pertama)
 function admin_permission_labels(): array
 {
     return [
@@ -73,11 +91,16 @@ function admin_permission_labels(): array
         'extracurriculars' => 'Ekstrakurikuler',
         'faqs' => 'FAQ',
         'ppdb_content' => 'Konten PPDB',
+<<<<<<< HEAD
+=======
+        'ppdb_applications' => 'Pendaftar PPDB',
+>>>>>>> 98147e3 (upload pertama)
         'contact_messages' => 'Pesan masuk',
         'change_password' => 'Ganti password sendiri',
     ];
 }
 
+<<<<<<< HEAD
 function admin_role_permission_label(string $role, string $permission): string
 {
     if ($role === 'ppdb' && $permission === 'documents') {
@@ -88,12 +111,18 @@ function admin_role_permission_label(string $role, string $permission): string
     return $labels[$permission] ?? $permission;
 }
 
+=======
+>>>>>>> 98147e3 (upload pertama)
 function admin_role_descriptions(): array
 {
     return [
         'superadmin' => 'Akses penuh termasuk pengaturan, backup, akun admin, log, dan cek production.',
         'editor' => 'Mengelola konten publik dan pesan masuk tanpa akses ke fitur sensitif.',
+<<<<<<< HEAD
         'ppdb' => 'Fokus mengelola informasi PPDB, edaran, alur, dan kontak panitia tanpa akses ke konten umum lain.',
+=======
+        'ppdb' => 'Fokus mengelola konten PPDB dan data pendaftar tanpa akses ke konten umum lain.',
+>>>>>>> 98147e3 (upload pertama)
     ];
 }
 
@@ -103,6 +132,7 @@ function admin_can(string $permission): bool
     return in_array($permission, admin_permissions()[$role] ?? [], true);
 }
 
+<<<<<<< HEAD
 function admin_session_is_active(): bool
 {
     static $checked = false;
@@ -136,6 +166,8 @@ function admin_session_is_active(): bool
     return true;
 }
 
+=======
+>>>>>>> 98147e3 (upload pertama)
 function admin_login(string $username, string $password): bool
 {
     $pdo = db();
@@ -277,11 +309,14 @@ function require_admin(): void
     if (!admin_is_logged_in()) {
         redirect_to('admin/login.php');
     }
+<<<<<<< HEAD
 
     if (!admin_session_is_active()) {
         admin_logout();
         redirect_to('admin/login.php');
     }
+=======
+>>>>>>> 98147e3 (upload pertama)
 }
 
 function require_admin_permission(string $permission): void

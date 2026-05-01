@@ -44,6 +44,7 @@ $rows = admin_gallery_rows();
 $pageTitle = 'Kelola Galeri';
 require __DIR__ . '/../templates/admin_header.php';
 ?>
+<<<<<<< HEAD
 <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
 
@@ -82,6 +83,38 @@ require __DIR__ . '/../templates/admin_header.php';
             </form>
         </details>
     </div>
+=======
+<div class="admin-card">
+    <h1>Kelola Galeri sjfnksfnks</h1>
+    <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
+    <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
+    <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar CRUD galeri aktif.</div><?php endif; ?>
+    <form method="post" enctype="multipart/form-data" class="form-grid">
+        <?= csrf_field(); ?>
+        <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">
+        <input type="hidden" name="existing_image_path" value="<?= e($editRow['image_path'] ?? '/public/logo-sekolah.png'); ?>">
+        <label><span>Judul</span><input type="text" name="title" value="<?= e($editRow['title'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
+        <label>
+            <span>Upload Gambar</span>
+            <input type="file" name="image_file" accept=".jpg,.jpeg,.png,.webp" <?= db_available() ? '' : 'disabled'; ?>>
+            <span class="muted"><?= e(image_upload_help_text($galleryImageMaxBytes)); ?></span>
+            <?php if ($editRow && !empty($editRow['image_path'])): ?>
+                <img class="admin-preview" src="<?= asset(ltrim($editRow['image_path'], '/')); ?>" alt="Preview gambar galeri">
+            <?php endif; ?>
+        </label>
+        <label><span>Urutan</span><input type="number" name="sort_order" value="<?= e((string) ($editRow['sort_order'] ?? 0)); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
+        <label class="full"><span>Deskripsi</span><textarea name="description" <?= db_available() ? '' : 'disabled'; ?>><?= e($editRow['description'] ?? ''); ?></textarea></label>
+        <div class="action-bar">
+            <button class="button primary" type="submit" <?= db_available() ? '' : 'disabled'; ?>><?= $editRow ? 'Update Item' : 'Simpan Item'; ?></button>
+            <?php if ($editRow): ?>
+                <a class="button secondary" href="<?= base_url('admin/gallery.php'); ?>">Batal Edit</a>
+            <?php endif; ?>
+        </div>
+    </form>
+</div>
+<div class="admin-card">
+    <h2>Daftar Galeri</h2>
+>>>>>>> 98147e3 (upload pertama)
     <div class="table-wrap">
         <table class="admin-table">
             <thead><tr><th>Judul</th><th>Gambar</th><th>Aksi</th></tr></thead>

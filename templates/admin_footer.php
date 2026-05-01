@@ -1,5 +1,6 @@
     </main>
 </div>
+<<<<<<< HEAD
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-toggle-target]').forEach(function (button) {
@@ -22,5 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
+=======
+>>>>>>> 98147e3 (upload pertama)
 </body>
 </html>

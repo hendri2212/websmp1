@@ -87,7 +87,11 @@ function normalized_site_home(array $settings, array $defaults): array
         $normalized[$key] = array_key_exists($key, $normalized) ? (bool) $normalized[$key] : true;
     }
 
+<<<<<<< HEAD
     foreach (['heroTitle', 'heroSubtitle', 'primaryButtonLabel', 'primaryButtonUrl', 'secondaryButtonLabel', 'secondaryButtonUrl', 'profileVideoUrl', 'profileVideoTitle', 'profileVideoDescription'] as $key) {
+=======
+    foreach (['heroTitle', 'heroSubtitle', 'primaryButtonLabel', 'primaryButtonUrl', 'secondaryButtonLabel', 'secondaryButtonUrl'] as $key) {
+>>>>>>> 98147e3 (upload pertama)
         $normalized[$key] = trim((string) ($normalized[$key] ?? ($defaults[$key] ?? '')));
     }
     $normalized['teacherLimit'] = max(4, min(24, (int) ($normalized['teacherLimit'] ?? 12)));
@@ -369,7 +373,11 @@ function admin_news_rows(): array
     return $pdo->query('SELECT * FROM news ORDER BY is_active DESC, published_at DESC, id DESC')->fetchAll();
 }
 
+<<<<<<< HEAD
 function news_count(bool $activeOnly = true): int
+=======
+function news_count(): int
+>>>>>>> 98147e3 (upload pertama)
 {
     $pdo = db();
     if (!$pdo) {
@@ -377,6 +385,7 @@ function news_count(bool $activeOnly = true): int
     }
 
     ensure_news_publication_column();
+<<<<<<< HEAD
     if ($activeOnly) {
         return (int) $pdo->query('SELECT COUNT(*) FROM news WHERE is_active = 1')->fetchColumn();
     }
@@ -405,6 +414,9 @@ function related_news_items(string $currentSlug, string $category, int $limit = 
     }
 
     return array_slice($items, 0, $limit);
+=======
+    return (int) $pdo->query('SELECT COUNT(*) FROM news WHERE is_active = 1')->fetchColumn();
+>>>>>>> 98147e3 (upload pertama)
 }
 
 function admin_news_row(int $id): ?array
@@ -698,6 +710,7 @@ function agenda_items(int $limit = 0): array
     return $statement->fetchAll();
 }
 
+<<<<<<< HEAD
 function upcoming_agenda_items(int $limit = 3): array
 {
     $pdo = db();
@@ -713,6 +726,8 @@ function upcoming_agenda_items(int $limit = 3): array
     return $rows ?: agenda_items($limit);
 }
 
+=======
+>>>>>>> 98147e3 (upload pertama)
 function admin_agenda_rows(): array
 {
     $pdo = db();
@@ -927,6 +942,7 @@ function achievements(?string $category = null): array
     return $statement->fetchAll();
 }
 
+<<<<<<< HEAD
 function home_achievements(): array
 {
     $pdo = db();
@@ -993,6 +1009,8 @@ function related_achievements(int $currentId, string $category, int $limit = 3):
     return array_slice($items, 0, $limit);
 }
 
+=======
+>>>>>>> 98147e3 (upload pertama)
 function achievement_categories(): array
 {
     $pdo = db();
@@ -1007,6 +1025,7 @@ function achievement_categories(): array
     return array_map(static fn(array $row): string => $row['category'], $rows);
 }
 
+<<<<<<< HEAD
 function achievement_categories_all_years(): array
 {
     $pdo = db();
@@ -1019,6 +1038,8 @@ function achievement_categories_all_years(): array
     return array_map(static fn(array $row): string => $row['category'], $rows);
 }
 
+=======
+>>>>>>> 98147e3 (upload pertama)
 function admin_achievement_rows(): array
 {
     $pdo = db();
@@ -1799,6 +1820,7 @@ function ppdb_application_count(?string $status = null): int
     $statement->execute(['status' => $status, 'academic_year' => current_academic_year()]);
     return (int) $statement->fetchColumn();
 }
+<<<<<<< HEAD
 
 function public_search_results(string $query, int $limitPerType = 8): array
 {
@@ -1943,3 +1965,5 @@ function admin_content_status_summary(): array
         ['permission' => 'faqs', 'label' => 'FAQ', 'active' => faq_count(true), 'total' => faq_count(false), 'href' => 'admin/faqs.php'],
     ];
 }
+=======
+>>>>>>> 98147e3 (upload pertama)

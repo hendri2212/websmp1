@@ -58,6 +58,11 @@ Website membaca konfigurasi dari file `.env`. File ini tidak ikut disimpan ke re
    - `APP_URL=https://domain-sekolah.sch.id`
    - `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`, dan `DB_PASSWORD` sesuai panel hosting.
 
+<<<<<<< HEAD
+=======
+Untuk hosting, bisa gunakan `.env.production.example` sebagai template awal. Panduan ringkas deploy juga tersedia di `DEPLOYMENT.md`.
+
+>>>>>>> 98147e3 (upload pertama)
 ## Checklist Deploy Hosting
 
 Gunakan checklist ini saat website sudah akan dipindahkan dari XAMPP/Laragon lokal ke hosting production.
@@ -235,10 +240,18 @@ Gunakan checklist ini setelah fitur website selesai diuji dan sebelum website di
 
 ### Konten Publik
 
+<<<<<<< HEAD
 - Tambahkan data guru dan staf aktif beserta foto, jabatan, mapel/bidang, dan kontak bila perlu.
 - Tambahkan fasilitas sekolah asli beserta foto, kategori, lokasi, kapasitas, kondisi, dan deskripsi.
 - Tambahkan agenda atau kalender kegiatan sekolah yang masih berlaku.
 - Tambahkan dokumen resmi: kalender akademik, formulir, surat edaran, tata tertib, dan PDF sekolah.
+=======
+- Jika database baru dibuat ulang, jalankan `C:\xampp\php\php.exe database\seed_final_content.php` untuk mengisi konten dasar final dari data sekolah yang tersedia.
+- Tambahkan data guru dan staf aktif beserta foto, jabatan, mapel/bidang, dan kontak bila perlu.
+- Tambahkan fasilitas sekolah asli beserta foto, kategori, lokasi, kapasitas, kondisi, dan deskripsi.
+- Tambahkan agenda atau kalender kegiatan sekolah yang masih berlaku.
+- Tambahkan dokumen resmi melalui admin dengan file PDF asli: kalender akademik, formulir, surat edaran, tata tertib, dan PDF sekolah.
+>>>>>>> 98147e3 (upload pertama)
 - Tambahkan prestasi sekolah terbaru dengan foto dan tanggal prestasi.
 - Tambahkan ekstrakurikuler aktif beserta pembina, jadwal, lokasi, dan deskripsi.
 - Tambahkan FAQ yang sering ditanyakan orang tua, siswa, dan calon siswa.
@@ -257,6 +270,10 @@ Gunakan checklist ini setelah fitur website selesai diuji dan sebelum website di
 - Pastikan password admin awal sudah diganti.
 - Buat akun operator sesuai role: `superadmin`, `editor`, dan `ppdb`.
 - Pastikan tidak semua operator memakai akun `superadmin`.
+<<<<<<< HEAD
+=======
+- Jalankan smoke test form admin dari terminal project dengan `C:\xampp\php\php.exe tests\admin_form_smoke_test.php` setelah MySQL XAMPP aktif.
+>>>>>>> 98147e3 (upload pertama)
 - Buka halaman `Cek Production` dan pastikan tidak ada masalah kritis.
 - Jalankan backup database setelah semua konten asli masuk.
 - Gunakan `Backup SQL` untuk pemulihan database saja.

@@ -66,7 +66,11 @@ $accreditationFile = trim((string) ($accreditation['filePath'] ?? ''));
         <div class="section-head-row compact">
             <div class="section-heading">
                 <span class="eyebrow">Profil Sekolah</span>
+<<<<<<< HEAD
                 <h2>Informasi kelembagaan</h2>
+=======
+                <h2>Informasi kelembagaan yang dapat diperbarui dari panel admin</h2>
+>>>>>>> 98147e3 (upload pertama)
             </div>
             <div class="carousel-actions" aria-label="Navigasi profil sekolah">
                 <button class="carousel-button" type="button" data-carousel-prev="profile-section-carousel" aria-label="Geser profil ke kiri">&#8249;</button>
