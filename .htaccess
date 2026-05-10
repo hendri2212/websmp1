@@ -1,0 +1,16 @@
+Options -Indexes
+
+<FilesMatch "(^\.|\.sql$|\.md$|\.env$|\.ini$|\.log$|\.bak$|\.backup$|composer\.(json|lock)$|package(-lock)?\.json$)">
+    Require all denied
+</FilesMatch>
+
+RewriteEngine On
+
+RewriteRule ^(config|includes|storage|database|tests|templates)(/|$) - [F,L]
+RewriteRule ^(.*/)?(backup|backups|source_docs)(/|$) - [F,L]
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^ index.php [L]

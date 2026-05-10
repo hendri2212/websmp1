@@ -1,0 +1,11 @@
+.next/
+node_modules/
+vendor/
+.env
+.env.local
+public/uploads/news/*
+public/uploads/gallery/*
+public/uploads/profile/*
+!public/uploads/news/.gitkeep
+!public/uploads/gallery/.gitkeep
+!public/uploads/profile/.gitkeep
