@@ -99,7 +99,6 @@ function plain_text_excerpt(string $value, int $maxLength = 160): string
     return rtrim($excerpt) . '...';
 }
 
-<<<<<<< HEAD
 function video_embed_url(string $url): string
 {
     $url = trim($url);
@@ -129,8 +128,6 @@ function video_embed_url(string $url): string
     return $url;
 }
 
-=======
->>>>>>> 98147e3 (upload pertama)
 function normalize_hex_color(?string $value, string $fallback): string
 {
     $value = trim((string) $value);

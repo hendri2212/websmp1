@@ -44,7 +44,6 @@ $rows = admin_faq_rows();
 $pageTitle = 'Kelola FAQ';
 require __DIR__ . '/../templates/admin_header.php';
 ?>
-<<<<<<< HEAD
 <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
 <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
 
@@ -86,41 +85,6 @@ require __DIR__ . '/../templates/admin_header.php';
             </form>
         </details>
     </div>
-=======
-<div class="admin-card">
-    <h1>Kelola FAQ</h1>
-    <p>Tambahkan pertanyaan umum yang sering ditanyakan orang tua, calon siswa, dan masyarakat.</p>
-    <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
-    <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
-    <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar FAQ bisa dikelola.</div><?php endif; ?>
-    <form method="post" class="form-grid two-col">
-        <?= csrf_field(); ?>
-        <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">
-        <label class="full"><span>Pertanyaan</span><input type="text" name="question" value="<?= e($editRow['question'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?> required></label>
-        <label>
-            <span>Kategori</span>
-            <input type="text" name="category" list="faq-categories" value="<?= e($editRow['category'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?> required>
-            <datalist id="faq-categories">
-                <?php foreach ($defaultCategories as $category): ?>
-                    <option value="<?= e($category); ?>">
-                <?php endforeach; ?>
-            </datalist>
-        </label>
-        <label><span>Urutan</span><input type="number" name="sort_order" value="<?= e((string) ($editRow['sort_order'] ?? 0)); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-        <label class="checkbox-label"><input type="checkbox" name="is_active" value="1" <?= (int) ($editRow['is_active'] ?? 1) === 1 ? 'checked' : ''; ?> <?= db_available() ? '' : 'disabled'; ?>> <span>Publish ke halaman publik</span></label>
-        <label class="full"><span>Jawaban</span><textarea name="answer" <?= db_available() ? '' : 'disabled'; ?> required><?= e($editRow['answer'] ?? ''); ?></textarea></label>
-        <div class="action-bar full">
-            <button class="button primary blue" type="submit" <?= db_available() ? '' : 'disabled'; ?>><?= $editRow ? 'Update FAQ' : 'Simpan FAQ'; ?></button>
-            <?php if ($editRow): ?>
-                <a class="button secondary" href="<?= base_url('admin/faqs.php'); ?>">Batal Edit</a>
-            <?php endif; ?>
-        </div>
-    </form>
-</div>
-
-<div class="admin-card">
-    <h2>Daftar FAQ</h2>
->>>>>>> 98147e3 (upload pertama)
     <?php if (!$rows): ?>
         <p class="muted">Belum ada FAQ.</p>
     <?php else: ?>

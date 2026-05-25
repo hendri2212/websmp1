@@ -21,11 +21,7 @@ $acceptedPpdbApplications = $dbReady ? ppdb_application_count('diterima') : 0;
 $rejectedPpdbApplications = $dbReady ? ppdb_application_count('ditolak') : 0;
 $totalPpdbApplications = $dbReady ? ppdb_application_count() : 0;
 $activeAnnouncements = $dbReady ? announcement_count(true) : 0;
-<<<<<<< HEAD
 $totalNews = news_count(true);
-=======
-$totalNews = news_count();
->>>>>>> 98147e3 (upload pertama)
 $totalGallery = gallery_count();
 $activeStaff = staff_count(true);
 $activeAgenda = agenda_count(true);
@@ -34,17 +30,12 @@ $activeAchievements = achievement_count(true);
 $activeExtracurriculars = extracurricular_count(true);
 $activeFacilities = facility_count(true);
 $activeFaqs = faq_count(true);
-<<<<<<< HEAD
 $upcomingAgenda = $dbReady ? upcoming_agenda_items(5) : [];
 $recentLogs = ($dbReady && admin_can('activity_logs')) ? admin_activity_logs([], 6) : [];
 $contentStatusRows = array_values(array_filter(
     $dbReady ? admin_content_status_summary() : [],
     static fn(array $row): bool => admin_can($row['permission'])
 ));
-=======
-$upcomingAgenda = $dbReady ? agenda_items(5) : [];
-$recentLogs = ($dbReady && admin_can('activity_logs')) ? admin_activity_logs([], 6) : [];
->>>>>>> 98147e3 (upload pertama)
 
 $contentMetrics = [
     ['permission' => 'news', 'label' => 'Berita', 'value' => $totalNews, 'href' => 'admin/news.php'],
@@ -262,7 +253,6 @@ require __DIR__ . '/../templates/admin_header.php';
     </div>
 <?php endif; ?>
 
-<<<<<<< HEAD
 <?php if ($contentStatusRows): ?>
     <div class="admin-card dashboard-chart-card">
         <div class="dashboard-section-head">
@@ -290,8 +280,6 @@ require __DIR__ . '/../templates/admin_header.php';
     </div>
 <?php endif; ?>
 
-=======
->>>>>>> 98147e3 (upload pertama)
 <div class="dashboard-two-col">
     <?php if (admin_can('agenda')): ?>
         <div class="admin-card">

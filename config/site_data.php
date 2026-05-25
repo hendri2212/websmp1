@@ -34,12 +34,9 @@ return [
         'primaryButtonUrl' => '/profil',
         'secondaryButtonLabel' => 'Informasi PPDB',
         'secondaryButtonUrl' => '/ppdb',
-<<<<<<< HEAD
         'profileVideoUrl' => '',
         'profileVideoTitle' => 'Profil sekolah dalam satu tayangan',
         'profileVideoDescription' => 'Ruang ini disiapkan untuk menampilkan video profil resmi sekolah, mulai dari lingkungan belajar, kegiatan siswa, fasilitas, hingga budaya sekolah.',
-=======
->>>>>>> 98147e3 (upload pertama)
         'teacherLimit' => 12,
         'agendaLimit' => 3,
         'showAnnouncements' => true,

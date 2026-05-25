@@ -87,12 +87,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
             'primaryButtonUrl' => trim($_POST['home_primary_button_url'] ?? ($content['siteHome']['primaryButtonUrl'] ?? '/profil')),
             'secondaryButtonLabel' => trim($_POST['home_secondary_button_label'] ?? ($content['siteHome']['secondaryButtonLabel'] ?? 'Informasi PPDB')),
             'secondaryButtonUrl' => trim($_POST['home_secondary_button_url'] ?? ($content['siteHome']['secondaryButtonUrl'] ?? '/ppdb')),
-<<<<<<< HEAD
             'profileVideoUrl' => trim($_POST['home_profile_video_url'] ?? ($content['siteHome']['profileVideoUrl'] ?? '')),
             'profileVideoTitle' => trim($_POST['home_profile_video_title'] ?? ($content['siteHome']['profileVideoTitle'] ?? 'Profil sekolah dalam satu tayangan')),
             'profileVideoDescription' => trim($_POST['home_profile_video_description'] ?? ($content['siteHome']['profileVideoDescription'] ?? 'Ruang ini disiapkan untuk menampilkan video profil resmi sekolah, mulai dari lingkungan belajar, kegiatan siswa, fasilitas, hingga budaya sekolah.')),
-=======
->>>>>>> 98147e3 (upload pertama)
             'teacherLimit' => max(4, min(24, (int) ($_POST['home_teacher_limit'] ?? ($content['siteHome']['teacherLimit'] ?? 12)))),
             'agendaLimit' => max(1, min(9, (int) ($_POST['home_agenda_limit'] ?? ($content['siteHome']['agendaLimit'] ?? 3)))),
             'showAnnouncements' => isset($_POST['home_show_announcements']),
@@ -123,15 +120,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
         if ($home['secondaryButtonUrl'] === '') {
             $home['secondaryButtonUrl'] = '/ppdb';
         }
-<<<<<<< HEAD
         if ($home['profileVideoTitle'] === '') {
             $home['profileVideoTitle'] = 'Profil sekolah dalam satu tayangan';
         }
         if ($home['profileVideoDescription'] === '') {
             $home['profileVideoDescription'] = 'Ruang ini disiapkan untuk menampilkan video profil resmi sekolah, mulai dari lingkungan belajar, kegiatan siswa, fasilitas, hingga budaya sekolah.';
         }
-=======
->>>>>>> 98147e3 (upload pertama)
 
         $principal = $content['principalMessage'];
         $principal['name'] = $_POST['principal_name'] ?? $principal['name'];
@@ -261,18 +255,13 @@ require __DIR__ . '/../templates/admin_header.php';
     <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
     <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
     <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL lebih dulu agar tombol simpan aktif.</div><?php endif; ?>
-<<<<<<< HEAD
     <form method="post" enctype="multipart/form-data" class="form-grid two-col settings-form">
-=======
-    <form method="post" enctype="multipart/form-data" class="form-grid two-col">
->>>>>>> 98147e3 (upload pertama)
         <?= csrf_field(); ?>
         <input type="hidden" name="existing_logo_path" value="<?= e($content['schoolProfile']['logoPath'] ?? '/public/logo-sekolah.png'); ?>">
         <input type="hidden" name="existing_principal_photo_path" value="<?= e($content['principalMessage']['photoPath'] ?? '/public/kepala-sekolah.jpeg'); ?>">
         <input type="hidden" name="existing_accreditation_file_path" value="<?= e($content['schoolAccreditation']['filePath'] ?? ''); ?>">
         <input type="hidden" name="existing_accreditation_original_filename" value="<?= e($content['schoolAccreditation']['originalFilename'] ?? ''); ?>">
         <input type="hidden" name="existing_accreditation_file_size" value="<?= e((string) ($content['schoolAccreditation']['fileSize'] ?? 0)); ?>">
-<<<<<<< HEAD
         <details class="settings-section full" open>
             <summary>
                 <span>
@@ -295,21 +284,11 @@ require __DIR__ . '/../templates/admin_header.php';
             </div>
             <div class="settings-subsection">
                 <span class="form-section-title">Tahun Ajaran Aktif</span>
-=======
-        <label><span>Nama Sekolah</span><input type="text" name="name" value="<?= e($content['schoolProfile']['name']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-        <label><span>Nama Singkat</span><input type="text" name="short_name" value="<?= e($content['schoolProfile']['shortName']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-        <label class="full"><span>Tagline</span><input type="text" name="tagline" value="<?= e($content['schoolProfile']['tagline']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-        <label class="full"><span>Deskripsi Singkat</span><textarea name="description" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['schoolProfile']['description']); ?></textarea></label>
-        <label class="full"><span>Deskripsi Hero</span><textarea name="hero_description" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['schoolProfile']['heroDescription']); ?></textarea></label>
-        <div class="full">
-            <span class="form-section-title">Tahun Ajaran Aktif</span>
->>>>>>> 98147e3 (upload pertama)
             <label>
                 <span>Tahun Ajaran</span>
                 <input type="text" name="current_academic_year" value="<?= e($content['siteAcademic']['currentYear'] ?? '2025/2026'); ?>" placeholder="2025/2026" <?= db_available() ? '' : 'disabled'; ?>>
             </label>
             <p class="muted">Tahun ajaran aktif digunakan sebagai default untuk PPDB, agenda, dokumen, dan prestasi baru.</p>
-<<<<<<< HEAD
             </div>
         </details>
         <details class="settings-section full">
@@ -319,11 +298,6 @@ require __DIR__ . '/../templates/admin_header.php';
                     <small>Hero, video profil, link cepat, dan bagian yang tampil.</small>
                 </span>
             </summary>
-=======
-        </div>
-        <div class="full">
-            <span class="form-section-title">Tampilan Beranda</span>
->>>>>>> 98147e3 (upload pertama)
             <div class="form-grid two-col">
                 <label class="full"><span>Judul Hero Beranda</span><input type="text" name="home_hero_title" value="<?= e($content['siteHome']['heroTitle'] ?? $content['schoolProfile']['name']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label class="full"><span>Deskripsi Hero Beranda</span><textarea name="home_hero_subtitle" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['siteHome']['heroSubtitle'] ?? $content['schoolProfile']['heroDescription']); ?></textarea></label>
@@ -331,12 +305,9 @@ require __DIR__ . '/../templates/admin_header.php';
                 <label><span>Link Tombol Utama</span><input type="text" name="home_primary_button_url" value="<?= e($content['siteHome']['primaryButtonUrl'] ?? '/profil'); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label><span>Label Tombol Kedua</span><input type="text" name="home_secondary_button_label" value="<?= e($content['siteHome']['secondaryButtonLabel'] ?? 'Informasi PPDB'); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label><span>Link Tombol Kedua</span><input type="text" name="home_secondary_button_url" value="<?= e($content['siteHome']['secondaryButtonUrl'] ?? '/ppdb'); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-<<<<<<< HEAD
                 <label class="full"><span>URL Video Profil</span><input type="url" name="home_profile_video_url" value="<?= e($content['siteHome']['profileVideoUrl'] ?? ''); ?>" placeholder="https://www.youtube.com/watch?v=..." <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label class="full"><span>Judul Video Profil</span><input type="text" name="home_profile_video_title" value="<?= e($content['siteHome']['profileVideoTitle'] ?? 'Profil sekolah dalam satu tayangan'); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label class="full"><span>Keterangan Video Profil</span><textarea name="home_profile_video_description" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['siteHome']['profileVideoDescription'] ?? 'Ruang ini disiapkan untuk menampilkan video profil resmi sekolah, mulai dari lingkungan belajar, kegiatan siswa, fasilitas, hingga budaya sekolah.'); ?></textarea></label>
-=======
->>>>>>> 98147e3 (upload pertama)
                 <label><span>Jumlah Foto Guru di Beranda</span><input type="number" min="4" max="24" name="home_teacher_limit" value="<?= e((string) ($content['siteHome']['teacherLimit'] ?? 12)); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label><span>Jumlah Agenda di Beranda</span><input type="number" min="1" max="9" name="home_agenda_limit" value="<?= e((string) ($content['siteHome']['agendaLimit'] ?? 3)); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
             </div>
@@ -394,7 +365,6 @@ require __DIR__ . '/../templates/admin_header.php';
                 </label>
             </div>
             <p class="muted">Bagian yang tidak dicentang akan disembunyikan dari beranda tanpa menghapus datanya.</p>
-<<<<<<< HEAD
         </details>
         <details class="settings-section full">
             <summary>
@@ -403,11 +373,6 @@ require __DIR__ . '/../templates/admin_header.php';
                     <small>Matikan sementara halaman publik saat perawatan website.</small>
                 </span>
             </summary>
-=======
-        </div>
-        <div class="full">
-            <span class="form-section-title">Mode Maintenance Publik</span>
->>>>>>> 98147e3 (upload pertama)
             <label class="checkbox-label toggle-item">
                 <input type="checkbox" name="maintenance_enabled" value="1" <?= !empty($content['siteMaintenance']['enabled']) ? 'checked' : ''; ?> <?= db_available() ? '' : 'disabled'; ?>>
                 <span>Aktifkan mode maintenance untuk halaman publik</span>
@@ -417,7 +382,6 @@ require __DIR__ . '/../templates/admin_header.php';
                 <textarea name="maintenance_message" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['siteMaintenance']['message'] ?? 'Website sekolah sedang dalam pemeliharaan singkat. Silakan kembali beberapa saat lagi.'); ?></textarea>
             </label>
             <p class="muted">Saat aktif, pengunjung publik melihat halaman pemeliharaan. Admin tetap bisa login dan mengelola website.</p>
-<<<<<<< HEAD
         </details>
         <details class="settings-section full">
             <summary>
@@ -426,11 +390,6 @@ require __DIR__ . '/../templates/admin_header.php';
                     <small>Ubah warna utama, aksen, dan sidebar admin.</small>
                 </span>
             </summary>
-=======
-        </div>
-        <div class="full">
-            <span class="form-section-title">Tema Warna Website</span>
->>>>>>> 98147e3 (upload pertama)
             <div class="theme-grid">
                 <label>
                     <span>Warna Utama</span>
@@ -454,7 +413,6 @@ require __DIR__ . '/../templates/admin_header.php';
                 </label>
             </div>
             <p class="muted">Warna ini langsung memengaruhi hero, tombol utama, aksen footer, link aktif, dan sidebar admin.</p>
-<<<<<<< HEAD
         </details>
         <details class="settings-section full">
             <summary>
@@ -515,39 +473,6 @@ require __DIR__ . '/../templates/admin_header.php';
                     <small>Status akreditasi dan file PDF resmi.</small>
                 </span>
             </summary>
-=======
-        </div>
-        <label>
-            <span>Logo Sekolah</span>
-            <input type="file" name="school_logo_file" accept=".jpg,.jpeg,.png,.webp" <?= db_available() ? '' : 'disabled'; ?>>
-            <span class="muted"><?= e(image_upload_help_text()); ?></span>
-            <img class="admin-preview" src="<?= asset(ltrim($content['schoolProfile']['logoPath'] ?? '/public/logo-sekolah.png', '/')); ?>" alt="Preview logo sekolah">
-        </label>
-        <label class="full"><span>Alamat</span><textarea name="address" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['schoolProfile']['address']); ?></textarea></label>
-        <label><span>Telepon</span><input type="text" name="phone" value="<?= e($content['schoolProfile']['phone']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-        <label><span>Email</span><input type="text" name="email" value="<?= e($content['schoolProfile']['email']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-        <label><span>Jam Layanan</span><input type="text" name="service_hours" value="<?= e($content['schoolProfile']['serviceHours']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-        <label><span>Kepala Sekolah</span><input type="text" name="principal_name" value="<?= e($content['principalMessage']['name']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-        <label><span>Jabatan</span><input type="text" name="principal_title" value="<?= e($content['principalMessage']['title']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-        <label class="full"><span>Salam Sambutan</span><input type="text" name="principal_greeting" value="<?= e($content['principalMessage']['greeting']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-        <label>
-            <span>Foto Kepala Sekolah</span>
-            <input type="file" name="principal_photo_file" accept=".jpg,.jpeg,.png,.webp" <?= db_available() ? '' : 'disabled'; ?>>
-            <span class="muted"><?= e(image_upload_help_text()); ?></span>
-            <img class="admin-preview" src="<?= asset(ltrim($content['principalMessage']['photoPath'] ?? '/public/kepala-sekolah.jpeg', '/')); ?>" alt="Preview foto kepala sekolah">
-        </label>
-        <label class="full"><span>Paragraf Sambutan (satu paragraf per baris)</span><textarea name="principal_paragraphs" <?= db_available() ? '' : 'disabled'; ?>><?= e(implode("\n", $content['principalMessage']['paragraphs'])); ?></textarea></label>
-        <label class="full"><span>Sejarah Singkat</span><textarea name="history_text" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['profileSections'][0]['text'] ?? ''); ?></textarea></label>
-        <label class="full"><span>Visi Sekolah</span><textarea name="vision_text" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['profileSections'][1]['text'] ?? ''); ?></textarea></label>
-        <label class="full"><span>Misi Sekolah</span><textarea name="mission_text" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['profileSections'][2]['text'] ?? ''); ?></textarea></label>
-        <label class="full">
-            <span>Fasilitas Sekolah Ringkas (satu fasilitas per baris)</span>
-            <textarea name="school_facilities" <?= db_available() ? '' : 'disabled'; ?>><?= e(implode("\n", $content['schoolFacilities'])); ?></textarea>
-            <span class="muted">Daftar ini tampil sebagai ringkasan di halaman profil. Foto fasilitas dikelola dari menu Fasilitas.</span>
-        </label>
-        <div class="full">
-            <span class="form-section-title">Akreditasi Sekolah</span>
->>>>>>> 98147e3 (upload pertama)
             <div class="form-grid two-col">
                 <label><span>Status Akreditasi</span><input type="text" name="accreditation_status" value="<?= e($content['schoolAccreditation']['status'] ?? 'A'); ?>" placeholder="A" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label><span>Nomor SK</span><input type="text" name="accreditation_sk_number" value="<?= e($content['schoolAccreditation']['skNumber'] ?? '555/BAN-SM/SK/2023'); ?>" placeholder="555/BAN-SM/SK/2023" <?= db_available() ? '' : 'disabled'; ?>></label>
@@ -564,7 +489,6 @@ require __DIR__ . '/../templates/admin_header.php';
             <?php else: ?>
                 <p class="muted">Belum ada lembar akreditasi yang diunggah.</p>
             <?php endif; ?>
-<<<<<<< HEAD
         </details>
         <details class="settings-section full">
             <summary>
@@ -587,15 +511,6 @@ require __DIR__ . '/../templates/admin_header.php';
                     <small>Atur menu yang tampil di navbar publik.</small>
                 </span>
             </summary>
-=======
-        </div>
-        <label><span>Jumlah Siswa</span><input type="text" name="stat_students" value="<?= e($content['stats'][0]['value']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-        <label><span>Jumlah Guru & Staf</span><input type="text" name="stat_teachers" value="<?= e($content['stats'][1]['value']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-        <label><span>Jumlah Ekstrakurikuler</span><input type="text" name="stat_extracurriculars" value="<?= e($content['stats'][2]['value']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-        <label><span>Jumlah Rombel</span><input type="text" name="stat_rombel" value="<?= e($content['stats'][3]['value']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-        <div class="full">
-            <span class="form-section-title">Menu Navigasi Publik</span>
->>>>>>> 98147e3 (upload pertama)
             <div class="toggle-grid">
                 <?php foreach ($content['navigation'] as $item): ?>
                     <label class="checkbox-label toggle-item">
@@ -605,13 +520,8 @@ require __DIR__ . '/../templates/admin_header.php';
                 <?php endforeach; ?>
             </div>
             <p class="muted">Menu yang tidak dicentang disembunyikan dari navbar publik, tetapi halamannya tetap bisa diakses langsung melalui URL.</p>
-<<<<<<< HEAD
         </details>
         <div class="settings-save-bar full"><button class="button primary" type="submit" <?= db_available() ? '' : 'disabled'; ?>>Simpan Pengaturan</button></div>
-=======
-        </div>
-        <div class="full"><button class="button primary" type="submit" <?= db_available() ? '' : 'disabled'; ?>>Simpan Pengaturan</button></div>
->>>>>>> 98147e3 (upload pertama)
     </form>
 </div>
 <?php require __DIR__ . '/../templates/admin_footer.php'; ?>
