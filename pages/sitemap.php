@@ -15,7 +15,7 @@ foreach ($content['navigation'] as $item) {
 }
 
 foreach (news_items() as $item) {
-    $addUrl('/berita/' . $item['slug'], '0.6', 'monthly');
+    $addUrl('/berita/' . rawurlencode($item['slug']), '0.6', 'monthly');
 }
 
 header('Content-Type: application/xml; charset=utf-8');

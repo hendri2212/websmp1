@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/../includes/bootstrap.php';
 require_admin_permission('news');
+require_valid_admin_request_ids();
 
 $message = '';
 $error = '';
@@ -9,38 +10,42 @@ $editRow = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
     if (!csrf_token_is_valid($_POST['csrf_token'] ?? null)) {
         $error = 'Sesi form sudah tidak valid. Muat ulang halaman lalu coba lagi.';
+    } elseif (($validationError = input_validation_error('news', $_POST, $_FILES)) !== '') {
+        $error = $validationError;
     } elseif (isset($_POST['delete_id'])) {
-        delete_news((int) $_POST['delete_id']);
-        $message = 'Berita berhasil dihapus.';
+        $result = admin_delete_feedback(static fn()=>delete_news(database_id($_POST['delete_id'])), 'Berita berhasil dihapus.');
+        $message = $result['success'] ? $result['message'] : '';
+        $error = $result['success'] ? '' : $result['message'];
     } else {
-        $existing = !empty($_POST['id']) ? admin_news_row((int) $_POST['id']) : null;
+        $existing = !empty($_POST['id']) ? admin_news_row(database_id($_POST['id'])) : null;
         $upload = uploaded_image_result('image_file', 'news');
         $imagePath = $upload['path'];
         if ($upload['error']) {
             $error = $upload['error'];
         } elseif ($imagePath === null) {
-            $imagePath = trim($_POST['existing_image_path'] ?? ($existing['image_path'] ?? '/public/logo-sekolah.png'));
+            $imagePath = trim($existing['image_path'] ?? '/public/logo-sekolah.png');
         }
 
         if (!$error) {
             save_news([
-                'id' => $_POST['id'] !== '' ? (int) $_POST['id'] : null,
+                'id' => $_POST['id'] !== '' ? database_id($_POST['id']) : null,
                 'slug' => trim($_POST['slug']),
                 'title' => trim($_POST['title']),
                 'category' => trim($_POST['category']),
                 'excerpt' => trim($_POST['excerpt']),
                 'content' => trim($_POST['content']),
                 'image_path' => $imagePath,
-                'published_at' => trim($_POST['published_at']),
+                'published_at' => input_datetime_value($_POST['published_at']),
                 'is_active' => isset($_POST['is_active']) ? 1 : 0,
             ]);
+            commit_uploaded_files();
             $message = 'Berita berhasil disimpan.';
         }
     }
 }
 
 if (isset($_GET['edit']) && db_available()) {
-    $editRow = admin_news_row((int) $_GET['edit']);
+    $editRow = admin_news_row(database_id($_GET['edit']));
 }
 
 $rows = admin_news_rows();
@@ -75,7 +80,7 @@ require __DIR__ . '/../templates/admin_header.php';
                     <input type="file" name="image_file" accept=".jpg,.jpeg,.png,.webp" <?= db_available() ? '' : 'disabled'; ?>>
                     <span class="muted"><?= e(image_upload_help_text()); ?></span>
                     <?php if ($editRow && !empty($editRow['image_path'])): ?>
-                        <img class="admin-preview" src="<?= asset(ltrim($editRow['image_path'], '/')); ?>" alt="Preview gambar berita">
+                        <img class="admin-preview" src="<?= e(asset(ltrim($editRow['image_path'], '/'))); ?>" alt="Preview gambar berita">
                     <?php endif; ?>
                 </label>
                 <label class="full"><span>Ringkasan</span><textarea name="excerpt" <?= db_available() ? '' : 'disabled'; ?>><?= e($editRow['excerpt'] ?? ''); ?></textarea></label>
@@ -83,7 +88,7 @@ require __DIR__ . '/../templates/admin_header.php';
                 <div class="action-bar">
                     <button class="button primary" type="submit" <?= db_available() ? '' : 'disabled'; ?>><?= $editRow ? 'Update Berita' : 'Simpan Berita'; ?></button>
                     <?php if ($editRow): ?>
-                        <a class="button secondary" href="<?= base_url('admin/news.php'); ?>">Batal Edit</a>
+                        <a class="button secondary" href="<?= e(base_url('admin/news.php')); ?>">Batal Edit</a>
                     <?php endif; ?>
                 </div>
             </form>
@@ -103,7 +108,7 @@ require __DIR__ . '/../templates/admin_header.php';
                         <td><?= e($row['published_at']); ?></td>
                         <td><span class="status-badge <?= e(publication_status_class($row['is_active'] ?? 1)); ?>"><?= e(publication_status_label($row['is_active'] ?? 1)); ?></span></td>
                         <td class="action-cell">
-                            <a class="button primary small" href="<?= base_url('admin/news.php?edit=' . (int) $row['id']); ?>">Edit</a>
+                            <a class="button primary small" href="<?= e(base_url('admin/news.php?edit=' . (int) $row['id'])); ?>">Edit</a>
                             <form method="post" onsubmit="return confirm('Hapus berita ini?');">
                                 <?= csrf_field(); ?>
                                 <input type="hidden" name="delete_id" value="<?= (int) $row['id']; ?>">

@@ -9,7 +9,7 @@ if ($filePath === '') {
 
 $path = realpath(__DIR__ . '/../' . ltrim($filePath, '/'));
 $storageRoot = realpath(__DIR__ . '/../storage/uploads/accreditation');
-if (!$path || !$storageRoot || !str_starts_with($path, $storageRoot) || !is_file($path)) {
+if (!$path || !$storageRoot || !file_is_within_directory($path, $storageRoot)) {
     http_response_code(404);
     exit('Lembar akreditasi tidak ditemukan.');
 }

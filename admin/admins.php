@@ -1,29 +1,22 @@
 <?php
 require __DIR__ . '/../includes/bootstrap.php';
 require_admin_permission('admins');
+require_valid_admin_request_ids();
 
 $message = '';
 $error = '';
 $editRow = null;
-<<<<<<< HEAD
 $roleOptions = admin_role_options();
 $roleDescriptions = admin_role_descriptions();
-=======
-$roleOptions = [
-    'superadmin' => 'Superadmin',
-    'editor' => 'Editor Konten',
-    'ppdb' => 'Operator PPDB',
-];
-$roleDescriptions = admin_role_descriptions();
-$permissionLabels = admin_permission_labels();
->>>>>>> 98147e3 (upload pertama)
 $rolePermissions = admin_permissions();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
     if (!csrf_token_is_valid($_POST['csrf_token'] ?? null)) {
         $error = 'Sesi form sudah tidak valid. Muat ulang halaman lalu coba lagi.';
+    } elseif (($validationError = input_validation_error('admins', $_POST, $_FILES)) !== '') {
+        $error = $validationError;
     } elseif (isset($_POST['delete_id'])) {
-        $result = delete_admin_user((int) $_POST['delete_id']);
+        $result = admin_delete_feedback(static fn()=>delete_admin_user(database_id($_POST['delete_id'])), 'Akun admin berhasil dihapus.');
         $message = $result['success'] ? $result['message'] : '';
         $error = $result['success'] ? '' : $result['message'];
     } else {
@@ -39,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
 
         if (!$error) {
             $result = save_admin_user([
-                'id' => $_POST['id'] !== '' ? (int) $_POST['id'] : null,
+                'id' => $_POST['id'] !== '' ? database_id($_POST['id']) : null,
                 'username' => $username,
                 'full_name' => trim($_POST['full_name'] ?? ''),
                 'role' => $role,
@@ -53,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
 }
 
 if (isset($_GET['edit']) && db_available()) {
-    $editRow = admin_user((int) $_GET['edit']);
+    $editRow = admin_user(database_id($_GET['edit']));
 }
 
 $rows = admin_users();
@@ -62,11 +55,7 @@ require __DIR__ . '/../templates/admin_header.php';
 ?>
 <div class="admin-card">
     <h1>Kelola Akun Admin</h1>
-<<<<<<< HEAD
-    <p>Buat akun operator sesuai tugasnya. Superadmin memiliki akses penuh, editor mengelola konten umum, dan operator PPDB fokus pada informasi PPDB.</p>
-=======
-    <p>Buat akun operator sesuai tugasnya. Superadmin memiliki akses penuh, editor mengelola konten, dan operator PPDB fokus pada pendaftaran.</p>
->>>>>>> 98147e3 (upload pertama)
+    <p>Buat akun operator sesuai tugasnya. Superadmin memiliki akses penuh, editor mengelola konten, dan operator PPDB mengelola informasi PPDB.</p>
     <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
     <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
     <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar akun admin bisa dikelola.</div><?php endif; ?>
@@ -88,7 +77,7 @@ require __DIR__ . '/../templates/admin_header.php';
         <div class="action-bar full">
             <button class="button primary blue" type="submit" <?= db_available() ? '' : 'disabled'; ?>><?= $editRow ? 'Update Akun' : 'Simpan Akun'; ?></button>
             <?php if ($editRow): ?>
-                <a class="button secondary" href="<?= base_url('admin/admins.php'); ?>">Batal Edit</a>
+                <a class="button secondary" href="<?= e(base_url('admin/admins.php')); ?>">Batal Edit</a>
             <?php endif; ?>
         </div>
     </form>
@@ -111,11 +100,7 @@ require __DIR__ . '/../templates/admin_header.php';
                     <td>
                         <div class="access-chip-list">
                             <?php foreach ($visiblePermissions as $permission): ?>
-<<<<<<< HEAD
                                 <span class="status-badge <?= in_array($permission, admin_sensitive_permissions(), true) ? 'status-ditolak' : 'status-selesai'; ?>"><?= e(admin_role_permission_label($role, $permission)); ?></span>
-=======
-                                <span class="status-badge <?= in_array($permission, ['settings', 'admins', 'db_backup', 'activity_logs', 'production_check'], true) ? 'status-ditolak' : 'status-selesai'; ?>"><?= e($permissionLabels[$permission] ?? $permission); ?></span>
->>>>>>> 98147e3 (upload pertama)
                             <?php endforeach; ?>
                         </div>
                     </td>
@@ -142,7 +127,7 @@ require __DIR__ . '/../templates/admin_header.php';
                         <td><?= e(admin_role_label($row['role'])); ?></td>
                         <td><?= (int) $row['is_active'] === 1 ? 'Aktif' : 'Nonaktif'; ?></td>
                         <td class="action-cell">
-                            <a class="button primary small" href="<?= base_url('admin/admins.php?edit=' . (int) $row['id']); ?>">Edit</a>
+                            <a class="button primary small" href="<?= e(base_url('admin/admins.php?edit=' . (int) $row['id'])); ?>">Edit</a>
                             <form method="post" onsubmit="return confirm('Hapus akun ini?');">
                                 <?= csrf_field(); ?>
                                 <input type="hidden" name="delete_id" value="<?= (int) $row['id']; ?>">

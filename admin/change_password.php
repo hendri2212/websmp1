@@ -12,6 +12,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!csrf_token_is_valid($_POST['csrf_token'] ?? null)) {
         $error = 'Sesi form sudah tidak valid. Muat ulang halaman lalu coba lagi.';
+    } elseif (($validationError = input_validation_error('change_password', $_POST, $_FILES)) !== '') {
+        $error = $validationError;
     } elseif ($newPassword !== $confirmPassword) {
         $error = 'Konfirmasi password baru belum sama.';
     } else {
@@ -43,7 +45,7 @@ require __DIR__ . '/../templates/admin_header.php';
         <label><span>Konfirmasi Password Baru</span><input type="password" name="confirm_password" required minlength="8" <?= db_available() ? '' : 'disabled'; ?>></label>
         <div class="action-bar">
             <button class="button primary" type="submit" <?= db_available() ? '' : 'disabled'; ?>>Simpan Password Baru</button>
-            <a class="button secondary" href="<?= base_url('admin/dashboard.php'); ?>">Kembali ke Dashboard</a>
+            <a class="button secondary" href="<?= e(base_url('admin/dashboard.php')); ?>">Kembali ke Dashboard</a>
         </div>
     </form>
 </div>

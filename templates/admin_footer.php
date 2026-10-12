@@ -1,8 +1,30 @@
     </main>
 </div>
-<<<<<<< HEAD
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-video-source-choice]').forEach(function (choice) {
+        var form = choice.closest('form');
+        if (!form) { return; }
+        var groups = Array.from(form.querySelectorAll('[data-video-source-field]'));
+        var disabledInitially = new Map();
+        groups.forEach(function (group) {
+            group.querySelectorAll('input').forEach(function (input) {
+                disabledInitially.set(input, input.disabled);
+            });
+        });
+        function updateVideoFields() {
+            var selected = choice.querySelector('input:checked');
+            groups.forEach(function (group) {
+                var active = selected && group.getAttribute('data-video-source-field') === selected.value;
+                group.hidden = !active;
+                group.querySelectorAll('input').forEach(function (input) {
+                    input.disabled = !active || disabledInitially.get(input);
+                });
+            });
+        }
+        choice.addEventListener('change', updateVideoFields);
+        updateVideoFields();
+    });
     document.querySelectorAll('[data-toggle-target]').forEach(function (button) {
         var target = document.getElementById(button.getAttribute('data-toggle-target'));
         if (!target) {
@@ -23,7 +45,5 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 </script>
-=======
->>>>>>> 98147e3 (upload pertama)
 </body>
 </html>

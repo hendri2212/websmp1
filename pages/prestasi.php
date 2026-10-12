@@ -21,9 +21,9 @@ $achievementRows = achievement_rows_all_years($selectedCategory !== '' ? $select
 
         <?php if ($categories): ?>
             <div class="document-filter">
-                <a class="button <?= $selectedCategory === '' ? 'primary blue' : 'secondary'; ?>" href="<?= base_url('prestasi'); ?>">Semua</a>
+                <a class="button <?= $selectedCategory === '' ? 'primary blue' : 'secondary'; ?>" href="<?= e(base_url('prestasi')); ?>">Semua</a>
                 <?php foreach ($categories as $category): ?>
-                    <a class="button <?= $selectedCategory === $category ? 'primary blue' : 'secondary'; ?>" href="<?= base_url('prestasi?category=' . rawurlencode($category)); ?>"><?= e($category); ?></a>
+                    <a class="button <?= $selectedCategory === $category ? 'primary blue' : 'secondary'; ?>" href="<?= e(base_url('prestasi?category=' . rawurlencode($category))); ?>"><?= e($category); ?></a>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
@@ -42,7 +42,7 @@ $achievementRows = achievement_rows_all_years($selectedCategory !== '' ? $select
                                 <small><?= e($achievement['category']); ?></small>
                             </div>
                         <?php else: ?>
-                            <img src="<?= image_asset_path($achievement['image_path']); ?>" alt="<?= e($achievement['title']); ?>" loading="lazy">
+                            <img src="<?= e(image_asset_path($achievement['image_path'])); ?>" alt="<?= e($achievement['title']); ?>" loading="lazy">
                         <?php endif; ?>
                         <div>
                             <span class="eyebrow"><?= e($achievement['category']); ?> - <?= e($achievement['level']); ?></span>
@@ -50,7 +50,7 @@ $achievementRows = achievement_rows_all_years($selectedCategory !== '' ? $select
                             <p class="staff-role"><?= e($achievement['achiever_name']); ?></p>
                             <p class="muted"><?= date('d F Y', strtotime($achievement['achievement_date'])); ?></p>
                             <p><?= e($achievement['description']); ?></p>
-                            <a class="text-link" href="<?= base_url('prestasi/' . (int) $achievement['id']); ?>">Baca selengkapnya</a>
+                            <a class="text-link" href="<?= e(base_url('prestasi/' . (int) $achievement['id'])); ?>">Baca selengkapnya</a>
                         </div>
                     </article>
                 <?php endforeach; ?>

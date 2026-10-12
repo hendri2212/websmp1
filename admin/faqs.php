@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/../includes/bootstrap.php';
 require_admin_permission('faqs');
+require_valid_admin_request_ids();
 
 $message = '';
 $error = '';
@@ -10,9 +11,12 @@ $defaultCategories = ['Umum', 'PPDB', 'Akademik', 'Administrasi', 'Kesiswaan', '
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
     if (!csrf_token_is_valid($_POST['csrf_token'] ?? null)) {
         $error = 'Sesi form sudah tidak valid. Muat ulang halaman lalu coba lagi.';
+    } elseif (($validationError = input_validation_error('faqs', $_POST, $_FILES)) !== '') {
+        $error = $validationError;
     } elseif (isset($_POST['delete_id'])) {
-        delete_faq((int) $_POST['delete_id']);
-        $message = 'FAQ berhasil dihapus.';
+        $result = admin_delete_feedback(static fn()=>delete_faq(database_id($_POST['delete_id'])), 'FAQ berhasil dihapus.');
+        $message = $result['success'] ? $result['message'] : '';
+        $error = $result['success'] ? '' : $result['message'];
     } else {
         $question = trim($_POST['question'] ?? '');
         $answer = trim($_POST['answer'] ?? '');
@@ -24,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
 
         if (!$error) {
             save_faq([
-                'id' => $_POST['id'] !== '' ? (int) $_POST['id'] : null,
+                'id' => $_POST['id'] !== '' ? database_id($_POST['id']) : null,
                 'question' => $question,
                 'answer' => $answer,
                 'category' => $category,
@@ -37,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
 }
 
 if (isset($_GET['edit']) && db_available()) {
-    $editRow = admin_faq_row((int) $_GET['edit']);
+    $editRow = admin_faq_row(database_id($_GET['edit']));
 }
 
 $rows = admin_faq_rows();
@@ -79,7 +83,7 @@ require __DIR__ . '/../templates/admin_header.php';
                 <div class="action-bar full">
                     <button class="button primary blue" type="submit" <?= db_available() ? '' : 'disabled'; ?>><?= $editRow ? 'Update FAQ' : 'Simpan FAQ'; ?></button>
                     <?php if ($editRow): ?>
-                        <a class="button secondary" href="<?= base_url('admin/faqs.php'); ?>">Batal Edit</a>
+                        <a class="button secondary" href="<?= e(base_url('admin/faqs.php')); ?>">Batal Edit</a>
                     <?php endif; ?>
                 </div>
             </form>
@@ -98,7 +102,7 @@ require __DIR__ . '/../templates/admin_header.php';
                         <td><?= e($row['category']); ?></td>
                         <td><span class="status-badge <?= e(publication_status_class($row['is_active'])); ?>"><?= e(publication_status_label($row['is_active'])); ?></span></td>
                         <td class="action-cell">
-                            <a class="button primary small" href="<?= base_url('admin/faqs.php?edit=' . (int) $row['id']); ?>">Edit</a>
+                            <a class="button primary small" href="<?= e(base_url('admin/faqs.php?edit=' . (int) $row['id'])); ?>">Edit</a>
                             <form method="post" onsubmit="return confirm('Hapus FAQ ini?');">
                                 <?= csrf_field(); ?>
                                 <input type="hidden" name="delete_id" value="<?= (int) $row['id']; ?>">

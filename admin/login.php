@@ -7,7 +7,7 @@ if (admin_is_logged_in()) {
 
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!csrf_token_is_valid($_POST['csrf_token'] ?? null)) {
+    if (!is_string($_POST['csrf_token'] ?? null) || !csrf_token_is_valid($_POST['csrf_token'])) {
         $error = 'Sesi form sudah tidak valid. Muat ulang halaman lalu coba lagi.';
     } elseif (admin_login($_POST['username'] ?? '', $_POST['password'] ?? '')) {
         redirect_to('admin/dashboard.php');

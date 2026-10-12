@@ -1,5 +1,90 @@
 <?php
 
+require_once __DIR__ . '/input_validation.php';
+require_once __DIR__ . '/upload_security.php';
+require_once __DIR__ . '/media_lifecycle.php';
+
+function require_http_methods(array $allowed): void
+{
+    if (in_array($_SERVER['REQUEST_METHOD'] ?? 'GET', $allowed, true)) {
+        return;
+    }
+    http_response_code(405);
+    header('Allow: ' . implode(', ', $allowed));
+    header('Content-Type: text/plain; charset=UTF-8');
+    header('Cache-Control: no-store');
+    exit('Metode HTTP tidak diizinkan.');
+}
+
+function admin_delete_feedback(callable $delete, string $successMessage): array
+{
+    try {
+        $result = $delete();
+        if (is_array($result) && is_bool($result['success'] ?? null) && is_string($result['message'] ?? null)) {
+            return $result;
+        }
+        if ($result === true) {
+            return ['success'=>true, 'message'=>$successMessage];
+        }
+        if ($result !== false) {
+            throw new LogicException('Invalid delete result.');
+        }
+    } catch (MediaRecordNotFoundException $exception) {
+        // Missing records are an expected form outcome, not a database error.
+    } catch (Throwable $exception) {
+        error_log('Administrative delete failed (' . get_class($exception) . ').');
+        return ['success'=>false, 'message'=>'Data gagal dihapus. Silakan coba lagi.'];
+    }
+    return ['success'=>false, 'message'=>'Data tidak ditemukan atau sudah dihapus.'];
+}
+
+function database_id(mixed $value): ?int
+{
+    if (is_int($value)) {
+        return $value > 0 ? $value : null;
+    }
+    if (!is_string($value) || !preg_match('/\A[1-9][0-9]*\z/', $value)) {
+        return null;
+    }
+    $maximum = (string) PHP_INT_MAX;
+    if (strlen($value) > strlen($maximum)
+        || (strlen($value) === strlen($maximum) && strcmp($value, $maximum) > 0)) {
+        return null;
+    }
+    return (int) $value;
+}
+
+function require_database_id(mixed $value): int
+{
+    $id = database_id($value);
+    if ($id === null) {
+        throw new InvalidArgumentException('ID tidak valid.');
+    }
+    return $id;
+}
+
+function require_valid_admin_request_ids(): void
+{
+    foreach (['id', 'edit'] as $key) {
+        if (array_key_exists($key, $_GET) && database_id($_GET[$key]) === null) {
+            http_response_code(400);
+            exit('ID tidak valid.');
+        }
+    }
+    if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+        return;
+    }
+    foreach (['id', 'delete_id', 'message_id'] as $key) {
+        if (!array_key_exists($key, $_POST) || ($key === 'id' && $_POST[$key] === '')) {
+            continue;
+        }
+        if (database_id($_POST[$key]) === null) {
+            http_response_code(400);
+            exit('ID tidak valid.');
+        }
+    }
+}
+
 function app_config(): array
 {
     static $config;
@@ -18,6 +103,13 @@ function base_url(string $path = ''): string
     return ($base !== '' ? $base : '') . '/' . ltrim($path, '/');
 }
 
+function request_is_https(): bool
+{
+    $https = strtolower((string) ($_SERVER['HTTPS'] ?? ''));
+    return ($https !== '' && !in_array($https, ['off', '0'], true))
+        || (int) ($_SERVER['SERVER_PORT'] ?? 0) === 443;
+}
+
 function absolute_url(string $path = ''): string
 {
     $url = base_url($path);
@@ -25,14 +117,42 @@ function absolute_url(string $path = ''): string
         return $url;
     }
 
-    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $scheme = request_is_https() ? 'https' : 'http';
     $host = preg_replace('/[^a-zA-Z0-9.:-]/', '', $_SERVER['HTTP_HOST'] ?? 'localhost') ?: 'localhost';
     return $scheme . '://' . $host . $url;
 }
 
 function e(?string $value): string
 {
-    return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+// Return a raw URL; callers must still use e() when rendering HTML attributes.
+function safe_content_url(string $url): string
+{
+    $url = trim($url);
+    if ($url === '' || preg_match('/[\x00-\x20\x7f\\\\]/', $url) || str_starts_with($url, '//')) {
+        return '';
+    }
+    if (preg_match('/^[a-z][a-z0-9+.-]*:/i', $url)) {
+        $parts = parse_url($url);
+        return is_array($parts) && in_array(strtolower($parts['scheme'] ?? ''), ['http','https'], true)
+            && !empty($parts['host']) && !isset($parts['user']) && !isset($parts['pass'])
+            && filter_var($url, FILTER_VALIDATE_URL) ? $url : '';
+    }
+    return str_contains(explode('/', $url, 2)[0], ':') ? '' : $url;
+}
+
+function content_link_url(string $url): string
+{
+    $url = safe_content_url($url);
+    if ($url === '') {
+        return '#';
+    }
+    if (preg_match('/^https?:/i', $url) || str_starts_with($url, '#')) {
+        return $url;
+    }
+    return str_starts_with($url, '?') ? base_url() . $url : base_url(ltrim($url, '/'));
 }
 
 function asset(string $path): string
@@ -99,33 +219,68 @@ function plain_text_excerpt(string $value, int $maxLength = 160): string
     return rtrim($excerpt) . '...';
 }
 
-function video_embed_url(string $url): string
+function youtube_video_id(string $url): ?string
 {
-    $url = trim($url);
-    if ($url === '') {
-        return '';
-    }
-
+    $url = safe_content_url($url);
+    if ($url === '') { return null; }
     $parts = parse_url($url);
     $host = strtolower($parts['host'] ?? '');
     $path = $parts['path'] ?? '';
+    if (!in_array($host, ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'youtu.be', 'www.youtube-nocookie.com', 'youtube-nocookie.com'], true)
+        || isset($parts['port']) || isset($parts['user']) || isset($parts['pass'])) { return null; }
     $query = [];
     parse_str($parts['query'] ?? '', $query);
+    $id = null;
+    if ($host === 'youtu.be' && preg_match('~\A/([a-zA-Z0-9_-]{11})/?\z~', $path, $match)) {
+        $id = $match[1];
+    } elseif (in_array($host, ['youtube.com','www.youtube.com','m.youtube.com'], true) && $path === '/watch') {
+        $id = is_string($query['v'] ?? null) ? $query['v'] : null;
+    } elseif (preg_match('~\A/(?:embed|shorts|live)/([a-zA-Z0-9_-]{11})/?\z~', $path, $match)) {
+        $id = $match[1];
+    }
+    return is_string($id) && preg_match('/\A[a-zA-Z0-9_-]{11}\z/', $id) ? $id : null;
+}
 
-    if (str_contains($host, 'youtube.com')) {
-        if (!empty($query['v'])) {
-            return 'https://www.youtube.com/embed/' . rawurlencode($query['v']);
-        }
-        if (preg_match('#^/(embed|shorts)/([^/?]+)#', $path, $matches)) {
-            return 'https://www.youtube.com/embed/' . rawurlencode($matches[2]);
+function video_embed_url(string $url): string
+{
+    $id = youtube_video_id($url);
+    return $id === null ? '' : 'https://www.youtube.com/embed/' . $id;
+}
+
+function profile_video_upload_path(string $url): ?string
+{
+    $url = safe_content_url($url);
+    if ($url === '') { return null; }
+    $parts = parse_url($url);
+    $localPath = $parts['path'] ?? '';
+    if (isset($parts['host'])) {
+        $base = parse_url(base_url());
+        if (strtolower($parts['host']) !== strtolower($base['host'] ?? '')
+            || ($parts['scheme'] ?? '') !== ($base['scheme'] ?? '')
+            || ($parts['port'] ?? null) !== ($base['port'] ?? null)) { return null; }
+        $basePath = rtrim($base['path'] ?? '', '/');
+        if ($basePath !== '') {
+            if (!str_starts_with($localPath, $basePath . '/')) { return null; }
+            $localPath = substr($localPath, strlen($basePath));
         }
     }
+    $path = managed_media_path($localPath);
+    return $path !== null && str_starts_with($path, 'public/uploads/videos/') ? '/' . $path : null;
+}
 
-    if (str_contains($host, 'youtu.be') && preg_match('#^/([^/?]+)#', $path, $matches)) {
-        return 'https://www.youtube.com/embed/' . rawurlencode($matches[1]);
+function video_file_url(string $url): string
+{
+    $url = safe_content_url($url);
+    if ($url === '') {
+        return '';
     }
-
-    return $url;
+    $path = rawurldecode((string) (parse_url($url, PHP_URL_PATH) ?? ''));
+    if (preg_match('/[\x00-\x1f\x7f\\\\]/', $path)
+        || preg_match('~(?:^|/)\.\.?(?:/|$)~', $path)
+        || !in_array(strtolower(pathinfo($path, PATHINFO_EXTENSION)), ['mp4', 'mov', 'webm', 'ogv'], true)) {
+        return '';
+    }
+    return content_link_url($url);
 }
 
 function normalize_hex_color(?string $value, string $fallback): string
@@ -168,7 +323,9 @@ function send_security_headers(): void
         return;
     }
 
+    header_remove('X-Powered-By');
     header('X-Frame-Options: SAMEORIGIN');
+    header("Content-Security-Policy: frame-ancestors 'self'");
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: strict-origin-when-cross-origin');
     header('Permissions-Policy: camera=(), microphone=(), geolocation=()');
@@ -189,6 +346,24 @@ function safe_download_filename(string $filename, string $fallback = 'download')
     return $filename !== '' ? $filename : $fallback;
 }
 
+function file_is_within_directory(string $filePath, string $directory): bool
+{
+    $file = realpath($filePath);
+    $root = realpath($directory);
+    if ($file === false || $root === false || !is_file($file) || !is_dir($root)) {
+        return false;
+    }
+
+    $file = str_replace('\\', '/', $file);
+    $root = rtrim(str_replace('\\', '/', $root), '/') . '/';
+    if (PHP_OS_FAMILY === 'Windows') {
+        $file = strtolower($file);
+        $root = strtolower($root);
+    }
+
+    return str_starts_with($file, $root);
+}
+
 function csv_safe_cell(mixed $value): string
 {
     $value = preg_replace('/\R+/', ' ', (string) $value);
@@ -201,7 +376,7 @@ function csv_safe_cell(mixed $value): string
 
 function csrf_token(): string
 {
-    if (empty($_SESSION['csrf_token'])) {
+    if (!is_string($_SESSION['csrf_token'] ?? null) || $_SESSION['csrf_token'] === '') {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
 
@@ -213,10 +388,11 @@ function csrf_field(): string
     return '<input type="hidden" name="csrf_token" value="' . e(csrf_token()) . '">';
 }
 
-function csrf_token_is_valid(?string $token): bool
+function csrf_token_is_valid(mixed $token): bool
 {
     return is_string($token)
-        && isset($_SESSION['csrf_token'])
+        && $token !== ''
+        && is_string($_SESSION['csrf_token'] ?? null)
         && hash_equals($_SESSION['csrf_token'], $token);
 }
 
@@ -254,12 +430,35 @@ function publication_status_class(int|string|null $isActive): string
 
 function image_resource_from_upload(string $path, string $mimeType): mixed
 {
-    return match ($mimeType) {
+    if ($mimeType === 'image/webp' && !upload_webp_container_is_complete($path)) {
+        return false;
+    }
+    $jpegWarnings = ini_get('gd.jpeg_ignore_warning');
+    if ($mimeType === 'image/jpeg' && ini_set('gd.jpeg_ignore_warning', '0') === false) {
+        return false;
+    }
+    $warning = false;
+    set_error_handler(static function () use (&$warning): bool { $warning = true; return true; });
+    try {
+        $resource = match ($mimeType) {
         'image/jpeg' => function_exists('imagecreatefromjpeg') ? @imagecreatefromjpeg($path) : false,
         'image/png' => function_exists('imagecreatefrompng') ? @imagecreatefrompng($path) : false,
         'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($path) : false,
         default => false,
-    };
+        };
+    } catch (Throwable $exception) {
+        $resource = false;
+    } finally {
+        restore_error_handler();
+        if ($mimeType === 'image/jpeg' && $jpegWarnings !== false) {
+            ini_set('gd.jpeg_ignore_warning', $jpegWarnings);
+        }
+    }
+    if ($warning && $resource) {
+        imagedestroy($resource);
+        return false;
+    }
+    return $resource;
 }
 
 function save_optimized_image(string $sourcePath, string $destination, string $mimeType, int $width, int $height, int $maxDimension = 1600): bool
@@ -324,98 +523,68 @@ function image_asset_path(?string $path, bool $preferThumbnail = true): string
 
 function uploaded_image_result(string $field, string $folder, int $maxBytes = IMAGE_UPLOAD_MAX_BYTES): array
 {
-    if (empty($_FILES[$field]['name'])) {
+    if (!isset($_FILES[$field])) {
         return ['path' => null, 'error' => null];
     }
-
-    $uploadError = $_FILES[$field]['error'] ?? UPLOAD_ERR_OK;
-    if (in_array($uploadError, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
-        return ['path' => null, 'error' => 'Ukuran gambar maksimal ' . file_size_label($maxBytes) . '. Pastikan upload_max_filesize dan post_max_size server tidak lebih kecil dari batas ini.'];
+    $fail = static function (string $error): array {
+        rollback_uploaded_files();
+        return ['path' => null, 'error' => $error];
+    };
+    $file = $_FILES[$field];
+    if (!is_array($file)) {
+        return $fail('Metadata upload tidak valid.');
     }
-
-    if ($uploadError !== UPLOAD_ERR_OK) {
-        return ['path' => null, 'error' => 'Upload gambar gagal. Silakan coba lagi.'];
+    $nameError = upload_filename_error($file, ['jpg', 'jpeg', 'png', 'webp']);
+    if ($nameError !== '') {
+        return $fail($nameError);
     }
-
-    if (!is_uploaded_file($_FILES[$field]['tmp_name'])) {
-        return ['path' => null, 'error' => 'File upload tidak valid.'];
+    if ($file['error'] === UPLOAD_ERR_NO_FILE) {
+        return ['path' => null, 'error' => null];
     }
-
-    if (($_FILES[$field]['size'] ?? 0) > $maxBytes) {
-        return ['path' => null, 'error' => 'Ukuran gambar maksimal ' . file_size_label($maxBytes) . '.'];
+    if ($file['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'])) {
+        return $fail('Upload gambar gagal atau tidak valid.');
     }
-
-    $mimeType = null;
-    if (function_exists('finfo_open')) {
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        if ($finfo) {
-            $mimeType = finfo_file($finfo, $_FILES[$field]['tmp_name']);
-            finfo_close($finfo);
-        }
+    $size = filesize($file['tmp_name']);
+    if ($size === false || $size <= 0 || $size > $maxBytes) {
+        return $fail('Ukuran gambar melebihi batas atau file kosong.');
     }
-
-    $imageInfo = @getimagesize($_FILES[$field]['tmp_name']);
-    if (!$mimeType && is_array($imageInfo)) {
-        $mimeType = $imageInfo['mime'] ?? null;
+    if (!class_exists('finfo') || !function_exists('imagecreatetruecolor')) {
+        return $fail('Validasi gambar belum tersedia pada server.');
     }
-
-    $allowedMimeTypes = [
-        'image/jpeg' => 'jpg',
-        'image/png' => 'png',
-        'image/webp' => 'webp',
-    ];
-
-    if (!isset($allowedMimeTypes[$mimeType]) || $imageInfo === false) {
-        return ['path' => null, 'error' => 'Format gambar harus JPG, PNG, atau WEBP yang valid.'];
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+    $extensions = ['image/jpeg'=>['jpg','jpeg'], 'image/png'=>['png'], 'image/webp'=>['webp']];
+    $info = @getimagesize($file['tmp_name']);
+    $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    if (!isset($extensions[$mime]) || !in_array($extension, $extensions[$mime], true)
+        || !$info || ($info['mime'] ?? '') !== $mime) {
+        return $fail('Ekstensi dan konten gambar harus sesuai JPG, PNG, atau WEBP.');
     }
-
-    $width = (int) ($imageInfo[0] ?? 0);
-    $height = (int) ($imageInfo[1] ?? 0);
-    if ($width < 400 || $height < 300) {
-        return ['path' => null, 'error' => 'Resolusi gambar terlalu kecil. Gunakan gambar minimal 400 x 300 piksel.'];
+    $width = (int) $info[0];
+    $height = (int) $info[1];
+    if (!upload_image_fits_memory($width, $height)) {
+        return $fail('Dimensi gambar tidak sesuai atau terlalu besar untuk diproses.');
     }
-
-    $safeFolder = trim(preg_replace('/[^a-zA-Z0-9_-]/', '', $folder), '/');
-    if ($safeFolder === '') {
-        return ['path' => null, 'error' => 'Folder upload tidak valid.'];
+    if (!preg_match('/\A[a-zA-Z0-9_-]+\z/', $folder)) {
+        return $fail('Folder upload tidak valid.');
     }
-
-    $uploadDir = __DIR__ . '/../public/uploads/' . $safeFolder;
-    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
-        return ['path' => null, 'error' => 'Folder upload belum bisa dibuat.'];
-    }
+    $uploadDir = __DIR__ . '/../public/uploads/' . $folder;
     $thumbDir = $uploadDir . '/thumbs';
-    if (!is_dir($thumbDir) && !mkdir($thumbDir, 0755, true)) {
-        return ['path' => null, 'error' => 'Folder thumbnail belum bisa dibuat.'];
+    if ((!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true))
+        || (!is_dir($thumbDir) && !mkdir($thumbDir, 0755, true))) {
+        return $fail('Folder upload belum bisa dibuat.');
     }
-
-    $extension = function_exists('imagewebp') ? 'webp' : $allowedMimeTypes[$mimeType];
-    $filename = $safeFolder . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(8)) . '.' . $extension;
-    $relative = 'public/uploads/' . $safeFolder . '/' . $filename;
+    $outputExtension = function_exists('imagewebp') ? 'webp' : $extensions[$mime][0];
+    $filename = $folder . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(8)) . '.' . $outputExtension;
+    $relative = 'public/uploads/' . $folder . '/' . $filename;
     $destination = __DIR__ . '/../' . $relative;
-    $thumbDestination = $thumbDir . '/' . $filename;
-
-    $optimized = false;
-    if (function_exists('imagecreatetruecolor')) {
-        $optimized = save_optimized_image($_FILES[$field]['tmp_name'], $destination, $mimeType, $width, $height);
-        if ($optimized) {
-            save_optimized_image($_FILES[$field]['tmp_name'], $thumbDestination, $mimeType, $width, $height, 640);
-        }
+    $thumbnail = $thumbDir . '/' . $filename;
+    if (!reserve_uploaded_file($destination) || !reserve_uploaded_file($thumbnail)
+        || !save_optimized_image($file['tmp_name'], $destination, $mime, $width, $height)
+        || !save_optimized_image($file['tmp_name'], $thumbnail, $mime, $width, $height, 640)
+        || filesize($destination) === 0 || filesize($thumbnail) === 0) {
+        return $fail('Gambar rusak atau gagal diproses. Upload tidak disimpan.');
     }
-
-    if (!$optimized) {
-        $fallbackDestination = __DIR__ . '/../public/uploads/' . $safeFolder . '/' . pathinfo($filename, PATHINFO_FILENAME) . '.' . $allowedMimeTypes[$mimeType];
-        $relative = 'public/uploads/' . $safeFolder . '/' . basename($fallbackDestination);
-        $thumbDestination = $thumbDir . '/' . basename($fallbackDestination);
-
-        if (!move_uploaded_file($_FILES[$field]['tmp_name'], $fallbackDestination)) {
-            return ['path' => null, 'error' => 'Gambar gagal disimpan ke folder upload.'];
-        }
-    } elseif (!file_exists($thumbDestination)) {
-        @copy($destination, $thumbDestination);
-    }
-
-    return ['path' => '/' . str_replace('\\', '/', $relative), 'error' => null];
+    return ['path' => '/' . $relative, 'error' => null];
 }
 
 function uploaded_image_path(string $field, string $folder): ?string
@@ -423,119 +592,90 @@ function uploaded_image_path(string $field, string $folder): ?string
     return uploaded_image_result($field, $folder)['path'];
 }
 
-function uploaded_document_result(string $field, string $folder, int $maxBytes = 3145728): array
+
+
+function uploaded_profile_video_result(string $field): array
 {
-    if (empty($_FILES[$field]['name'])) {
-        return ['path' => null, 'error' => null];
+    $empty = ['path'=>null, 'error'=>null];
+    if (!isset($_FILES[$field])) { return $empty; }
+    $fail = static function (string $error) use ($empty): array {
+        rollback_uploaded_files();
+        return array_replace($empty, ['error'=>$error]);
+    };
+    $file = $_FILES[$field];
+    if (!is_array($file)) { return $fail('Metadata upload video tidak valid.'); }
+    $nameError = upload_filename_error($file, ['mp4', 'mov']);
+    if ($nameError !== '') { return $fail($nameError); }
+    if ($file['error'] === UPLOAD_ERR_NO_FILE) { return $empty; }
+    if ($file['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'])) {
+        return $fail('Upload video gagal. Pilih MP4 atau MOV maksimal 20 MB.');
     }
-
-    if (($_FILES[$field]['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
-        return ['path' => null, 'error' => 'Upload berkas gagal. Silakan coba lagi.'];
+    $size = filesize($file['tmp_name']);
+    if ($size === false || $size <= 0 || $size > 20 * 1048576) {
+        return $fail('Video harus berukuran maksimal 20 MB dan tidak kosong.');
     }
-
-    if (!is_uploaded_file($_FILES[$field]['tmp_name'])) {
-        return ['path' => null, 'error' => 'Berkas upload tidak valid.'];
+    $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+    $allowedMimes = $extension === 'mov' ? ['video/quicktime', 'video/mp4'] : ['video/mp4'];
+    if (!class_exists('finfo') || !in_array((new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']), $allowedMimes, true)
+        || !uploaded_video_has_basic_structure($file['tmp_name'], $extension === 'mov')) {
+        return $fail('Konten video tidak sesuai MP4/MOV atau struktur file rusak.');
     }
-
-    if (($_FILES[$field]['size'] ?? 0) > $maxBytes) {
-        return ['path' => null, 'error' => 'Ukuran berkas maksimal 3 MB.'];
+    $directory = __DIR__ . '/../public/uploads/videos';
+    if (!is_dir($directory) && !mkdir($directory, 0755, true)) {
+        return $fail('Penyimpanan video belum tersedia.');
     }
-
-    $mimeType = null;
-    if (function_exists('finfo_open')) {
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        if ($finfo) {
-            $mimeType = finfo_file($finfo, $_FILES[$field]['tmp_name']);
-            finfo_close($finfo);
-        }
-    }
-
-    $allowedMimeTypes = [
-        'application/pdf' => 'pdf',
-        'image/jpeg' => 'jpg',
-        'image/png' => 'png',
-        'image/webp' => 'webp',
-    ];
-
-    if (!isset($allowedMimeTypes[$mimeType])) {
-        return ['path' => null, 'error' => 'Berkas harus berupa PDF, JPG, PNG, atau WEBP.'];
-    }
-
-    $safeFolder = trim(preg_replace('/[^a-zA-Z0-9_-]/', '', $folder), '/');
-    if ($safeFolder === '') {
-        return ['path' => null, 'error' => 'Folder upload tidak valid.'];
-    }
-
-    $uploadDir = __DIR__ . '/../storage/uploads/' . $safeFolder;
-    if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
-        return ['path' => null, 'error' => 'Folder penyimpanan berkas belum bisa dibuat.'];
-    }
-
-    $filename = $safeFolder . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(8)) . '.' . $allowedMimeTypes[$mimeType];
-    $relative = 'storage/uploads/' . $safeFolder . '/' . $filename;
+    $relative = 'public/uploads/videos/videos-' . date('YmdHis') . '-' . bin2hex(random_bytes(8)) . '.' . $extension;
     $destination = __DIR__ . '/../' . $relative;
-
-    if (!move_uploaded_file($_FILES[$field]['tmp_name'], $destination)) {
-        return ['path' => null, 'error' => 'Berkas gagal disimpan.'];
+    if (!reserve_uploaded_file($destination) || !move_uploaded_file($file['tmp_name'], $destination)) {
+        return $fail('Video gagal disimpan. Silakan coba lagi.');
     }
-
-    return ['path' => str_replace('\\', '/', $relative), 'error' => null];
+    return ['path'=>'/' . $relative, 'error'=>null];
 }
 
 function uploaded_pdf_result(string $field, string $folder, int $maxBytes = 5242880): array
 {
-    if (empty($_FILES[$field]['name'])) {
-        return ['path' => null, 'error' => null, 'original_filename' => null, 'file_size' => 0];
+    $empty = ['path'=>null, 'error'=>null, 'original_filename'=>null, 'file_size'=>0];
+    if (!isset($_FILES[$field])) {
+        return $empty;
     }
-
-    if (($_FILES[$field]['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
-        return ['path' => null, 'error' => 'Upload PDF gagal. Silakan coba lagi.', 'original_filename' => null, 'file_size' => 0];
+    $fail = static function (string $error) use ($empty): array {
+        rollback_uploaded_files();
+        return array_replace($empty, ['error'=>$error]);
+    };
+    $file = $_FILES[$field];
+    if (!is_array($file)) {
+        return $fail('Metadata upload tidak valid.');
     }
-
-    if (!is_uploaded_file($_FILES[$field]['tmp_name'])) {
-        return ['path' => null, 'error' => 'File PDF upload tidak valid.', 'original_filename' => null, 'file_size' => 0];
+    $nameError = upload_filename_error($file, ['pdf']);
+    if ($nameError !== '') {
+        return $fail($nameError);
     }
-
-    $fileSize = (int) ($_FILES[$field]['size'] ?? 0);
-    if ($fileSize > $maxBytes) {
-        return ['path' => null, 'error' => 'Ukuran PDF maksimal 5 MB.', 'original_filename' => null, 'file_size' => 0];
+    if ($file['error'] === UPLOAD_ERR_NO_FILE) {
+        return $empty;
     }
-
-    $mimeType = null;
-    if (function_exists('finfo_open')) {
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        if ($finfo) {
-            $mimeType = finfo_file($finfo, $_FILES[$field]['tmp_name']);
-            finfo_close($finfo);
-        }
+    if ($file['error'] !== UPLOAD_ERR_OK || !is_uploaded_file($file['tmp_name'])) {
+        return $fail('Upload PDF gagal atau tidak valid.');
     }
-
-    if ($mimeType !== 'application/pdf') {
-        return ['path' => null, 'error' => 'Dokumen harus berupa file PDF.', 'original_filename' => null, 'file_size' => 0];
+    $size = filesize($file['tmp_name']);
+    if ($size === false || $size <= 0 || $size > $maxBytes) {
+        return $fail('Ukuran PDF melebihi batas atau file kosong.');
     }
-
-    $safeFolder = trim(preg_replace('/[^a-zA-Z0-9_-]/', '', $folder), '/');
-    if ($safeFolder === '') {
-        return ['path' => null, 'error' => 'Folder upload tidak valid.', 'original_filename' => null, 'file_size' => 0];
+    if (!class_exists('finfo') || (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']) !== 'application/pdf'
+        || !uploaded_pdf_has_basic_structure($file['tmp_name'])) {
+        return $fail('Konten PDF tidak valid atau rusak.');
     }
-
-    $uploadDir = __DIR__ . '/../storage/uploads/' . $safeFolder;
+    if (!preg_match('/\A[a-zA-Z0-9_-]+\z/', $folder)) {
+        return $fail('Folder upload tidak valid.');
+    }
+    $uploadDir = __DIR__ . '/../storage/uploads/' . $folder;
     if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
-        return ['path' => null, 'error' => 'Folder penyimpanan PDF belum bisa dibuat.', 'original_filename' => null, 'file_size' => 0];
+        return $fail('Folder penyimpanan PDF belum bisa dibuat.');
     }
-
-    $filename = $safeFolder . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(8)) . '.pdf';
-    $relative = 'storage/uploads/' . $safeFolder . '/' . $filename;
+    $filename = $folder . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(8)) . '.pdf';
+    $relative = 'storage/uploads/' . $folder . '/' . $filename;
     $destination = __DIR__ . '/../' . $relative;
-
-    if (!move_uploaded_file($_FILES[$field]['tmp_name'], $destination)) {
-        return ['path' => null, 'error' => 'PDF gagal disimpan.', 'original_filename' => null, 'file_size' => 0];
+    if (!reserve_uploaded_file($destination) || !move_uploaded_file($file['tmp_name'], $destination)) {
+        return $fail('PDF gagal disimpan.');
     }
-
-    return [
-        'path' => str_replace('\\', '/', $relative),
-        'error' => null,
-        'original_filename' => basename($_FILES[$field]['name']),
-        'file_size' => $fileSize,
-    ];
+    return ['path'=>$relative, 'error'=>null, 'original_filename'=>$file['name'], 'file_size'=>$size];
 }

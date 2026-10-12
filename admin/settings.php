@@ -11,9 +11,9 @@ function settings_parse_link_rows(string $raw, array $fallback): array
             continue;
         }
         $rows[] = [
-            'title' => mb_substr($parts[0], 0, 120),
-            'desc' => mb_substr($parts[1], 0, 260),
-            'href' => mb_substr($parts[2], 0, 180),
+            'title' => $parts[0],
+            'desc' => $parts[1],
+            'href' => $parts[2],
         ];
     }
 
@@ -44,6 +44,8 @@ $content = site_content();
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
     if (!csrf_token_is_valid($_POST['csrf_token'] ?? null)) {
         $error = 'Sesi form sudah tidak valid. Muat ulang halaman lalu coba lagi.';
+    } elseif (($validationError = input_validation_error('settings', $_POST, $_FILES)) !== '') {
+        $error = $validationError;
     } else {
         $profile = $content['schoolProfile'];
         $profile['name'] = $_POST['name'] ?? $profile['name'];
@@ -56,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
         $profile['email'] = $_POST['email'] ?? $profile['email'];
         $profile['serviceHours'] = $_POST['service_hours'] ?? $profile['serviceHours'];
         $logoUpload = uploaded_image_result('school_logo_file', 'profile');
-        $profile['logoPath'] = $logoUpload['path'] ?? ($_POST['existing_logo_path'] ?? ($profile['logoPath'] ?? '/public/logo-sekolah.png'));
+        $profile['logoPath'] = $logoUpload['path'] ?? ($profile['logoPath'] ?? '/public/logo-sekolah.png');
 
         $maintenance = [
             'enabled' => isset($_POST['maintenance_enabled']),
@@ -102,6 +104,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
             'showFeaturedAreas' => isset($_POST['home_show_featured_areas']),
             'showAgenda' => isset($_POST['home_show_agenda']),
         ];
+        $hasVideoUpload = isset($_FILES['home_profile_video_file']) && ($_FILES['home_profile_video_file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE;
+        $videoSource = $_POST['home_profile_video_source'] ?? ($hasVideoUpload ? 'upload' : (youtube_video_id($home['profileVideoUrl']) !== null ? 'youtube' : 'upload'));
+        $profileVideoUpload = ['path'=>null, 'error'=>null];
+        if (!in_array($videoSource, ['upload','youtube'], true)) {
+            $error = 'Sumber video tidak valid.';
+        } elseif ($videoSource === 'youtube') {
+            $videoId = youtube_video_id($home['profileVideoUrl']);
+            if ($videoId === null) {
+                $error = 'Gunakan URL YouTube watch, youtu.be, atau shorts yang valid.';
+            } elseif ($hasVideoUpload) {
+                $error = 'Pilih satu sumber video saja.';
+            } else {
+                $home['profileVideoUrl'] = 'https://www.youtube.com/watch?v=' . $videoId;
+            }
+        } else {
+            $profileVideoUpload = uploaded_profile_video_result('home_profile_video_file');
+            $oldVideo = $content['siteHome']['profileVideoUrl'] ?? '';
+            $home['profileVideoUrl'] = $profileVideoUpload['path'] ?? profile_video_upload_path($oldVideo) ?? '';
+            if (!$hasVideoUpload && $oldVideo !== '' && $home['profileVideoUrl'] === '') {
+                $error = 'Pilih file video untuk mengganti sumber sebelumnya.';
+            }
+        }
+        $home['profileVideoSource'] = $videoSource;
         if ($home['heroTitle'] === '') {
             $home['heroTitle'] = $profile['name'];
         }
@@ -133,7 +158,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
         $principal['greeting'] = $_POST['principal_greeting'] ?? $principal['greeting'];
         $principal['paragraphs'] = array_values(array_filter(array_map('trim', preg_split('/\R+/', $_POST['principal_paragraphs'] ?? ''))));
         $principalPhotoUpload = uploaded_image_result('principal_photo_file', 'profile');
-        $principal['photoPath'] = $principalPhotoUpload['path'] ?? ($_POST['existing_principal_photo_path'] ?? ($principal['photoPath'] ?? '/public/kepala-sekolah.jpeg'));
+        $principal['photoPath'] = $principalPhotoUpload['path'] ?? ($principal['photoPath'] ?? '/public/kepala-sekolah.jpeg');
 
         $currentAccreditation = $content['schoolAccreditation'] ?? [];
         $accreditationUpload = uploaded_pdf_result('accreditation_file', 'accreditation');
@@ -145,9 +170,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
             'skNumber' => $accreditationSkNumber,
             'skDate' => $accreditationSkDate,
             'description' => trim($_POST['accreditation_description'] ?? ($currentAccreditation['description'] ?? '')),
-            'filePath' => $accreditationUpload['path'] ?? ($_POST['existing_accreditation_file_path'] ?? ($currentAccreditation['filePath'] ?? '')),
-            'originalFilename' => $accreditationUpload['original_filename'] ?? ($_POST['existing_accreditation_original_filename'] ?? ($currentAccreditation['originalFilename'] ?? '')),
-            'fileSize' => (int) ($accreditationUpload['file_size'] ?: ($_POST['existing_accreditation_file_size'] ?? ($currentAccreditation['fileSize'] ?? 0))),
+            'filePath' => $accreditationUpload['path'] ?? ($currentAccreditation['filePath'] ?? ''),
+            'originalFilename' => $accreditationUpload['original_filename'] ?? ($currentAccreditation['originalFilename'] ?? ''),
+            'fileSize' => (int) ($accreditationUpload['file_size'] ?: ($currentAccreditation['fileSize'] ?? 0)),
         ];
         if ($accreditation['description'] === '') {
             $accreditation['description'] = 'SMP Negeri 1 Kotabaru memiliki status akreditasi ' . $accreditation['status'] . ' sesuai dokumen resmi akreditasi sekolah.';
@@ -159,6 +184,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
             $error = $principalPhotoUpload['error'];
         } elseif ($accreditationUpload['error']) {
             $error = $accreditationUpload['error'];
+        } elseif ($profileVideoUpload['error']) {
+            $error = $profileVideoUpload['error'];
+        }
+        foreach (['home_primary_button_url','home_secondary_button_url','home_profile_video_url'] as $field) {
+            if (isset($_POST[$field]) && trim($_POST[$field]) !== '' && safe_content_url($_POST[$field]) === '') {
+                $error = 'URL tidak valid. Gunakan path lokal atau URL HTTP/HTTPS.';
+            }
         }
 
         $profileSections = [
@@ -241,6 +273,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
                 'schoolAccreditation' => $accreditation,
                 'contactChannels' => $contactChannels,
             ]);
+            commit_uploaded_files();
             $content = site_content();
             $message = 'Pengaturan sekolah berhasil diperbarui.';
         }
@@ -279,7 +312,7 @@ require __DIR__ . '/../templates/admin_header.php';
                     <span>Logo Sekolah</span>
                     <input type="file" name="school_logo_file" accept=".jpg,.jpeg,.png,.webp" <?= db_available() ? '' : 'disabled'; ?>>
                     <span class="muted"><?= e(image_upload_help_text()); ?></span>
-                    <img class="admin-preview" src="<?= asset(ltrim($content['schoolProfile']['logoPath'] ?? '/public/logo-sekolah.png', '/')); ?>" alt="Preview logo sekolah">
+                    <img class="admin-preview" src="<?= e(asset(ltrim($content['schoolProfile']['logoPath'] ?? '/public/logo-sekolah.png', '/'))); ?>" alt="Preview logo sekolah">
                 </label>
             </div>
             <div class="settings-subsection">
@@ -288,7 +321,7 @@ require __DIR__ . '/../templates/admin_header.php';
                 <span>Tahun Ajaran</span>
                 <input type="text" name="current_academic_year" value="<?= e($content['siteAcademic']['currentYear'] ?? '2025/2026'); ?>" placeholder="2025/2026" <?= db_available() ? '' : 'disabled'; ?>>
             </label>
-            <p class="muted">Tahun ajaran aktif digunakan sebagai default untuk PPDB, agenda, dokumen, dan prestasi baru.</p>
+            <p class="muted">Tahun ajaran aktif ditampilkan pada informasi PPDB dan digunakan sebagai default agenda, dokumen, dan prestasi baru.</p>
             </div>
         </details>
         <details class="settings-section full">
@@ -305,7 +338,22 @@ require __DIR__ . '/../templates/admin_header.php';
                 <label><span>Link Tombol Utama</span><input type="text" name="home_primary_button_url" value="<?= e($content['siteHome']['primaryButtonUrl'] ?? '/profil'); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label><span>Label Tombol Kedua</span><input type="text" name="home_secondary_button_label" value="<?= e($content['siteHome']['secondaryButtonLabel'] ?? 'Informasi PPDB'); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label><span>Link Tombol Kedua</span><input type="text" name="home_secondary_button_url" value="<?= e($content['siteHome']['secondaryButtonUrl'] ?? '/ppdb'); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
-                <label class="full"><span>URL Video Profil</span><input type="url" name="home_profile_video_url" value="<?= e($content['siteHome']['profileVideoUrl'] ?? ''); ?>" placeholder="https://www.youtube.com/watch?v=..." <?= db_available() ? '' : 'disabled'; ?>></label>
+                <?php $videoSource = $content['siteHome']['profileVideoSource'] ?? (youtube_video_id($content['siteHome']['profileVideoUrl'] ?? '') !== null ? 'youtube' : 'upload'); ?>
+                <fieldset class="full video-source-choice" data-video-source-choice>
+                    <legend>Sumber Video</legend>
+                    <label><input type="radio" name="home_profile_video_source" value="upload" <?= $videoSource === 'upload' ? 'checked' : ''; ?> <?= db_available() ? '' : 'disabled'; ?>> Upload Video</label>
+                    <label><input type="radio" name="home_profile_video_source" value="youtube" <?= $videoSource === 'youtube' ? 'checked' : ''; ?> <?= db_available() ? '' : 'disabled'; ?>> Link YouTube</label>
+                </fieldset>
+                <p class="full muted">Untuk video berukuran besar, gunakan YouTube agar tidak membebani kapasitas hosting.</p>
+                <div class="full" data-video-source-field="upload">
+                <label><span>File Video Profil (MP4/MOV, maksimal 20 MB)</span><input type="file" name="home_profile_video_file" accept=".mp4,.mov,video/mp4,video/quicktime" <?= db_available() ? '' : 'disabled'; ?>></label>
+                <?php if (video_file_url($content['siteHome']['profileVideoUrl'] ?? '') !== ''): ?>
+                    <a class="text-link full" href="<?= e(video_file_url($content['siteHome']['profileVideoUrl'])); ?>" target="_blank" rel="noopener">Lihat video tersimpan</a>
+                <?php endif; ?>
+                </div>
+                <div class="full" data-video-source-field="youtube">
+                <label><span>Link YouTube</span><input type="url" name="home_profile_video_url" value="<?= e(youtube_video_id($content['siteHome']['profileVideoUrl'] ?? '') !== null ? $content['siteHome']['profileVideoUrl'] : ''); ?>" placeholder="https://www.youtube.com/watch?v=..." <?= db_available() ? '' : 'disabled'; ?>></label>
+                </div>
                 <label class="full"><span>Judul Video Profil</span><input type="text" name="home_profile_video_title" value="<?= e($content['siteHome']['profileVideoTitle'] ?? 'Profil sekolah dalam satu tayangan'); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label class="full"><span>Keterangan Video Profil</span><textarea name="home_profile_video_description" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['siteHome']['profileVideoDescription'] ?? 'Ruang ini disiapkan untuk menampilkan video profil resmi sekolah, mulai dari lingkungan belajar, kegiatan siswa, fasilitas, hingga budaya sekolah.'); ?></textarea></label>
                 <label><span>Jumlah Foto Guru di Beranda</span><input type="number" min="4" max="24" name="home_teacher_limit" value="<?= e((string) ($content['siteHome']['teacherLimit'] ?? 12)); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
@@ -443,7 +491,7 @@ require __DIR__ . '/../templates/admin_header.php';
                     <span>Foto Kepala Sekolah</span>
                     <input type="file" name="principal_photo_file" accept=".jpg,.jpeg,.png,.webp" <?= db_available() ? '' : 'disabled'; ?>>
                     <span class="muted"><?= e(image_upload_help_text()); ?></span>
-                    <img class="admin-preview" src="<?= asset(ltrim($content['principalMessage']['photoPath'] ?? '/public/kepala-sekolah.jpeg', '/')); ?>" alt="Preview foto kepala sekolah">
+                    <img class="admin-preview" src="<?= e(asset(ltrim($content['principalMessage']['photoPath'] ?? '/public/kepala-sekolah.jpeg', '/'))); ?>" alt="Preview foto kepala sekolah">
                 </label>
                 <label class="full"><span>Paragraf Sambutan (satu paragraf per baris)</span><textarea name="principal_paragraphs" <?= db_available() ? '' : 'disabled'; ?>><?= e(implode("\n", $content['principalMessage']['paragraphs'])); ?></textarea></label>
             </div>
@@ -485,7 +533,7 @@ require __DIR__ . '/../templates/admin_header.php';
                 <label class="full"><span>Keterangan Akreditasi</span><textarea name="accreditation_description" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['schoolAccreditation']['description'] ?? ''); ?></textarea></label>
             </div>
             <?php if (!empty($content['schoolAccreditation']['filePath'])): ?>
-                <p class="muted">File aktif: <?= e($content['schoolAccreditation']['originalFilename'] ?: basename($content['schoolAccreditation']['filePath'])); ?>. <a class="text-link" href="<?= base_url('akreditasi/lihat'); ?>" target="_blank" rel="noopener">Lihat file</a></p>
+                <p class="muted">File aktif: <?= e($content['schoolAccreditation']['originalFilename'] ?: basename($content['schoolAccreditation']['filePath'])); ?>. <a class="text-link" href="<?= e(base_url('akreditasi/lihat')); ?>" target="_blank" rel="noopener">Lihat file</a></p>
             <?php else: ?>
                 <p class="muted">Belum ada lembar akreditasi yang diunggah.</p>
             <?php endif; ?>

@@ -1,8 +1,8 @@
 <?php $school = $content['schoolProfile']; ?>
-<?php $logoPath = $school['logoPath'] ?? '/public/logo-sekolah.png'; ?>
 <?php $principalPhotoPath = $content['principalMessage']['photoPath'] ?? '/public/kepala-sekolah.jpeg'; ?>
 <?php $homeSettings = $content['siteHome'] ?? []; ?>
-<?php $homeAchievements = home_achievements(); ?>
+<?php $heroAchievements = array_slice(home_achievements(), 0, 3); ?>
+<?php $homeAnnouncements = ($homeSettings['showAnnouncements'] ?? true) ? active_announcements() : []; ?>
 <?php
 $teacherLimit = max(4, min(24, (int) ($homeSettings['teacherLimit'] ?? 12)));
 $agendaLimit = max(1, min(9, (int) ($homeSettings['agendaLimit'] ?? 3)));
@@ -15,14 +15,15 @@ $primaryButtonUrl = trim($homeSettings['primaryButtonUrl'] ?? '') ?: '/profil';
 $secondaryButtonLabel = trim($homeSettings['secondaryButtonLabel'] ?? '') ?: 'Informasi PPDB';
 $secondaryButtonUrl = trim($homeSettings['secondaryButtonUrl'] ?? '') ?: '/ppdb';
 $profileVideoUrl = video_embed_url($homeSettings['profileVideoUrl'] ?? '');
+$profileYoutubeId = youtube_video_id($homeSettings['profileVideoUrl'] ?? '');
+$profileYoutubeWatchUrl = $profileYoutubeId === null ? '' : 'https://www.youtube.com/watch?v=' . $profileYoutubeId;
+$profileVideoFileUrl = video_file_url($homeSettings['profileVideoUrl'] ?? '');
 $profileVideoTitle = trim($homeSettings['profileVideoTitle'] ?? '') ?: 'Profil sekolah dalam satu tayangan';
 $profileVideoDescription = trim($homeSettings['profileVideoDescription'] ?? '') ?: 'Ruang ini disiapkan untuk menampilkan video profil resmi sekolah, mulai dari lingkungan belajar, kegiatan siswa, fasilitas, hingga budaya sekolah.';
-$primaryButtonHref = str_starts_with($primaryButtonUrl, 'http') ? $primaryButtonUrl : base_url(ltrim($primaryButtonUrl, '/'));
-$secondaryButtonHref = str_starts_with($secondaryButtonUrl, 'http') ? $secondaryButtonUrl : base_url(ltrim($secondaryButtonUrl, '/'));
-$showLogoCard = $homeSettings['showLogoCard'] ?? true;
+$primaryButtonHref = content_link_url($primaryButtonUrl);
+$secondaryButtonHref = content_link_url($secondaryButtonUrl);
 $showStats = $homeSettings['showStats'] ?? true;
 $showPrincipalCard = $homeSettings['showPrincipalCard'] ?? true;
-$showHeroSide = $showLogoCard || $showStats || $showPrincipalCard;
 
 if (!function_exists('home_quick_link_icon')) {
     function home_quick_link_icon(string $href): string
@@ -45,37 +46,32 @@ if (!function_exists('home_quick_link_icon')) {
     }
 }
 ?>
-<?php if (($homeSettings['showAnnouncements'] ?? true) && $homeAchievements): ?>
-<section class="announcement-band">
+<?php if ($homeAnnouncements): ?>
+<section class="announcement-band" aria-labelledby="home-announcements-heading">
     <div class="container">
         <div class="announcement-head">
             <div>
-                <span class="eyebrow">Prestasi Terbaru</span>
-                <h2>Prestasi Sekolah</h2>
+                <span class="eyebrow">Informasi Sekolah</span>
+                <h2 id="home-announcements-heading">Pengumuman</h2>
             </div>
-            <?php if (count($homeAchievements) > 1): ?>
-                <div class="carousel-actions" aria-label="Navigasi prestasi">
-                    <button class="carousel-button" type="button" data-carousel-prev="home-achievement-carousel" aria-label="Geser prestasi ke kiri">&#8249;</button>
-                    <button class="carousel-button" type="button" data-carousel-next="home-achievement-carousel" aria-label="Geser prestasi ke kanan">&#8250;</button>
+            <?php if (count($homeAnnouncements) > 1): ?>
+                <div class="carousel-actions" aria-label="Navigasi pengumuman">
+                    <button class="carousel-button" type="button" data-carousel-prev="home-announcement-carousel" aria-label="Geser pengumuman ke kiri">&#8249;</button>
+                    <button class="carousel-button" type="button" data-carousel-next="home-announcement-carousel" aria-label="Geser pengumuman ke kanan">&#8250;</button>
                 </div>
             <?php endif; ?>
         </div>
-        <div class="announcement-carousel" id="home-achievement-carousel">
-            <?php foreach ($homeAchievements as $achievement): ?>
-                <article class="announcement-card">
+        <div class="announcement-carousel" id="home-announcement-carousel">
+            <?php foreach ($homeAnnouncements as $announcement): ?>
+                <?php $announcementLink = safe_content_url($announcement['link_url'] ?? ''); ?>
+                <article class="announcement-card public-announcement-card">
                     <div>
-                        <span class="eyebrow"><?= e($achievement['category']); ?> - <?= e($achievement['level']); ?></span>
-                        <h3><?= e($achievement['title']); ?></h3>
-                        <p class="announcement-excerpt"><?= e($achievement['achiever_name']); ?> meraih prestasi pada <?= e(date('d F Y', strtotime($achievement['achievement_date']))); ?>. <?= e($achievement['description']); ?></p>
-                        <a class="text-link announcement-more" href="<?= base_url('prestasi/' . (int) $achievement['id']); ?>">Selengkapnya</a>
-                    </div>
-                    <a class="announcement-thumb" href="<?= base_url('prestasi/' . (int) $achievement['id']); ?>" aria-label="Lihat foto prestasi <?= e($achievement['title']); ?>">
-                        <?php if (is_placeholder_image($achievement['image_path'] ?? null)): ?>
-                            <span><?= e(initials_from_text($achievement['title'])); ?></span>
-                        <?php else: ?>
-                            <img src="<?= image_asset_path($achievement['image_path']); ?>" alt="<?= e($achievement['title']); ?>" loading="lazy">
+                        <h3><?= e($announcement['title']); ?></h3>
+                        <p><?= nl2br(e($announcement['content'])); ?></p>
+                        <?php if ($announcementLink !== ''): ?>
+                            <a class="text-link announcement-more" href="<?= e(content_link_url($announcementLink)); ?>"><?= e(trim($announcement['link_label'] ?? '') ?: 'Selengkapnya'); ?></a>
                         <?php endif; ?>
-                    </a>
+                    </div>
                 </article>
             <?php endforeach; ?>
         </div>
@@ -84,7 +80,7 @@ if (!function_exists('home_quick_link_icon')) {
 <?php endif; ?>
 <section class="hero home-hero">
     <div class="hero-glow"></div>
-    <div class="container hero-grid <?= $showHeroSide ? '' : 'single'; ?>">
+    <div class="container hero-grid">
         <div class="hero-copy">
             <span class="eyebrow inverse"><?= e($school['tagline']); ?></span>
             <h1><?= e($heroTitle); ?></h1>
@@ -94,14 +90,52 @@ if (!function_exists('home_quick_link_icon')) {
                 <a class="button ghost" href="<?= e($secondaryButtonHref); ?>"><?= e($secondaryButtonLabel); ?></a>
             </div>
         </div>
-        <?php if ($showHeroSide): ?>
-        <div class="hero-side hero-showcase home-mobile-rail hero-side-rail">
-            <?php if ($showLogoCard): ?>
-            <div class="logo-card home-rail-item">
-                <img src="<?= asset(ltrim($logoPath, '/')); ?>" alt="Logo sekolah">
-                <span>Website Resmi</span>
-            </div>
-            <?php endif; ?>
+        <div class="hero-side hero-showcase home-mobile-rail hero-side-rail hero-with-achievements">
+            <section class="hero-achievements" aria-labelledby="hero-achievements-heading" <?= count($heroAchievements) > 1 ? 'data-achievement-slider' : ''; ?>>
+                <div class="hero-achievements-head">
+                    <h2 id="hero-achievements-heading">Spensa Update</h2>
+                    <a href="<?= e(base_url('prestasi')); ?>">Lihat semua &#8594;</a>
+                </div>
+                <?php if ($heroAchievements): ?>
+                <div class="hero-achievements-slides">
+                    <?php foreach ($heroAchievements as $slideIndex => $achievement): ?>
+                    <?php $achievementHref = base_url('prestasi/' . (int) $achievement['id']); ?>
+                    <article class="hero-achievement-slide" <?= $slideIndex > 0 ? 'hidden' : ''; ?> aria-label="<?= e('Prestasi ' . ($slideIndex + 1) . ' dari ' . count($heroAchievements)); ?>">
+                        <a class="hero-achievement-image" href="<?= e($achievementHref); ?>" aria-label="<?= e('Lihat prestasi: ' . $achievement['title']); ?>">
+                            <?php if (is_placeholder_image($achievement['image_path'] ?? null)): ?>
+                            <span class="hero-achievement-placeholder"><?= e(initials_from_text($achievement['title'])); ?></span>
+                            <?php else: ?>
+                            <img src="<?= e(image_asset_path($achievement['image_path'])); ?>" alt="<?= e($achievement['title']); ?>" loading="<?= $slideIndex === 0 ? 'eager' : 'lazy'; ?>">
+                            <?php endif; ?>
+                        </a>
+                        <div class="hero-achievement-copy">
+                            <span class="hero-achievement-label"><?= e(trim($achievement['category'] ?? '') ?: 'Prestasi'); ?></span>
+                            <h3><a href="<?= e($achievementHref); ?>"><?= e($achievement['title']); ?></a></h3>
+                            <?php if (!empty($achievement['achievement_date'])): ?>
+                            <time datetime="<?= e($achievement['achievement_date']); ?>"><?= e(date('d M Y', strtotime($achievement['achievement_date']))); ?></time>
+                            <?php endif; ?>
+                            <a class="hero-achievement-link" href="<?= e($achievementHref); ?>">Lihat Prestasi &#8594;</a>
+                        </div>
+                    </article>
+                    <?php endforeach; ?>
+                </div>
+                <?php if (count($heroAchievements) > 1): ?>
+                <div class="hero-achievement-controls">
+                    <div class="hero-achievement-dots" aria-label="Pilih prestasi">
+                        <?php foreach ($heroAchievements as $slideIndex => $achievement): ?>
+                        <button type="button" data-achievement-dot="<?= $slideIndex; ?>" aria-label="<?= e('Tampilkan prestasi ' . ($slideIndex + 1)); ?>" aria-pressed="<?= $slideIndex === 0 ? 'true' : 'false'; ?>"></button>
+                        <?php endforeach; ?>
+                    </div>
+                    <button type="button" class="hero-achievement-pause" data-achievement-pause aria-label="Jeda pergantian prestasi" title="Jeda pergantian prestasi">&#9208;</button>
+                </div>
+                <?php endif; ?>
+                <?php else: ?>
+                <div class="hero-achievements-empty">
+                    <p>Belum ada prestasi yang dipublikasikan.</p>
+                    <a class="hero-achievement-link" href="<?= e(base_url('prestasi')); ?>">Lihat Prestasi &#8594;</a>
+                </div>
+                <?php endif; ?>
+            </section>
             <?php if ($showStats): ?>
             <div class="stats-card home-rail-item">
                 <?php foreach ($content['stats'] as $item): ?>
@@ -114,7 +148,7 @@ if (!function_exists('home_quick_link_icon')) {
             <?php endif; ?>
             <?php if ($showPrincipalCard): ?>
             <div class="principal-card home-rail-item">
-                <img src="<?= asset(ltrim($principalPhotoPath, '/')); ?>" alt="Kepala sekolah">
+                <img src="<?= e(asset(ltrim($principalPhotoPath, '/'))); ?>" alt="Kepala sekolah">
                 <div>
                     <span class="eyebrow">Sambutan Singkat</span>
                     <h3>Mewujudkan generasi yang unggul dalam prestasi, karakter, dan pemanfaatan teknologi.</h3>
@@ -123,11 +157,10 @@ if (!function_exists('home_quick_link_icon')) {
             </div>
             <?php endif; ?>
         </div>
-        <?php endif; ?>
         <?php if (($homeSettings['showQuickLinks'] ?? true) && !empty($content['quickLinks'])): ?>
         <div class="quick-grid quick-icon-grid hero-quick-grid home-mobile-rail" aria-label="Menu informasi cepat">
             <?php foreach ($content['quickLinks'] as $item): ?>
-                <a class="quick-card quick-icon-card home-rail-item" href="<?= base_url(ltrim($item['href'], '/')); ?>" aria-label="<?= e($item['title'] . '. ' . $item['desc']); ?>">
+                <a class="quick-card quick-icon-card home-rail-item" href="<?= e(base_url(ltrim($item['href'], '/'))); ?>" aria-label="<?= e($item['title'] . '. ' . $item['desc']); ?>">
                     <span class="quick-icon"><?= home_quick_link_icon($item['href']); ?></span>
                     <strong><?= e($item['title']); ?></strong>
                     <span class="quick-card-desc"><?= e($item['desc']); ?></span>
@@ -148,8 +181,17 @@ if (!function_exists('home_quick_link_icon')) {
             </div>
         </div>
         <article class="home-video-panel">
-            <?php if ($profileVideoUrl !== ''): ?>
-                <iframe src="<?= e($profileVideoUrl); ?>" title="Video profil sekolah" loading="lazy" allowfullscreen></iframe>
+            <?php if ($profileVideoFileUrl !== ''): ?>
+                <video controls muted playsinline preload="metadata" aria-label="<?= e($profileVideoTitle); ?>" src="<?= e($profileVideoFileUrl); ?>">
+                    Browser Anda tidak mendukung pemutaran video.
+                </video>
+                <p class="profile-video-error" data-profile-video-error role="alert" hidden>Video tidak dapat diputar di browser ini.</p>
+            <?php elseif ($profileVideoUrl !== ''): ?>
+                <iframe id="profile-youtube-player" data-youtube-autoplay src="<?= e($profileVideoUrl . '?enablejsapi=1&playsinline=1'); ?>" title="<?= e($profileVideoTitle); ?>" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                <div class="profile-youtube-fallback">
+                    <p data-youtube-error role="status" hidden>Video tidak dapat diputar di halaman ini. Silakan tonton melalui YouTube.</p>
+                    <a class="text-link" href="<?= e($profileYoutubeWatchUrl); ?>" target="_blank" rel="noopener noreferrer">Tonton di YouTube</a>
+                </div>
             <?php else: ?>
                 <div class="home-video-placeholder">
                     <span aria-hidden="true"></span>
@@ -194,7 +236,7 @@ if (!function_exists('home_quick_link_icon')) {
     <div class="container">
         <div class="teacher-strip-head">
             <h2>Guru Pengajar</h2>
-            <a href="<?= base_url('guru-staf'); ?>">Selengkapnya</a>
+            <a href="<?= e(base_url('guru-staf')); ?>">Selengkapnya</a>
         </div>
         <div class="teacher-strip-wrap">
             <div class="carousel-actions teacher-carousel-actions" aria-label="Navigasi foto guru">
@@ -210,7 +252,7 @@ if (!function_exists('home_quick_link_icon')) {
                                 <span><?= e(initials_from_text($displayName ?: $staff['name'])); ?></span>
                             </div>
                         <?php else: ?>
-                            <img src="<?= image_asset_path($staff['photo_path']); ?>" alt="<?= e($staff['name']); ?>" loading="lazy">
+                            <img src="<?= e(image_asset_path($staff['photo_path'])); ?>" alt="<?= e($staff['name']); ?>" loading="lazy">
                         <?php endif; ?>
                         <div class="teacher-slide-name">
                             <strong><?= e($displayName ?: $staff['name']); ?></strong>
@@ -257,7 +299,7 @@ if (!function_exists('home_quick_link_icon')) {
             <?php endforeach; ?>
         </div>
         <div class="cta-row">
-            <a class="button secondary" href="<?= base_url('agenda'); ?>">Lihat Semua Agenda</a>
+            <a class="button secondary" href="<?= e(base_url('agenda')); ?>">Lihat Semua Agenda</a>
         </div>
     </div>
 </section>

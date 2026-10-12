@@ -21,9 +21,9 @@ $faqRows = faqs($selectedCategory !== '' ? $selectedCategory : null);
 
         <?php if ($categories): ?>
             <div class="document-filter">
-                <a class="button <?= $selectedCategory === '' ? 'primary blue' : 'secondary'; ?>" href="<?= base_url('faq'); ?>">Semua</a>
+                <a class="button <?= $selectedCategory === '' ? 'primary blue' : 'secondary'; ?>" href="<?= e(base_url('faq')); ?>">Semua</a>
                 <?php foreach ($categories as $category): ?>
-                    <a class="button <?= $selectedCategory === $category ? 'primary blue' : 'secondary'; ?>" href="<?= base_url('faq?category=' . rawurlencode($category)); ?>"><?= e($category); ?></a>
+                    <a class="button <?= $selectedCategory === $category ? 'primary blue' : 'secondary'; ?>" href="<?= e(base_url('faq?category=' . rawurlencode($category))); ?>"><?= e($category); ?></a>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>

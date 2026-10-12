@@ -12,7 +12,7 @@ $searchResults = $searchQuery !== '' ? public_search_results($searchQuery) : [];
 
 <section class="section">
     <div class="container">
-        <form class="search-panel" action="<?= base_url('cari'); ?>" method="get">
+        <form class="search-panel" action="<?= e(base_url('cari')); ?>" method="get">
             <label>
                 <span>Kata kunci</span>
                 <input type="search" name="q" value="<?= e($searchQuery); ?>" placeholder="Contoh: PPDB, prestasi, agenda, dokumen" autofocus>

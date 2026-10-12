@@ -1,0 +1,122 @@
+{
+  "version": 1,
+  "status": "candidate_source_bundle_policy_not_executed",
+  "applies_to": "source release bundle, not repository, backups, or separately provisioned hosting configuration",
+  "allowlist": "RELEASE_ALLOWLIST.json",
+  "default_policy": "deny",
+  "path_matching": {
+    "path_format": "root-relative forward-slash file paths, no leading slash",
+    "case_insensitive": true,
+    "regex_engine": "PowerShell/.NET-compatible",
+    "reject_absolute_traversal_wildcard_or_link_paths": true,
+    "rules_apply_to_files_not_delete_operations": true
+  },
+  "rules": [
+    {
+      "id": "version_control_ci",
+      "path_regex": "(^|/)(\\.git|\\.github|\\.gitlab|\\.svn|\\.hg)(/|$)|(^|/)\\.(gitignore|gitattributes|gitmodules)$",
+      "reason": "Version-control/CI metadata; no runtime dependency found."
+    },
+    {
+      "id": "tests_fixtures_snapshots",
+      "path_regex": "(^|/)(tests?|fixtures?|__tests__|__snapshots__|snapshots?|test-results|playwright-report|coverage)(/|$)",
+      "reason": "Testing source, probes, fixtures and generated evidence; repository-only or ignored."
+    },
+    {
+      "id": "setup_maintenance",
+      "path_regex": "^database(/|$)",
+      "reason": "Installer/schema/seed/CLI initializer/maintenance are not required by normal runtime; optional backup schema handled separately."
+    },
+    {
+      "id": "environment_secret",
+      "path_regex": "(^|/)\\.env[^/]*$|(^|/)\\.envrc$|(^|/)\\.my\\.cnf$|(^|/)\\.direnv(/|$)|^config/([^/]+\\.local\\.[^/]+|local\\.[^/]+)$|(^|/)(credentials(\\.[^/]+)?|connection|bootstrap-admin|auth)\\.json$",
+      "reason": "Never package private workspace environment/credentials. Operator provisioning is separate."
+    },
+    {
+      "id": "private_storage_data",
+      "path_regex": "^storage(/|$)|^public/uploads(/|$)",
+      "reason": "Exclude workspace persistent/private state; only exact protective-file exceptions. Approved media/private provision are separate."
+    },
+    {
+      "id": "backup_log_temp",
+      "path_regex": "(^|/)(backup|backups|dumps|logs|tmp|temp|cache|source_docs|sessions)(/|$)",
+      "reason": "Historical backups, dumps, logs, temp/cache/session state are not source bundle."
+    },
+    {
+      "id": "audit_docs_manifests",
+      "path_regex": "\\.(md|markdown)$|(^|/)RELEASE_(ALLOWLIST|DENYLIST)\\.json$",
+      "reason": "Offline reports/documentation/release metadata are not web runtime."
+    },
+    {
+      "id": "development_tools",
+      "path_regex": "^(preview_router\\.php|ubah-port-ssl-dapodik\\.ps1)$|(^|/)(phpinfo|debug|diagnostic|setup|install|installer|seed)[^/]*\\.(php|ps1|sh|bat|cmd|cjs|js)$",
+      "reason": "Local/debug/setup scripts are excluded; do not use filename matches to remove known runtime dependencies."
+    },
+    {
+      "id": "ide_dependencies_generated",
+      "path_regex": "(^|/)(\\.idea|\\.vscode|node_modules|vendor|\\.next|\\.phpunit\\.cache)(/|$)|(^|/)(composer\\.(json|lock)|package(-lock)?\\.json|\\.phpunit\\.result\\.cache)$|\\.(code-workspace|swp|swo|tmp|temp)$|(^|/)(Thumbs\\.db|Desktop\\.ini|\\.DS_Store)$|~$",
+      "reason": "Local/generated state; no vendor/node dependency found at current runtime. Re-audit if dependency changes."
+    },
+    {
+      "id": "sensitive_archive_config_extensions",
+      "path_regex": "\\.(sql|sql\\.gz|sql\\.zip|sql\\.bz2|sql\\.xz|log|bak|backup|zip|gz|bz2|xz|7z|rar|tar|pem|key|p12|pfx|jks|cnf|conf|ini)$",
+      "reason": "Dumps/archives/keys/operator configuration; exact .user.ini exception is conditional."
+    },
+    {
+      "id": "operator_snippets",
+      "path_regex": "^config/(apache_security\\.conf|php_security\\.ini)$",
+      "reason": "Apply through reviewed hosting/operator configuration, not public source bundle."
+    }
+  ],
+  "exact_control_exceptions": [
+    {
+      "path": "storage/.htaccess",
+      "exception_for_rule_ids": [
+        "private_storage_data"
+      ],
+      "condition": "Required protective source file only; no storage contents."
+    },
+    {
+      "path": "public/uploads/.htaccess",
+      "exception_for_rule_ids": [
+        "private_storage_data"
+      ],
+      "condition": "Required protective source file only; no uploaded media."
+    },
+    {
+      "path": ".user.ini",
+      "exception_for_rule_ids": [
+        "sensitive_archive_config_extensions"
+      ],
+      "condition": "Only if hosting condition in allowlist is satisfied; otherwise equivalent reviewed PHP settings are required."
+    }
+  ],
+  "evaluation_order": [
+    "Reject unsafe path or symbolic link/junction and any file outside source root.",
+    "Match deny rules. Suppress a match only for the exact path and listed rule IDs in exact_control_exceptions, with its condition satisfied.",
+    "Any remaining deny match rejects the file, even if accidentally added to the allowlist.",
+    "If not denied, require exact membership in required_source_files or satisfied conditional_source_files. Reject all other files.",
+    "Verify all required source files exist in the final bundle and all local static/dynamic view/asset dependencies remain complete.",
+    "Validate final staged/bundle secret scan and archive contents; this policy alone is not evidence an archive was built safely."
+  ],
+  "preserve_runtime_dependencies": [
+    "admin/db_backup.php",
+    "admin/production_check.php",
+    "admin/ppdb.php",
+    "admin/ppdb_applications.php",
+    "admin/ppdb_download.php",
+    "admin/ppdb_export.php",
+    "pages/maintenance.php",
+    "pages/ppdb.php",
+    "pages/ppdb_receipt.php",
+    "includes/schema_requirements.php",
+    "config/app.php",
+    "config/database.php",
+    "config/env.php",
+    "config/site_data.php"
+  ],
+  "separate_provisioning": "No workspace .env/data/state is included. Approved persistent data and explicit private production environment are provisioned separately under allowlist contract.",
+  "backup_schema_note": "database/schema.sql is optional input in backup handler; absent source file creates an empty installer entry, while actual schema/data SQL is generated from the live authorized DB. Requires later bundle runtime validation; do not treat optional installer entry as restore source.",
+  "no_deletion": true,
+  "no_packaging_or_deployment_performed": true
+}

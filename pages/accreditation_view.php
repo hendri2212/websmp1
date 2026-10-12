@@ -28,7 +28,7 @@ $skDate = trim((string) ($accreditation['skDate'] ?? ''));
 
             <?php if ($filePath !== ''): ?>
                 <div class="pdf-viewer-frame" oncontextmenu="return false">
-                    <iframe src="<?= base_url('akreditasi/file'); ?>#toolbar=0&navpanes=0&scrollbar=1" title="Lembar akreditasi sekolah" loading="lazy"></iframe>
+                    <iframe src="<?= e(base_url('akreditasi/file')); ?>#toolbar=0&navpanes=0&scrollbar=1" title="Lembar akreditasi sekolah" loading="lazy"></iframe>
                 </div>
                 <p class="muted">File ditampilkan untuk dibaca di website. Tombol unduh tidak disediakan pada halaman ini.</p>
             <?php else: ?>

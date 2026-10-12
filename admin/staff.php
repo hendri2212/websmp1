@@ -1,6 +1,7 @@
 <?php
 require __DIR__ . '/../includes/bootstrap.php';
 require_admin_permission('staff');
+require_valid_admin_request_ids();
 
 $message = '';
 $error = '';
@@ -9,17 +10,20 @@ $editRow = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
     if (!csrf_token_is_valid($_POST['csrf_token'] ?? null)) {
         $error = 'Sesi form sudah tidak valid. Muat ulang halaman lalu coba lagi.';
+    } elseif (($validationError = input_validation_error('staff', $_POST, $_FILES)) !== '') {
+        $error = $validationError;
     } elseif (isset($_POST['delete_id'])) {
-        delete_staff_member((int) $_POST['delete_id']);
-        $message = 'Data guru/staf berhasil dihapus.';
+        $result = admin_delete_feedback(static fn()=>delete_staff_member(database_id($_POST['delete_id'])), 'Data guru/staf berhasil dihapus.');
+        $message = $result['success'] ? $result['message'] : '';
+        $error = $result['success'] ? '' : $result['message'];
     } else {
-        $existing = !empty($_POST['id']) ? admin_staff_row((int) $_POST['id']) : null;
+        $existing = !empty($_POST['id']) ? admin_staff_row(database_id($_POST['id'])) : null;
         $upload = uploaded_image_result('photo_file', 'staff');
         $photoPath = $upload['path'];
         if ($upload['error']) {
             $error = $upload['error'];
         } elseif ($photoPath === null) {
-            $photoPath = trim($_POST['existing_photo_path'] ?? ($existing['photo_path'] ?? '/public/logo-sekolah.png'));
+            $photoPath = trim($existing['photo_path'] ?? '/public/logo-sekolah.png');
         }
 
         $name = trim($_POST['name'] ?? '');
@@ -36,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
 
         if (!$error) {
             save_staff_member([
-                'id' => $_POST['id'] !== '' ? (int) $_POST['id'] : null,
+                'id' => $_POST['id'] !== '' ? database_id($_POST['id']) : null,
                 'name' => $name,
                 'position' => $position,
                 'subject' => $subject,
@@ -47,13 +51,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
                 'is_active' => isset($_POST['is_active']) ? 1 : 0,
                 'sort_order' => (int) ($_POST['sort_order'] ?: 0),
             ]);
+            commit_uploaded_files();
             $message = 'Data guru/staf berhasil disimpan.';
         }
     }
 }
 
 if (isset($_GET['edit']) && db_available()) {
-    $editRow = admin_staff_row((int) $_GET['edit']);
+    $editRow = admin_staff_row(database_id($_GET['edit']));
 }
 
 $rows = admin_staff_rows();
@@ -91,7 +96,7 @@ require __DIR__ . '/../templates/admin_header.php';
                     <input type="file" name="photo_file" accept=".jpg,.jpeg,.png,.webp" <?= db_available() ? '' : 'disabled'; ?>>
                     <span class="muted"><?= e(image_upload_help_text()); ?></span>
                     <?php if ($editRow && !empty($editRow['photo_path'])): ?>
-                        <img class="admin-preview" src="<?= asset(ltrim($editRow['photo_path'], '/')); ?>" alt="Preview foto guru/staf">
+                        <img class="admin-preview" src="<?= e(asset(ltrim($editRow['photo_path'], '/'))); ?>" alt="Preview foto guru/staf">
                     <?php endif; ?>
                 </label>
                 <label class="checkbox-label"><input type="checkbox" name="is_active" value="1" <?= (int) ($editRow['is_active'] ?? 1) === 1 ? 'checked' : ''; ?> <?= db_available() ? '' : 'disabled'; ?>> <span>Aktif tampil di publik</span></label>
@@ -99,7 +104,7 @@ require __DIR__ . '/../templates/admin_header.php';
                 <div class="action-bar full">
                     <button class="button primary blue" type="submit" <?= db_available() ? '' : 'disabled'; ?>><?= $editRow ? 'Update Data' : 'Simpan Data'; ?></button>
                     <?php if ($editRow): ?>
-                        <a class="button secondary" href="<?= base_url('admin/staff.php'); ?>">Batal Edit</a>
+                        <a class="button secondary" href="<?= e(base_url('admin/staff.php')); ?>">Batal Edit</a>
                     <?php endif; ?>
                 </div>
             </form>
@@ -119,7 +124,7 @@ require __DIR__ . '/../templates/admin_header.php';
                         <td><?= e($row['subject']); ?></td>
                         <td><?= (int) $row['is_active'] === 1 ? 'Aktif' : 'Nonaktif'; ?></td>
                         <td class="action-cell">
-                            <a class="button primary small" href="<?= base_url('admin/staff.php?edit=' . (int) $row['id']); ?>">Edit</a>
+                            <a class="button primary small" href="<?= e(base_url('admin/staff.php?edit=' . (int) $row['id'])); ?>">Edit</a>
                             <form method="post" onsubmit="return confirm('Hapus data ini?');">
                                 <?= csrf_field(); ?>
                                 <input type="hidden" name="delete_id" value="<?= (int) $row['id']; ?>">

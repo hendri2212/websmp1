@@ -13,7 +13,7 @@
                 <h3><?= e($item['title']); ?></h3>
                 <p><?= e($item['desc']); ?></p>
                 <?php if (strtolower($item['title']) === 'ekstrakurikuler'): ?>
-                    <p><a class="text-link" href="<?= base_url('ekstrakurikuler'); ?>">Lihat daftar ekstrakurikuler</a></p>
+                    <p><a class="text-link" href="<?= e(base_url('ekstrakurikuler')); ?>">Lihat daftar ekstrakurikuler</a></p>
                 <?php endif; ?>
             </article>
         <?php endforeach; ?>

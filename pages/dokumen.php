@@ -20,9 +20,9 @@ $documents = public_documents($selectedCategory !== '' ? $selectedCategory : nul
         </div>
         <?php if ($categories): ?>
             <div class="document-filter">
-                <a class="button <?= $selectedCategory === '' ? 'primary blue' : 'secondary'; ?>" href="<?= base_url('dokumen'); ?>">Semua</a>
+                <a class="button <?= $selectedCategory === '' ? 'primary blue' : 'secondary'; ?>" href="<?= e(base_url('dokumen')); ?>">Semua</a>
                 <?php foreach ($categories as $category): ?>
-                    <a class="button <?= $selectedCategory === $category ? 'primary blue' : 'secondary'; ?>" href="<?= base_url('dokumen?category=' . rawurlencode($category)); ?>"><?= e($category); ?></a>
+                    <a class="button <?= $selectedCategory === $category ? 'primary blue' : 'secondary'; ?>" href="<?= e(base_url('dokumen?category=' . rawurlencode($category))); ?>"><?= e($category); ?></a>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
@@ -39,7 +39,7 @@ $documents = public_documents($selectedCategory !== '' ? $selectedCategory : nul
                         <h3><?= e($document['title']); ?></h3>
                         <p><?= e($document['description']); ?></p>
                         <p class="muted"><?= e($document['original_filename']); ?> - <?= number_format(((int) $document['file_size']) / 1024, 1); ?> KB</p>
-                        <a class="button primary blue" href="<?= base_url('dokumen/unduh?id=' . (int) $document['id']); ?>">Unduh PDF</a>
+                        <a class="button primary blue" href="<?= e(base_url('dokumen/unduh?id=' . (int) $document['id'])); ?>">Unduh PDF</a>
                     </article>
                 <?php endforeach; ?>
             </div>

@@ -7,7 +7,6 @@ $stylesheetVersion = is_file($stylesheetPath) ? (string) filemtime($stylesheetPa
 $faviconPath = __DIR__ . '/../public/favicon.png';
 $faviconVersion = is_file($faviconPath) ? (string) filemtime($faviconPath) : $stylesheetVersion;
 $adminNotificationCounts = [
-    'ppdb_applications' => db_available() ? ppdb_application_count('baru') : 0,
     'contact_messages' => db_available() ? contact_message_count('baru') : 0,
 ];
 ?>
@@ -17,16 +16,16 @@ $adminNotificationCounts = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($pageTitle); ?></title>
-    <link rel="icon" type="image/png" href="<?= asset('public/favicon.png?v=' . $faviconVersion); ?>">
-    <link rel="apple-touch-icon" href="<?= asset('public/favicon.png?v=' . $faviconVersion); ?>">
-    <link rel="stylesheet" href="<?= asset('public/assets/css/style.css?v=' . $stylesheetVersion); ?>">
+    <link rel="icon" type="image/png" href="<?= e(asset('public/favicon.png?v=' . $faviconVersion)); ?>">
+    <link rel="apple-touch-icon" href="<?= e(asset('public/favicon.png?v=' . $faviconVersion)); ?>">
+    <link rel="stylesheet" href="<?= e(asset('public/assets/css/style.css?v=' . $stylesheetVersion)); ?>">
     <style><?= theme_css_variables($content['siteTheme'] ?? []); ?></style>
 </head>
 <body class="admin-body">
 <div class="admin-shell">
     <aside class="admin-sidebar">
-        <a class="admin-brand" href="<?= base_url('admin/dashboard.php'); ?>">
-            <img src="<?= asset('public/favicon.png?v=' . $faviconVersion); ?>" alt="Logo sekolah">
+        <a class="admin-brand" href="<?= e(base_url('admin/dashboard.php')); ?>">
+            <img src="<?= e(asset('public/favicon.png?v=' . $faviconVersion)); ?>" alt="Logo sekolah">
             <span>Admin Sekolah</span>
         </a>
         <nav class="admin-nav">
@@ -47,8 +46,7 @@ $adminNotificationCounts = [
                 ['permission' => 'news', 'href' => 'admin/news.php', 'label' => 'Berita'],
                 ['permission' => 'announcements', 'href' => 'admin/announcements.php', 'label' => 'Pengumuman'],
                 ['permission' => 'gallery', 'href' => 'admin/gallery.php', 'label' => 'Galeri'],
-                ['permission' => 'ppdb_content', 'href' => 'admin/ppdb.php', 'label' => 'PPDB'],
-                ['permission' => 'ppdb_applications', 'href' => 'admin/ppdb_applications.php', 'label' => 'Pendaftar PPDB', 'badge' => $adminNotificationCounts['ppdb_applications']],
+                ['permission' => 'ppdb_content', 'href' => 'admin/ppdb.php', 'label' => 'Informasi PPDB'],
                 ['permission' => 'faqs', 'href' => 'admin/faqs.php', 'label' => 'FAQ'],
                 ['permission' => 'contact_messages', 'href' => 'admin/contact_messages.php', 'label' => 'Pesan Masuk', 'badge' => $adminNotificationCounts['contact_messages']],
                 ['permission' => 'change_password', 'href' => 'admin/change_password.php', 'label' => 'Ganti Password'],
@@ -56,7 +54,7 @@ $adminNotificationCounts = [
             ?>
             <?php foreach ($adminMenu as $item): ?>
                 <?php if (admin_can($item['permission'])): ?>
-                    <a href="<?= base_url($item['href']); ?>">
+                    <a href="<?= e(base_url($item['href'])); ?>">
                         <span><?= e($item['label']); ?></span>
                         <?php if (!empty($item['badge'])): ?>
                             <strong class="admin-nav-badge"><?= (int) $item['badge']; ?></strong>
@@ -64,7 +62,7 @@ $adminNotificationCounts = [
                     </a>
                 <?php endif; ?>
             <?php endforeach; ?>
-            <form class="admin-nav-form" method="post" action="<?= base_url('admin/logout.php'); ?>">
+            <form class="admin-nav-form" method="post" action="<?= e(base_url('admin/logout.php')); ?>">
                 <?= csrf_field(); ?>
                 <button type="submit">Logout</button>
             </form>

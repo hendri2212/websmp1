@@ -1,8 +1,10 @@
 <?php
 
+require_once __DIR__ . '/schema_requirements.php';
+
 function admin_is_logged_in(): bool
 {
-    return !empty($_SESSION['admin_logged_in']);
+    return admin_session_is_active();
 }
 
 function admin_username(): ?string
@@ -12,32 +14,22 @@ function admin_username(): ?string
 
 function admin_role(): string
 {
-    if (empty($_SESSION['admin_role']) && ($_SESSION['admin_username'] ?? null) === 'admin') {
-        return 'superadmin';
-    }
-
-    return $_SESSION['admin_role'] ?? 'editor';
+    $role = $_SESSION['admin_role'] ?? '';
+    return is_string($role) && isset(admin_role_options()[$role]) ? $role : '';
 }
 
 function admin_role_label(?string $role = null): string
 {
-<<<<<<< HEAD
     return admin_role_options()[$role ?? admin_role()] ?? 'Editor Konten';
 }
 
 function admin_role_options(): array
 {
-=======
->>>>>>> 98147e3 (upload pertama)
     return [
         'superadmin' => 'Superadmin',
         'editor' => 'Editor Konten',
         'ppdb' => 'Operator PPDB',
-<<<<<<< HEAD
     ];
-=======
-    ][$role ?? admin_role()] ?? 'Editor Konten';
->>>>>>> 98147e3 (upload pertama)
 }
 
 function admin_permissions(): array
@@ -46,18 +38,13 @@ function admin_permissions(): array
         'superadmin' => [
             'dashboard', 'settings', 'admins', 'db_backup', 'activity_logs', 'production_check', 'facilities', 'agenda', 'documents', 'achievements',
             'extracurriculars', 'staff', 'news', 'announcements', 'gallery', 'faqs', 'ppdb_content',
-<<<<<<< HEAD
             'contact_messages', 'change_password',
-=======
-            'ppdb_applications', 'contact_messages', 'change_password',
->>>>>>> 98147e3 (upload pertama)
         ],
         'editor' => [
             'dashboard', 'facilities', 'agenda', 'documents', 'achievements', 'extracurriculars',
             'staff', 'news', 'announcements', 'gallery', 'faqs', 'contact_messages', 'change_password',
         ],
-<<<<<<< HEAD
-        'ppdb' => ['dashboard', 'ppdb_content', 'documents', 'change_password'],
+        'ppdb' => ['dashboard', 'ppdb_content', 'change_password'],
     ];
 }
 
@@ -66,12 +53,6 @@ function admin_sensitive_permissions(): array
     return ['settings', 'admins', 'db_backup', 'activity_logs', 'production_check'];
 }
 
-=======
-        'ppdb' => ['dashboard', 'ppdb_content', 'ppdb_applications', 'change_password'],
-    ];
-}
-
->>>>>>> 98147e3 (upload pertama)
 function admin_permission_labels(): array
 {
     return [
@@ -91,16 +72,11 @@ function admin_permission_labels(): array
         'extracurriculars' => 'Ekstrakurikuler',
         'faqs' => 'FAQ',
         'ppdb_content' => 'Konten PPDB',
-<<<<<<< HEAD
-=======
-        'ppdb_applications' => 'Pendaftar PPDB',
->>>>>>> 98147e3 (upload pertama)
         'contact_messages' => 'Pesan masuk',
         'change_password' => 'Ganti password sendiri',
     ];
 }
 
-<<<<<<< HEAD
 function admin_role_permission_label(string $role, string $permission): string
 {
     if ($role === 'ppdb' && $permission === 'documents') {
@@ -111,82 +87,94 @@ function admin_role_permission_label(string $role, string $permission): string
     return $labels[$permission] ?? $permission;
 }
 
-=======
->>>>>>> 98147e3 (upload pertama)
 function admin_role_descriptions(): array
 {
     return [
         'superadmin' => 'Akses penuh termasuk pengaturan, backup, akun admin, log, dan cek production.',
         'editor' => 'Mengelola konten publik dan pesan masuk tanpa akses ke fitur sensitif.',
-<<<<<<< HEAD
-        'ppdb' => 'Fokus mengelola informasi PPDB, edaran, alur, dan kontak panitia tanpa akses ke konten umum lain.',
-=======
-        'ppdb' => 'Fokus mengelola konten PPDB dan data pendaftar tanpa akses ke konten umum lain.',
->>>>>>> 98147e3 (upload pertama)
+        'ppdb' => 'Mengelola informasi PPDB tanpa pendaftaran lokal atau akses ke konten umum lain.',
     ];
 }
 
 function admin_can(string $permission): bool
 {
+    if (!admin_is_logged_in()) {
+        return false;
+    }
     $role = admin_role();
     return in_array($permission, admin_permissions()[$role] ?? [], true);
 }
 
-<<<<<<< HEAD
 function admin_session_is_active(): bool
 {
-    static $checked = false;
-    static $active = true;
-
-    if ($checked) {
-        return $active;
+    $id = $_SESSION['admin_id'] ?? null;
+    if (($_SESSION['admin_logged_in'] ?? false) !== true || !is_int($id) || $id <= 0) {
+        admin_clear_authentication();
+        return false;
     }
 
-    $checked = true;
-    if (empty($_SESSION['admin_id'])) {
-        return $active;
-    }
+    try {
+        $pdo = db();
+        if (!$pdo) {
+            admin_clear_authentication();
+            return false;
+        }
 
-    $pdo = db();
-    if (!$pdo) {
-        return $active;
-    }
-
-    ensure_admin_role_columns();
-    $statement = $pdo->prepare('SELECT username, role, is_active FROM admins WHERE id = :id LIMIT 1');
-    $statement->execute(['id' => (int) $_SESSION['admin_id']]);
-    $admin = $statement->fetch();
-    if (!$admin || (int) ($admin['is_active'] ?? 0) !== 1) {
-        $active = false;
+        $statement = $pdo->prepare('SELECT username, role, is_active FROM admins WHERE id = :id LIMIT 1');
+        $statement->execute(['id' => $id]);
+        $admin = $statement->fetch();
+        if (!$admin || (int) ($admin['is_active'] ?? 0) !== 1 || !isset(admin_role_options()[$admin['role'] ?? ''])) {
+            admin_clear_authentication();
+            return false;
+        }
+    } catch (Throwable $exception) {
+        admin_clear_authentication();
         return false;
     }
 
     $_SESSION['admin_username'] = $admin['username'];
-    $_SESSION['admin_role'] = $admin['role'] ?? 'editor';
+    $_SESSION['admin_role'] = $admin['role'];
     return true;
 }
 
-=======
->>>>>>> 98147e3 (upload pertama)
-function admin_login(string $username, string $password): bool
+function admin_clear_authentication(): void
 {
-    $pdo = db();
+    unset($_SESSION['admin_logged_in'], $_SESSION['admin_id'], $_SESSION['admin_username'], $_SESSION['admin_role']);
+}
 
-    if ($pdo) {
-        ensure_admin_role_columns();
+function admin_login(mixed $username, mixed $password): bool
+{
+    admin_clear_authentication();
+    if (!is_string($username) || !is_string($password) || $username === '' || $password === '') {
+        return false;
+    }
+
+    try {
+        $pdo = db();
+        if (!$pdo) {
+            return false;
+        }
         $statement = $pdo->prepare('SELECT * FROM admins WHERE username = :username AND is_active = 1 LIMIT 1');
         $statement->execute(['username' => $username]);
         $admin = $statement->fetch();
 
-        if ($admin && password_verify($password, $admin['password_hash'])) {
-            session_regenerate_id(true);
+        if ($admin && (int) ($admin['is_active'] ?? 0) === 1
+            && isset(admin_role_options()[$admin['role'] ?? ''])
+            && password_verify($password, $admin['password_hash'])) {
+            if (!session_regenerate_id(true)) {
+                return false;
+            }
+            unset($_SESSION['csrf_token']);
             $_SESSION['admin_logged_in'] = true;
             $_SESSION['admin_id'] = (int) $admin['id'];
             $_SESSION['admin_username'] = $admin['username'];
-            $_SESSION['admin_role'] = $admin['role'] ?? 'editor';
+            $_SESSION['admin_role'] = $admin['role'];
             log_admin_activity('login', 'auth', 'Login admin berhasil.');
             return true;
         }
+    } catch (Throwable $exception) {
+        admin_clear_authentication();
+        return false;
     }
 
     log_admin_activity('login_failed', 'auth', 'Percobaan login admin gagal.', null, null, ['username' => $username]);
@@ -195,9 +183,25 @@ function admin_login(string $username, string $password): bool
 
 function admin_logout(): void
 {
-    log_admin_activity('logout', 'auth', 'Logout admin.');
-    unset($_SESSION['admin_logged_in'], $_SESSION['admin_id'], $_SESSION['admin_username'], $_SESSION['admin_role']);
-    session_regenerate_id(true);
+    try {
+        log_admin_activity('logout', 'auth', 'Logout admin.');
+    } finally {
+        $_SESSION = [];
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
+        if (ini_get('session.use_cookies') && !headers_sent()) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', [
+                'expires' => time() - 3600,
+                'path' => $params['path'],
+                'domain' => $params['domain'],
+                'secure' => $params['secure'],
+                'httponly' => $params['httponly'],
+                'samesite' => $params['samesite'],
+            ]);
+        }
+    }
 }
 
 function update_admin_password(string $username, string $currentPassword, string $newPassword): array
@@ -243,25 +247,8 @@ function ensure_admin_activity_logs_table(): void
         return;
     }
 
-    $pdo->exec("CREATE TABLE IF NOT EXISTS admin_activity_logs (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        admin_id INT NULL,
-        username VARCHAR(80) NULL,
-        role VARCHAR(40) NULL,
-        action VARCHAR(80) NOT NULL,
-        module VARCHAR(80) NOT NULL,
-        entity_type VARCHAR(80) NULL,
-        entity_id INT NULL,
-        description TEXT NOT NULL,
-        metadata LONGTEXT NULL,
-        ip_address VARCHAR(45) NULL,
-        user_agent VARCHAR(255) NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_admin_activity_created_at (created_at),
-        INDEX idx_admin_activity_action (action),
-        INDEX idx_admin_activity_module (module),
-        INDEX idx_admin_activity_username (username)
-    )");
+    require_schema_columns($pdo, 'admin_activity_logs', ['id', 'admin_id', 'username', 'role', 'action', 'module',
+        'entity_type', 'entity_id', 'description', 'metadata', 'ip_address', 'user_agent', 'created_at']);
 
     $done = true;
 }
@@ -274,12 +261,11 @@ function log_admin_activity(
     ?int $entityId = null,
     array $metadata = []
 ): void {
-    $pdo = db();
-    if (!$pdo) {
-        return;
-    }
-
     try {
+        $pdo = db();
+        if (!$pdo) {
+            return;
+        }
         ensure_admin_activity_logs_table();
         $statement = $pdo->prepare('INSERT INTO admin_activity_logs (
             admin_id, username, role, action, module, entity_type, entity_id, description, metadata, ip_address, user_agent
@@ -309,14 +295,6 @@ function require_admin(): void
     if (!admin_is_logged_in()) {
         redirect_to('admin/login.php');
     }
-<<<<<<< HEAD
-
-    if (!admin_session_is_active()) {
-        admin_logout();
-        redirect_to('admin/login.php');
-    }
-=======
->>>>>>> 98147e3 (upload pertama)
 }
 
 function require_admin_permission(string $permission): void
@@ -341,19 +319,7 @@ function ensure_admin_role_columns(): void
         return;
     }
 
-    $columns = $pdo->query('SHOW COLUMNS FROM admins')->fetchAll();
-    $columnNames = array_map(static fn(array $column): string => $column['Field'], $columns);
+    require_schema_columns($pdo, 'admins', ['full_name', 'role', 'is_active']);
 
-    if (!in_array('full_name', $columnNames, true)) {
-        $pdo->exec('ALTER TABLE admins ADD full_name VARCHAR(120) NULL AFTER username');
-    }
-    if (!in_array('role', $columnNames, true)) {
-        $pdo->exec("ALTER TABLE admins ADD role ENUM('superadmin', 'editor', 'ppdb') NOT NULL DEFAULT 'editor' AFTER full_name");
-    }
-    if (!in_array('is_active', $columnNames, true)) {
-        $pdo->exec('ALTER TABLE admins ADD is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER role');
-    }
-
-    $pdo->exec("UPDATE admins SET role = 'superadmin', is_active = 1 WHERE username = 'admin'");
     $done = true;
 }

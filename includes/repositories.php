@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/schema_requirements.php';
+
 function seed_content(): array
 {
     static $seed;
@@ -65,16 +67,9 @@ function ensure_academic_year_columns(): void
         return;
     }
 
-    $defaultYear = seed_content()['siteAcademic']['currentYear'] ?? '2025/2026';
-    $tables = ['agenda_items', 'school_documents', 'school_achievements', 'ppdb_applications'];
+    $tables = ['agenda_items', 'school_documents', 'school_achievements'];
     foreach ($tables as $table) {
-        $columns = $pdo->query('SHOW COLUMNS FROM ' . repository_quote_identifier($table))->fetchAll();
-        $columnNames = array_map(static fn(array $column): string => $column['Field'], $columns);
-        if (!in_array('academic_year', $columnNames, true)) {
-            $pdo->exec('ALTER TABLE ' . repository_quote_identifier($table) . " ADD academic_year VARCHAR(20) NOT NULL DEFAULT '" . str_replace("'", "''", $defaultYear) . "'");
-        }
-        $statement = $pdo->prepare('UPDATE ' . repository_quote_identifier($table) . ' SET academic_year = :year WHERE academic_year = "" OR academic_year IS NULL');
-        $statement->execute(['year' => $defaultYear]);
+        require_schema_columns($pdo, $table, ['academic_year']);
     }
 
     $done = true;
@@ -122,17 +117,70 @@ function save_site_sections(array $payload): void
 {
     $pdo = db();
     if (!$pdo) {
-        return;
+        rollback_uploaded_files();
+        throw new RuntimeException('Database tidak tersedia. File tidak disimpan.');
     }
 
-    $statement = $pdo->prepare('INSERT INTO site_settings (setting_key, setting_value) VALUES (:setting_key, :setting_value) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
-    foreach ($payload as $key => $value) {
-        $statement->execute([
-            'setting_key' => $key,
-            'setting_value' => json_encode($value, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
-        ]);
+    media_lifecycle_lock();
+    if ($pdo->inTransaction()) {
+        throw new RuntimeException('Operasi file memerlukan transaksi tersendiri.');
+    }
+    $commitAttempted = false;
+    try {
+        require_transactional_media_table($pdo, 'site_settings');
+        $pdo->beginTransaction();
+        $oldSettings = $pdo->query('SELECT setting_key, setting_value FROM site_settings FOR UPDATE')->fetchAll();
+        foreach ($oldSettings as $setting) {
+            if (array_key_exists($setting['setting_key'], $payload)) {
+                $oldPaths = media_paths_in_value(json_decode($setting['setting_value'], true, 512, JSON_THROW_ON_ERROR));
+                $newPaths = media_paths_in_value($payload[$setting['setting_key']]);
+                foreach (array_diff($newPaths, $oldPaths) as $new) {
+                    require_new_media_reference($new);
+                }
+                foreach (array_diff($oldPaths, $newPaths) as $old) {
+                    media_cleanup_enqueue($old);
+                }
+            }
+        }
+        $existingKeys = array_column($oldSettings, 'setting_key');
+        foreach ($payload as $key => $value) {
+            if (!in_array($key, $existingKeys, true)) {
+                require_new_media_reference($value);
+            }
+        }
+        require_pending_media_files();
+        $statement = $pdo->prepare('INSERT INTO site_settings (setting_key, setting_value) VALUES (:setting_key, :setting_value) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
+        foreach ($payload as $key => $value) {
+            $statement->execute([
+                'setting_key' => $key,
+                'setting_value' => json_encode($value, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR),
+            ]);
+        }
+        require_pending_media_files();
+        $commitAttempted = true;
+        $GLOBALS['media_commit_in_progress'] = true;
+        $pdo->commit();
+    } catch (Throwable $exception) {
+        $rollbackConfirmed = true;
+        try {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+        } catch (Throwable $rollbackException) {
+            $rollbackConfirmed = false;
+            error_log('Settings transaction outcome could not be verified; media retained for safe retry.');
+        }
+        if ($commitAttempted || !$rollbackConfirmed) {
+            $GLOBALS['pending_uploaded_files'] = [];
+        } else {
+            rollback_uploaded_files();
+        }
+        $GLOBALS['media_commit_in_progress'] = false;
+        throw $exception;
     }
 
+    commit_uploaded_files();
+    retry_media_cleanup($pdo);
     log_admin_activity('update', 'settings', 'Pengaturan website diperbarui.', 'site_settings');
 }
 
@@ -190,8 +238,9 @@ function admin_users(): array
     return $pdo ? $pdo->query('SELECT id, username, full_name, role, is_active, created_at FROM admins ORDER BY role ASC, username ASC')->fetchAll() : [];
 }
 
-function admin_user(int $id): ?array
+function admin_user(mixed $id): ?array
 {
+    $id = require_database_id($id);
     ensure_admin_role_columns();
     $pdo = db();
     if (!$pdo) {
@@ -204,8 +253,40 @@ function admin_user(int $id): ?array
     return $row ?: null;
 }
 
+function admin_account_transaction(PDO $pdo, callable $operation): array
+{
+    if ($pdo->inTransaction()) {
+        throw new RuntimeException('Operasi akun memerlukan transaksi tersendiri.');
+    }
+    require_transactional_media_table($pdo, 'admins');
+    try {
+        $pdo->beginTransaction();
+        // Serialize account policy checks with writes, including the last-active-superadmin rule.
+        $pdo->query('SELECT id FROM admins ORDER BY id FOR UPDATE')->fetchAll();
+        $result = $operation();
+        if ($result['success'] ?? false) {
+            $pdo->commit();
+        } else {
+            $pdo->rollBack();
+        }
+        return $result;
+    } catch (Throwable $exception) {
+        try {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+        } catch (Throwable $rollbackException) {
+            error_log('Account transaction outcome could not be verified; manual verification required.');
+        }
+        throw $exception;
+    }
+}
+
 function save_admin_user(array $data): array
 {
+    if (array_key_exists('id', $data) && $data['id'] !== null) {
+        $data['id'] = require_database_id($data['id']);
+    }
     ensure_admin_role_columns();
     $pdo = db();
     if (!$pdo) {
@@ -216,6 +297,12 @@ function save_admin_user(array $data): array
     if (!in_array($data['role'], $allowedRoles, true)) {
         return ['success' => false, 'message' => 'Role admin tidak valid.'];
     }
+
+    return admin_account_transaction($pdo, static fn(): array => save_admin_user_locked($pdo, $data));
+}
+
+function save_admin_user_locked(PDO $pdo, array $data): array
+{
 
     if (!empty($data['id'])) {
         $existing = admin_user((int) $data['id']);
@@ -271,13 +358,20 @@ function save_admin_user(array $data): array
     return ['success' => true, 'message' => 'Akun admin berhasil dibuat.'];
 }
 
-function delete_admin_user(int $id): array
+function delete_admin_user(mixed $id): array
 {
+    $id = require_database_id($id);
     ensure_admin_role_columns();
     $pdo = db();
     if (!$pdo) {
-        return ['success' => false, 'message' => 'Database belum terhubung.'];
+        return ['success' => false, 'message' => 'Data gagal dihapus. Silakan coba lagi.'];
     }
+
+    return admin_account_transaction($pdo, static fn(): array => delete_admin_user_locked($pdo, $id));
+}
+
+function delete_admin_user_locked(PDO $pdo, int $id): array
+{
 
     if ((int) ($_SESSION['admin_id'] ?? 0) === $id) {
         return ['success' => false, 'message' => 'Akun yang sedang login tidak bisa dihapus.'];
@@ -296,6 +390,9 @@ function delete_admin_user(int $id): array
     }
     $statement = $pdo->prepare('DELETE FROM admins WHERE id = :id');
     $statement->execute(['id' => $id]);
+    if ($statement->rowCount() !== 1) {
+        return ['success' => false, 'message' => 'Akun admin tidak ditemukan atau sudah dihapus.'];
+    }
     log_admin_activity('delete', 'admins', 'Akun admin dihapus: ' . ($admin['username'] ?? ('ID ' . $id)), 'admin', $id);
     return ['success' => true, 'message' => 'Akun admin berhasil dihapus.'];
 }
@@ -313,11 +410,7 @@ function ensure_news_publication_column(): void
         return;
     }
 
-    $columns = $pdo->query('SHOW COLUMNS FROM news')->fetchAll();
-    $columnNames = array_map(static fn(array $column): string => $column['Field'], $columns);
-    if (!in_array('is_active', $columnNames, true)) {
-        $pdo->exec('ALTER TABLE news ADD is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER published_at');
-    }
+    require_schema_columns($pdo, 'news', ['is_active']);
 
     $done = true;
 }
@@ -407,8 +500,9 @@ function related_news_items(string $currentSlug, string $category, int $limit = 
     return array_slice($items, 0, $limit);
 }
 
-function admin_news_row(int $id): ?array
+function admin_news_row(mixed $id): ?array
 {
+    $id = require_database_id($id);
     $pdo = db();
     if (!$pdo) {
         return null;
@@ -422,35 +516,42 @@ function admin_news_row(int $id): ?array
 
 function save_news(array $data): void
 {
+    if (array_key_exists('id', $data) && $data['id'] !== null) {
+        $data['id'] = require_database_id($data['id']);
+    }
     $pdo = db();
     if (!$pdo) {
-        return;
+        rollback_uploaded_files();
+        throw new RuntimeException('Database tidak tersedia. File tidak disimpan.');
     }
 
     if (!empty($data['id'])) {
         ensure_news_publication_column();
-        $statement = $pdo->prepare('UPDATE news SET slug = :slug, title = :title, category = :category, excerpt = :excerpt, content = :content, image_path = :image_path, published_at = :published_at, is_active = :is_active WHERE id = :id');
-        $statement->execute($data);
+        execute_media_mutation($pdo, 'UPDATE news SET slug = :slug, title = :title, category = :category, excerpt = :excerpt, content = :content, image_path = :image_path, published_at = :published_at, is_active = :is_active WHERE id = :id', $data, 'news', 'image_path');
         log_admin_activity('update', 'news', 'Berita diperbarui: ' . $data['title'], 'news', (int) $data['id']);
         return;
     }
 
     unset($data['id']);
     ensure_news_publication_column();
-    $statement = $pdo->prepare('INSERT INTO news (slug, title, category, excerpt, content, image_path, published_at, is_active) VALUES (:slug, :title, :category, :excerpt, :content, :image_path, :published_at, :is_active)');
-    $statement->execute($data);
-    log_admin_activity('create', 'news', 'Berita dibuat: ' . $data['title'], 'news', (int) $pdo->lastInsertId());
+    $savedId = execute_media_mutation($pdo, 'INSERT INTO news (slug, title, category, excerpt, content, image_path, published_at, is_active) VALUES (:slug, :title, :category, :excerpt, :content, :image_path, :published_at, :is_active)', $data, 'news', 'image_path');
+    log_admin_activity('create', 'news', 'Berita dibuat: ' . $data['title'], 'news', $savedId);
 }
 
-function delete_news(int $id): void
+function delete_news(mixed $id): bool
 {
+    $id = require_database_id($id);
     $pdo = db();
+    if (!$pdo) {
+        throw new RuntimeException('Database tidak tersedia. File tidak dihapus.');
+    }
     if ($pdo) {
         $row = admin_news_row($id);
-        $statement = $pdo->prepare('DELETE FROM news WHERE id = :id');
-        $statement->execute(['id' => $id]);
+        execute_media_mutation($pdo, 'DELETE FROM news WHERE id = :id', ['id' => $id], 'news', 'image_path');
         log_admin_activity('delete', 'news', 'Berita dihapus: ' . ($row['title'] ?? ('ID ' . $id)), 'news', $id);
+        return true;
     }
+    return false;
 }
 
 function gallery_items(): array
@@ -489,8 +590,9 @@ function gallery_count(): int
     return (int) $pdo->query('SELECT COUNT(*) FROM gallery_items')->fetchColumn();
 }
 
-function admin_gallery_row(int $id): ?array
+function admin_gallery_row(mixed $id): ?array
 {
+    $id = require_database_id($id);
     $pdo = db();
     if (!$pdo) {
         return null;
@@ -503,33 +605,40 @@ function admin_gallery_row(int $id): ?array
 
 function save_gallery_item(array $data): void
 {
+    if (array_key_exists('id', $data) && $data['id'] !== null) {
+        $data['id'] = require_database_id($data['id']);
+    }
     $pdo = db();
     if (!$pdo) {
-        return;
+        rollback_uploaded_files();
+        throw new RuntimeException('Database tidak tersedia. File tidak disimpan.');
     }
 
     if (!empty($data['id'])) {
-        $statement = $pdo->prepare('UPDATE gallery_items SET title = :title, description = :description, image_path = :image_path, sort_order = :sort_order WHERE id = :id');
-        $statement->execute($data);
+        execute_media_mutation($pdo, 'UPDATE gallery_items SET title = :title, description = :description, image_path = :image_path, sort_order = :sort_order WHERE id = :id', $data, 'gallery_items', 'image_path');
         log_admin_activity('update', 'gallery', 'Galeri diperbarui: ' . $data['title'], 'gallery_item', (int) $data['id']);
         return;
     }
 
     unset($data['id']);
-    $statement = $pdo->prepare('INSERT INTO gallery_items (title, description, image_path, sort_order) VALUES (:title, :description, :image_path, :sort_order)');
-    $statement->execute($data);
-    log_admin_activity('create', 'gallery', 'Galeri dibuat: ' . $data['title'], 'gallery_item', (int) $pdo->lastInsertId());
+    $savedId = execute_media_mutation($pdo, 'INSERT INTO gallery_items (title, description, image_path, sort_order) VALUES (:title, :description, :image_path, :sort_order)', $data, 'gallery_items', 'image_path');
+    log_admin_activity('create', 'gallery', 'Galeri dibuat: ' . $data['title'], 'gallery_item', $savedId);
 }
 
-function delete_gallery_item(int $id): void
+function delete_gallery_item(mixed $id): bool
 {
+    $id = require_database_id($id);
     $pdo = db();
+    if (!$pdo) {
+        throw new RuntimeException('Database tidak tersedia. File tidak dihapus.');
+    }
     if ($pdo) {
         $row = admin_gallery_row($id);
-        $statement = $pdo->prepare('DELETE FROM gallery_items WHERE id = :id');
-        $statement->execute(['id' => $id]);
+        execute_media_mutation($pdo, 'DELETE FROM gallery_items WHERE id = :id', ['id' => $id], 'gallery_items', 'image_path');
         log_admin_activity('delete', 'gallery', 'Galeri dihapus: ' . ($row['title'] ?? ('ID ' . $id)), 'gallery_item', $id);
+        return true;
     }
+    return false;
 }
 
 function active_announcements(): array
@@ -549,8 +658,9 @@ function admin_announcement_rows(): array
     return $pdo ? $pdo->query('SELECT * FROM announcements ORDER BY is_active DESC, sort_order ASC, created_at DESC, id DESC')->fetchAll() : [];
 }
 
-function admin_announcement_row(int $id): ?array
+function admin_announcement_row(mixed $id): ?array
 {
+    $id = require_database_id($id);
     $pdo = db();
     if (!$pdo) {
         return null;
@@ -564,6 +674,9 @@ function admin_announcement_row(int $id): ?array
 
 function save_announcement(array $data): void
 {
+    if (array_key_exists('id', $data) && $data['id'] !== null) {
+        $data['id'] = require_database_id($data['id']);
+    }
     $pdo = db();
     if (!$pdo) {
         return;
@@ -582,15 +695,24 @@ function save_announcement(array $data): void
     log_admin_activity('create', 'announcements', 'Pengumuman dibuat: ' . $data['title'], 'announcement', (int) $pdo->lastInsertId());
 }
 
-function delete_announcement(int $id): void
+function delete_announcement(mixed $id): bool
 {
+    $id = require_database_id($id);
     $pdo = db();
+    if (!$pdo) {
+        throw new RuntimeException('Database tidak tersedia. Data tidak dihapus.');
+    }
     if ($pdo) {
         $row = admin_announcement_row($id);
         $statement = $pdo->prepare('DELETE FROM announcements WHERE id = :id');
         $statement->execute(['id' => $id]);
+        if ($statement->rowCount() !== 1) {
+            return false;
+        }
         log_admin_activity('delete', 'announcements', 'Pengumuman dihapus: ' . ($row['title'] ?? ('ID ' . $id)), 'announcement', $id);
+        return true;
     }
+    return false;
 }
 
 function staff_members(): array
@@ -614,8 +736,9 @@ function admin_staff_rows(): array
     return $pdo ? $pdo->query('SELECT * FROM staff_members ORDER BY is_active DESC, sort_order ASC, name ASC')->fetchAll() : [];
 }
 
-function admin_staff_row(int $id): ?array
+function admin_staff_row(mixed $id): ?array
 {
+    $id = require_database_id($id);
     $pdo = db();
     if (!$pdo) {
         return null;
@@ -629,33 +752,40 @@ function admin_staff_row(int $id): ?array
 
 function save_staff_member(array $data): void
 {
+    if (array_key_exists('id', $data) && $data['id'] !== null) {
+        $data['id'] = require_database_id($data['id']);
+    }
     $pdo = db();
     if (!$pdo) {
-        return;
+        rollback_uploaded_files();
+        throw new RuntimeException('Database tidak tersedia. File tidak disimpan.');
     }
 
     if (!empty($data['id'])) {
-        $statement = $pdo->prepare('UPDATE staff_members SET name = :name, position = :position, subject = :subject, bio = :bio, phone = :phone, email = :email, photo_path = :photo_path, is_active = :is_active, sort_order = :sort_order WHERE id = :id');
-        $statement->execute($data);
+        execute_media_mutation($pdo, 'UPDATE staff_members SET name = :name, position = :position, subject = :subject, bio = :bio, phone = :phone, email = :email, photo_path = :photo_path, is_active = :is_active, sort_order = :sort_order WHERE id = :id', $data, 'staff_members', 'photo_path');
         log_admin_activity('update', 'staff', 'Data guru/staf diperbarui: ' . $data['name'], 'staff_member', (int) $data['id']);
         return;
     }
 
     unset($data['id']);
-    $statement = $pdo->prepare('INSERT INTO staff_members (name, position, subject, bio, phone, email, photo_path, is_active, sort_order) VALUES (:name, :position, :subject, :bio, :phone, :email, :photo_path, :is_active, :sort_order)');
-    $statement->execute($data);
-    log_admin_activity('create', 'staff', 'Data guru/staf dibuat: ' . $data['name'], 'staff_member', (int) $pdo->lastInsertId());
+    $savedId = execute_media_mutation($pdo, 'INSERT INTO staff_members (name, position, subject, bio, phone, email, photo_path, is_active, sort_order) VALUES (:name, :position, :subject, :bio, :phone, :email, :photo_path, :is_active, :sort_order)', $data, 'staff_members', 'photo_path');
+    log_admin_activity('create', 'staff', 'Data guru/staf dibuat: ' . $data['name'], 'staff_member', $savedId);
 }
 
-function delete_staff_member(int $id): void
+function delete_staff_member(mixed $id): bool
 {
+    $id = require_database_id($id);
     $pdo = db();
+    if (!$pdo) {
+        throw new RuntimeException('Database tidak tersedia. File tidak dihapus.');
+    }
     if ($pdo) {
         $row = admin_staff_row($id);
-        $statement = $pdo->prepare('DELETE FROM staff_members WHERE id = :id');
-        $statement->execute(['id' => $id]);
+        execute_media_mutation($pdo, 'DELETE FROM staff_members WHERE id = :id', ['id' => $id], 'staff_members', 'photo_path');
         log_admin_activity('delete', 'staff', 'Data guru/staf dihapus: ' . ($row['name'] ?? ('ID ' . $id)), 'staff_member', $id);
+        return true;
     }
+    return false;
 }
 
 function staff_count(bool $activeOnly = false): int
@@ -723,8 +853,9 @@ function admin_agenda_rows(): array
     return $pdo->query('SELECT * FROM agenda_items ORDER BY academic_year DESC, is_active DESC, starts_at ASC, sort_order ASC, id DESC')->fetchAll();
 }
 
-function admin_agenda_row(int $id): ?array
+function admin_agenda_row(mixed $id): ?array
 {
+    $id = require_database_id($id);
     $pdo = db();
     if (!$pdo) {
         return null;
@@ -738,6 +869,9 @@ function admin_agenda_row(int $id): ?array
 
 function save_agenda_item(array $data): void
 {
+    if (array_key_exists('id', $data) && $data['id'] !== null) {
+        $data['id'] = require_database_id($data['id']);
+    }
     $pdo = db();
     if (!$pdo) {
         return;
@@ -758,15 +892,24 @@ function save_agenda_item(array $data): void
     log_admin_activity('create', 'agenda', 'Agenda dibuat: ' . $data['title'], 'agenda_item', (int) $pdo->lastInsertId());
 }
 
-function delete_agenda_item(int $id): void
+function delete_agenda_item(mixed $id): bool
 {
+    $id = require_database_id($id);
     $pdo = db();
+    if (!$pdo) {
+        throw new RuntimeException('Database tidak tersedia. Data tidak dihapus.');
+    }
     if ($pdo) {
         $row = admin_agenda_row($id);
         $statement = $pdo->prepare('DELETE FROM agenda_items WHERE id = :id');
         $statement->execute(['id' => $id]);
+        if ($statement->rowCount() !== 1) {
+            return false;
+        }
         log_admin_activity('delete', 'agenda', 'Agenda dihapus: ' . ($row['title'] ?? ('ID ' . $id)), 'agenda_item', $id);
+        return true;
     }
+    return false;
 }
 
 function agenda_count(bool $activeOnly = false): int
@@ -826,8 +969,9 @@ function admin_document_rows(): array
     return $pdo->query('SELECT * FROM school_documents ORDER BY academic_year DESC, is_active DESC, category ASC, sort_order ASC, created_at DESC, id DESC')->fetchAll();
 }
 
-function admin_document_row(int $id): ?array
+function admin_document_row(mixed $id): ?array
 {
+    $id = require_database_id($id);
     $pdo = db();
     if (!$pdo) {
         return null;
@@ -839,8 +983,9 @@ function admin_document_row(int $id): ?array
     return $row ?: null;
 }
 
-function public_document_row(int $id): ?array
+function public_document_row(mixed $id): ?array
 {
+    $id = require_database_id($id);
     $pdo = db();
     if (!$pdo) {
         return null;
@@ -854,39 +999,47 @@ function public_document_row(int $id): ?array
 
 function save_school_document(array $data): void
 {
+    if (array_key_exists('id', $data) && $data['id'] !== null) {
+        $data['id'] = require_database_id($data['id']);
+    }
     $pdo = db();
     if (!$pdo) {
-        return;
+        rollback_uploaded_files();
+        throw new RuntimeException('Database tidak tersedia. File tidak disimpan.');
     }
 
     if (!empty($data['id'])) {
         ensure_academic_year_columns();
-        $statement = $pdo->prepare('UPDATE school_documents SET title = :title, category = :category, description = :description, file_path = :file_path, original_filename = :original_filename, file_size = :file_size, is_active = :is_active, academic_year = :academic_year, sort_order = :sort_order WHERE id = :id');
-        $statement->execute($data);
+        execute_media_mutation($pdo, 'UPDATE school_documents SET title = :title, category = :category, description = :description, file_path = :file_path, original_filename = :original_filename, file_size = :file_size, is_active = :is_active, academic_year = :academic_year, sort_order = :sort_order WHERE id = :id', $data, 'school_documents', 'file_path');
         log_admin_activity('update', 'documents', 'Dokumen diperbarui: ' . $data['title'], 'school_document', (int) $data['id']);
         return;
     }
 
     unset($data['id']);
     ensure_academic_year_columns();
-    $statement = $pdo->prepare('INSERT INTO school_documents (title, category, description, file_path, original_filename, file_size, is_active, academic_year, sort_order) VALUES (:title, :category, :description, :file_path, :original_filename, :file_size, :is_active, :academic_year, :sort_order)');
-    $statement->execute($data);
-    log_admin_activity('create', 'documents', 'Dokumen dibuat: ' . $data['title'], 'school_document', (int) $pdo->lastInsertId());
+    $savedId = execute_media_mutation($pdo, 'INSERT INTO school_documents (title, category, description, file_path, original_filename, file_size, is_active, academic_year, sort_order) VALUES (:title, :category, :description, :file_path, :original_filename, :file_size, :is_active, :academic_year, :sort_order)', $data, 'school_documents', 'file_path');
+    log_admin_activity('create', 'documents', 'Dokumen dibuat: ' . $data['title'], 'school_document', $savedId);
 }
 
-function delete_school_document(int $id): void
+function delete_school_document(mixed $id): bool
 {
+    $id = require_database_id($id);
     $pdo = db();
+    if (!$pdo) {
+        throw new RuntimeException('Database tidak tersedia. File tidak dihapus.');
+    }
     if ($pdo) {
         $row = admin_document_row($id);
-        $statement = $pdo->prepare('DELETE FROM school_documents WHERE id = :id');
-        $statement->execute(['id' => $id]);
+        execute_media_mutation($pdo, 'DELETE FROM school_documents WHERE id = :id', ['id' => $id], 'school_documents', 'file_path');
         log_admin_activity('delete', 'documents', 'Dokumen dihapus: ' . ($row['title'] ?? ('ID ' . $id)), 'school_document', $id);
+        return true;
     }
+    return false;
 }
 
-function increment_document_download_count(int $id): void
+function increment_document_download_count(mixed $id): void
 {
+    $id = require_database_id($id);
     $pdo = db();
     if ($pdo) {
         $statement = $pdo->prepare('UPDATE school_documents SET download_count = download_count + 1 WHERE id = :id');
@@ -955,8 +1108,9 @@ function achievement_rows_all_years(?string $category = null): array
     return $pdo->query('SELECT * FROM school_achievements WHERE is_active = 1 ORDER BY achievement_date DESC, sort_order ASC, id DESC')->fetchAll();
 }
 
-function achievement_public_row(int $id): ?array
+function achievement_public_row(mixed $id): ?array
 {
+    $id = require_database_id($id);
     $pdo = db();
     if (!$pdo) {
         return null;
@@ -1029,8 +1183,9 @@ function admin_achievement_rows(): array
     return $pdo->query('SELECT * FROM school_achievements ORDER BY academic_year DESC, is_active DESC, achievement_date DESC, sort_order ASC, id DESC')->fetchAll();
 }
 
-function admin_achievement_row(int $id): ?array
+function admin_achievement_row(mixed $id): ?array
 {
+    $id = require_database_id($id);
     $pdo = db();
     if (!$pdo) {
         return null;
@@ -1044,35 +1199,42 @@ function admin_achievement_row(int $id): ?array
 
 function save_achievement(array $data): void
 {
+    if (array_key_exists('id', $data) && $data['id'] !== null) {
+        $data['id'] = require_database_id($data['id']);
+    }
     $pdo = db();
     if (!$pdo) {
-        return;
+        rollback_uploaded_files();
+        throw new RuntimeException('Database tidak tersedia. File tidak disimpan.');
     }
 
     if (!empty($data['id'])) {
         ensure_academic_year_columns();
-        $statement = $pdo->prepare('UPDATE school_achievements SET title = :title, level = :level, category = :category, achiever_name = :achiever_name, achievement_date = :achievement_date, description = :description, image_path = :image_path, is_active = :is_active, academic_year = :academic_year, sort_order = :sort_order WHERE id = :id');
-        $statement->execute($data);
+        execute_media_mutation($pdo, 'UPDATE school_achievements SET title = :title, level = :level, category = :category, achiever_name = :achiever_name, achievement_date = :achievement_date, description = :description, image_path = :image_path, is_active = :is_active, academic_year = :academic_year, sort_order = :sort_order WHERE id = :id', $data, 'school_achievements', 'image_path');
         log_admin_activity('update', 'achievements', 'Prestasi diperbarui: ' . $data['title'], 'achievement', (int) $data['id']);
         return;
     }
 
     unset($data['id']);
     ensure_academic_year_columns();
-    $statement = $pdo->prepare('INSERT INTO school_achievements (title, level, category, achiever_name, achievement_date, description, image_path, is_active, academic_year, sort_order) VALUES (:title, :level, :category, :achiever_name, :achievement_date, :description, :image_path, :is_active, :academic_year, :sort_order)');
-    $statement->execute($data);
-    log_admin_activity('create', 'achievements', 'Prestasi dibuat: ' . $data['title'], 'achievement', (int) $pdo->lastInsertId());
+    $savedId = execute_media_mutation($pdo, 'INSERT INTO school_achievements (title, level, category, achiever_name, achievement_date, description, image_path, is_active, academic_year, sort_order) VALUES (:title, :level, :category, :achiever_name, :achievement_date, :description, :image_path, :is_active, :academic_year, :sort_order)', $data, 'school_achievements', 'image_path');
+    log_admin_activity('create', 'achievements', 'Prestasi dibuat: ' . $data['title'], 'achievement', $savedId);
 }
 
-function delete_achievement(int $id): void
+function delete_achievement(mixed $id): bool
 {
+    $id = require_database_id($id);
     $pdo = db();
+    if (!$pdo) {
+        throw new RuntimeException('Database tidak tersedia. File tidak dihapus.');
+    }
     if ($pdo) {
         $row = admin_achievement_row($id);
-        $statement = $pdo->prepare('DELETE FROM school_achievements WHERE id = :id');
-        $statement->execute(['id' => $id]);
+        execute_media_mutation($pdo, 'DELETE FROM school_achievements WHERE id = :id', ['id' => $id], 'school_achievements', 'image_path');
         log_admin_activity('delete', 'achievements', 'Prestasi dihapus: ' . ($row['title'] ?? ('ID ' . $id)), 'achievement', $id);
+        return true;
     }
+    return false;
 }
 
 function achievement_count(bool $activeOnly = false): int
@@ -1143,8 +1305,9 @@ function admin_extracurricular_rows(): array
     return $pdo ? $pdo->query('SELECT * FROM extracurriculars ORDER BY is_active DESC, category ASC, sort_order ASC, name ASC')->fetchAll() : [];
 }
 
-function admin_extracurricular_row(int $id): ?array
+function admin_extracurricular_row(mixed $id): ?array
 {
+    $id = require_database_id($id);
     $pdo = db();
     if (!$pdo) {
         return null;
@@ -1158,33 +1321,40 @@ function admin_extracurricular_row(int $id): ?array
 
 function save_extracurricular(array $data): void
 {
+    if (array_key_exists('id', $data) && $data['id'] !== null) {
+        $data['id'] = require_database_id($data['id']);
+    }
     $pdo = db();
     if (!$pdo) {
-        return;
+        rollback_uploaded_files();
+        throw new RuntimeException('Database tidak tersedia. File tidak disimpan.');
     }
 
     if (!empty($data['id'])) {
-        $statement = $pdo->prepare('UPDATE extracurriculars SET name = :name, category = :category, coach = :coach, schedule_text = :schedule_text, location = :location, description = :description, image_path = :image_path, is_active = :is_active, sort_order = :sort_order WHERE id = :id');
-        $statement->execute($data);
+        execute_media_mutation($pdo, 'UPDATE extracurriculars SET name = :name, category = :category, coach = :coach, schedule_text = :schedule_text, location = :location, description = :description, image_path = :image_path, is_active = :is_active, sort_order = :sort_order WHERE id = :id', $data, 'extracurriculars', 'image_path');
         log_admin_activity('update', 'extracurriculars', 'Ekstrakurikuler diperbarui: ' . $data['name'], 'extracurricular', (int) $data['id']);
         return;
     }
 
     unset($data['id']);
-    $statement = $pdo->prepare('INSERT INTO extracurriculars (name, category, coach, schedule_text, location, description, image_path, is_active, sort_order) VALUES (:name, :category, :coach, :schedule_text, :location, :description, :image_path, :is_active, :sort_order)');
-    $statement->execute($data);
-    log_admin_activity('create', 'extracurriculars', 'Ekstrakurikuler dibuat: ' . $data['name'], 'extracurricular', (int) $pdo->lastInsertId());
+    $savedId = execute_media_mutation($pdo, 'INSERT INTO extracurriculars (name, category, coach, schedule_text, location, description, image_path, is_active, sort_order) VALUES (:name, :category, :coach, :schedule_text, :location, :description, :image_path, :is_active, :sort_order)', $data, 'extracurriculars', 'image_path');
+    log_admin_activity('create', 'extracurriculars', 'Ekstrakurikuler dibuat: ' . $data['name'], 'extracurricular', $savedId);
 }
 
-function delete_extracurricular(int $id): void
+function delete_extracurricular(mixed $id): bool
 {
+    $id = require_database_id($id);
     $pdo = db();
+    if (!$pdo) {
+        throw new RuntimeException('Database tidak tersedia. File tidak dihapus.');
+    }
     if ($pdo) {
         $row = admin_extracurricular_row($id);
-        $statement = $pdo->prepare('DELETE FROM extracurriculars WHERE id = :id');
-        $statement->execute(['id' => $id]);
+        execute_media_mutation($pdo, 'DELETE FROM extracurriculars WHERE id = :id', ['id' => $id], 'extracurriculars', 'image_path');
         log_admin_activity('delete', 'extracurriculars', 'Ekstrakurikuler dihapus: ' . ($row['name'] ?? ('ID ' . $id)), 'extracurricular', $id);
+        return true;
     }
+    return false;
 }
 
 function extracurricular_count(bool $activeOnly = false): int
@@ -1255,8 +1425,9 @@ function admin_facility_rows(): array
     return $pdo ? $pdo->query('SELECT * FROM school_facilities ORDER BY is_active DESC, category ASC, sort_order ASC, name ASC')->fetchAll() : [];
 }
 
-function admin_facility_row(int $id): ?array
+function admin_facility_row(mixed $id): ?array
 {
+    $id = require_database_id($id);
     $pdo = db();
     if (!$pdo) {
         return null;
@@ -1270,33 +1441,40 @@ function admin_facility_row(int $id): ?array
 
 function save_facility(array $data): void
 {
+    if (array_key_exists('id', $data) && $data['id'] !== null) {
+        $data['id'] = require_database_id($data['id']);
+    }
     $pdo = db();
     if (!$pdo) {
-        return;
+        rollback_uploaded_files();
+        throw new RuntimeException('Database tidak tersedia. File tidak disimpan.');
     }
 
     if (!empty($data['id'])) {
-        $statement = $pdo->prepare('UPDATE school_facilities SET name = :name, category = :category, location = :location, capacity = :capacity, condition_status = :condition_status, description = :description, image_path = :image_path, is_active = :is_active, sort_order = :sort_order WHERE id = :id');
-        $statement->execute($data);
+        execute_media_mutation($pdo, 'UPDATE school_facilities SET name = :name, category = :category, location = :location, capacity = :capacity, condition_status = :condition_status, description = :description, image_path = :image_path, is_active = :is_active, sort_order = :sort_order WHERE id = :id', $data, 'school_facilities', 'image_path');
         log_admin_activity('update', 'facilities', 'Fasilitas diperbarui: ' . $data['name'], 'facility', (int) $data['id']);
         return;
     }
 
     unset($data['id']);
-    $statement = $pdo->prepare('INSERT INTO school_facilities (name, category, location, capacity, condition_status, description, image_path, is_active, sort_order) VALUES (:name, :category, :location, :capacity, :condition_status, :description, :image_path, :is_active, :sort_order)');
-    $statement->execute($data);
-    log_admin_activity('create', 'facilities', 'Fasilitas dibuat: ' . $data['name'], 'facility', (int) $pdo->lastInsertId());
+    $savedId = execute_media_mutation($pdo, 'INSERT INTO school_facilities (name, category, location, capacity, condition_status, description, image_path, is_active, sort_order) VALUES (:name, :category, :location, :capacity, :condition_status, :description, :image_path, :is_active, :sort_order)', $data, 'school_facilities', 'image_path');
+    log_admin_activity('create', 'facilities', 'Fasilitas dibuat: ' . $data['name'], 'facility', $savedId);
 }
 
-function delete_facility(int $id): void
+function delete_facility(mixed $id): bool
 {
+    $id = require_database_id($id);
     $pdo = db();
+    if (!$pdo) {
+        throw new RuntimeException('Database tidak tersedia. File tidak dihapus.');
+    }
     if ($pdo) {
         $row = admin_facility_row($id);
-        $statement = $pdo->prepare('DELETE FROM school_facilities WHERE id = :id');
-        $statement->execute(['id' => $id]);
+        execute_media_mutation($pdo, 'DELETE FROM school_facilities WHERE id = :id', ['id' => $id], 'school_facilities', 'image_path');
         log_admin_activity('delete', 'facilities', 'Fasilitas dihapus: ' . ($row['name'] ?? ('ID ' . $id)), 'facility', $id);
+        return true;
     }
+    return false;
 }
 
 function facility_count(bool $activeOnly = false): int
@@ -1346,8 +1524,9 @@ function admin_faq_rows(): array
     return $pdo ? $pdo->query('SELECT * FROM faqs ORDER BY is_active DESC, category ASC, sort_order ASC, id DESC')->fetchAll() : [];
 }
 
-function admin_faq_row(int $id): ?array
+function admin_faq_row(mixed $id): ?array
 {
+    $id = require_database_id($id);
     $pdo = db();
     if (!$pdo) {
         return null;
@@ -1361,6 +1540,9 @@ function admin_faq_row(int $id): ?array
 
 function save_faq(array $data): void
 {
+    if (array_key_exists('id', $data) && $data['id'] !== null) {
+        $data['id'] = require_database_id($data['id']);
+    }
     $pdo = db();
     if (!$pdo) {
         return;
@@ -1379,15 +1561,24 @@ function save_faq(array $data): void
     log_admin_activity('create', 'faqs', 'FAQ dibuat: ' . $data['question'], 'faq', (int) $pdo->lastInsertId());
 }
 
-function delete_faq(int $id): void
+function delete_faq(mixed $id): bool
 {
+    $id = require_database_id($id);
     $pdo = db();
+    if (!$pdo) {
+        throw new RuntimeException('Database tidak tersedia. Data tidak dihapus.');
+    }
     if ($pdo) {
         $row = admin_faq_row($id);
         $statement = $pdo->prepare('DELETE FROM faqs WHERE id = :id');
         $statement->execute(['id' => $id]);
+        if ($statement->rowCount() !== 1) {
+            return false;
+        }
         log_admin_activity('delete', 'faqs', 'FAQ dihapus: ' . ($row['question'] ?? ('ID ' . $id)), 'faq', $id);
+        return true;
     }
+    return false;
 }
 
 function faq_count(bool $activeOnly = false): int
@@ -1492,19 +1683,25 @@ function save_ppdb_entry(array $data): void
     }
 
     $statement = $pdo->prepare('INSERT INTO ppdb_entries (section, title, content, sort_order) VALUES (:section, :title, :content, :sort_order)');
+    unset($data['id']);
     $statement->execute($data);
     log_admin_activity('create', 'ppdb_content', 'Konten PPDB dibuat: ' . $data['title'], 'ppdb_entry', (int) $pdo->lastInsertId());
 }
 
-function delete_ppdb_entry(int $id): void
+function delete_ppdb_entry(int $id): bool
 {
     $pdo = db();
     if ($pdo) {
         $row = admin_ppdb_row($id);
         $statement = $pdo->prepare('DELETE FROM ppdb_entries WHERE id = :id');
         $statement->execute(['id' => $id]);
-        log_admin_activity('delete', 'ppdb_content', 'Konten PPDB dihapus: ' . ($row['title'] ?? ('ID ' . $id)), 'ppdb_entry', $id);
+        $deleted = $statement->rowCount();
+        if ($deleted > 0) {
+            log_admin_activity('delete', 'ppdb_content', 'Konten PPDB dihapus: ' . ($row['title'] ?? ('ID ' . $id)), 'ppdb_entry', $id);
+        }
+        return $deleted > 0;
     }
+    return false;
 }
 
 function save_contact_message(array $data): void
@@ -1530,8 +1727,9 @@ function admin_contact_messages(): array
     return $pdo ? $pdo->query('SELECT * FROM contact_messages ORDER BY created_at DESC, id DESC')->fetchAll() : [];
 }
 
-function update_contact_message_status(int $id, string $status): void
+function update_contact_message_status(mixed $id, string $status): void
 {
+    $id = require_database_id($id);
     $pdo = db();
     if (!$pdo) {
         return;
@@ -1550,14 +1748,23 @@ function update_contact_message_status(int $id, string $status): void
     log_admin_activity('update_status', 'contact_messages', 'Status pesan masuk diubah menjadi ' . $status . '.', 'contact_message', $id);
 }
 
-function delete_contact_message(int $id): void
+function delete_contact_message(mixed $id): bool
 {
+    $id = require_database_id($id);
     $pdo = db();
+    if (!$pdo) {
+        throw new RuntimeException('Database tidak tersedia. Data tidak dihapus.');
+    }
     if ($pdo) {
         $statement = $pdo->prepare('DELETE FROM contact_messages WHERE id = :id');
         $statement->execute(['id' => $id]);
+        if ($statement->rowCount() !== 1) {
+            return false;
+        }
         log_admin_activity('delete', 'contact_messages', 'Pesan masuk dihapus.', 'contact_message', $id);
+        return true;
     }
+    return false;
 }
 
 function contact_message_count(?string $status = null): int
@@ -1576,229 +1783,7 @@ function contact_message_count(?string $status = null): int
     return (int) $statement->fetchColumn();
 }
 
-function next_ppdb_registration_number(): string
-{
-    $pdo = db();
-    $prefix = 'PPDB-' . date('Ymd') . '-';
-    if (!$pdo) {
-        return $prefix . strtoupper(bin2hex(random_bytes(3)));
-    }
 
-    $statement = $pdo->prepare('SELECT COUNT(*) FROM ppdb_applications WHERE registration_number LIKE :prefix');
-    $statement->execute(['prefix' => $prefix . '%']);
-    $next = (int) $statement->fetchColumn() + 1;
-
-    return $prefix . str_pad((string) $next, 4, '0', STR_PAD_LEFT);
-}
-
-function ensure_ppdb_consent_columns(): void
-{
-    static $done = false;
-    $pdo = db();
-    if ($done || !$pdo) {
-        return;
-    }
-
-    $columns = $pdo->query('SHOW COLUMNS FROM ppdb_applications')->fetchAll();
-    $columnNames = array_map(static fn(array $column): string => $column['Field'], $columns);
-
-    if (!in_array('consent_accepted_at', $columnNames, true)) {
-        $pdo->exec('ALTER TABLE ppdb_applications ADD consent_accepted_at DATETIME NULL AFTER photo_path');
-    }
-    if (!in_array('privacy_version', $columnNames, true)) {
-        $pdo->exec('ALTER TABLE ppdb_applications ADD privacy_version VARCHAR(40) NULL AFTER consent_accepted_at');
-    }
-    if (!in_array('registration_path', $columnNames, true)) {
-        $pdo->exec('ALTER TABLE ppdb_applications ADD registration_path VARCHAR(40) NOT NULL DEFAULT "" AFTER previous_school');
-    }
-
-    $done = true;
-}
-
-function save_ppdb_application(array $data): string
-{
-    $pdo = db();
-    if (!$pdo) {
-        return '';
-    }
-
-    ensure_ppdb_consent_columns();
-    ensure_academic_year_columns();
-    $registrationNumber = next_ppdb_registration_number();
-    $statement = $pdo->prepare('INSERT INTO ppdb_applications (
-        registration_number, student_name, birth_place, birth_date, gender, nisn, previous_school, registration_path,
-        parent_name, parent_phone, parent_email, address, family_card_path, birth_certificate_path,
-        report_card_path, photo_path, consent_accepted_at, privacy_version, academic_year
-    ) VALUES (
-        :registration_number, :student_name, :birth_place, :birth_date, :gender, :nisn, :previous_school, :registration_path,
-        :parent_name, :parent_phone, :parent_email, :address, :family_card_path, :birth_certificate_path,
-        :report_card_path, :photo_path, :consent_accepted_at, :privacy_version, :academic_year
-    )');
-    $statement->execute([
-        'registration_number' => $registrationNumber,
-        'student_name' => $data['student_name'],
-        'birth_place' => $data['birth_place'],
-        'birth_date' => $data['birth_date'],
-        'gender' => $data['gender'],
-        'nisn' => $data['nisn'],
-        'previous_school' => $data['previous_school'],
-        'registration_path' => $data['registration_path'] ?? '',
-        'parent_name' => $data['parent_name'],
-        'parent_phone' => $data['parent_phone'],
-        'parent_email' => $data['parent_email'],
-        'address' => $data['address'],
-        'family_card_path' => $data['family_card_path'],
-        'birth_certificate_path' => $data['birth_certificate_path'],
-        'report_card_path' => $data['report_card_path'],
-        'photo_path' => $data['photo_path'],
-        'consent_accepted_at' => $data['consent_accepted_at'],
-        'privacy_version' => $data['privacy_version'],
-        'academic_year' => $data['academic_year'] ?? current_academic_year(),
-    ]);
-
-    return $registrationNumber;
-}
-
-function ppdb_application_filters(array $filters): array
-{
-    ensure_ppdb_consent_columns();
-    ensure_academic_year_columns();
-    $where = [];
-    $params = [];
-
-    $query = trim($filters['q'] ?? '');
-    if ($query !== '') {
-        $where[] = '(registration_number LIKE :query OR student_name LIKE :query OR nisn LIKE :query OR previous_school LIKE :query OR registration_path LIKE :query OR parent_name LIKE :query OR parent_phone LIKE :query OR parent_email LIKE :query)';
-        $params['query'] = '%' . $query . '%';
-    }
-
-    $status = trim($filters['status'] ?? '');
-    $allowedStatuses = ['baru', 'diverifikasi', 'diterima', 'ditolak'];
-    if ($status !== '' && in_array($status, $allowedStatuses, true)) {
-        $where[] = 'status = :status';
-        $params['status'] = $status;
-    }
-
-    $year = trim($filters['academic_year'] ?? current_academic_year());
-    if ($year !== '') {
-        $where[] = 'academic_year = :academic_year';
-        $params['academic_year'] = $year;
-    }
-
-    return [
-        'where' => $where ? ' WHERE ' . implode(' AND ', $where) : '',
-        'params' => $params,
-    ];
-}
-
-function admin_ppdb_applications(array $filters = []): array
-{
-    $pdo = db();
-    if (!$pdo) {
-        return [];
-    }
-
-    $filterSql = ppdb_application_filters($filters);
-    $statement = $pdo->prepare('SELECT * FROM ppdb_applications' . $filterSql['where'] . ' ORDER BY created_at DESC, id DESC');
-    $statement->execute($filterSql['params']);
-    return $statement->fetchAll();
-}
-
-function admin_ppdb_application_filtered_count(array $filters = []): int
-{
-    $pdo = db();
-    if (!$pdo) {
-        return 0;
-    }
-
-    $filterSql = ppdb_application_filters($filters);
-    $statement = $pdo->prepare('SELECT COUNT(*) FROM ppdb_applications' . $filterSql['where']);
-    $statement->execute($filterSql['params']);
-    return (int) $statement->fetchColumn();
-}
-
-function admin_ppdb_application(int $id): ?array
-{
-    $pdo = db();
-    if (!$pdo) {
-        return null;
-    }
-
-    $statement = $pdo->prepare('SELECT * FROM ppdb_applications WHERE id = :id LIMIT 1');
-    $statement->execute(['id' => $id]);
-    $row = $statement->fetch();
-    return $row ?: null;
-}
-
-function ppdb_application_by_registration(string $registrationNumber, string $parentEmail): ?array
-{
-    $pdo = db();
-    if (!$pdo) {
-        return null;
-    }
-
-    $statement = $pdo->prepare('SELECT * FROM ppdb_applications WHERE registration_number = :registration_number AND parent_email = :parent_email LIMIT 1');
-    $statement->execute([
-        'registration_number' => $registrationNumber,
-        'parent_email' => $parentEmail,
-    ]);
-    $row = $statement->fetch();
-    return $row ?: null;
-}
-
-function update_ppdb_application_status(int $id, string $status, string $notes): void
-{
-    $pdo = db();
-    if (!$pdo) {
-        return;
-    }
-
-    $allowed = ['baru', 'diverifikasi', 'diterima', 'ditolak'];
-    if (!in_array($status, $allowed, true)) {
-        return;
-    }
-
-    $statement = $pdo->prepare('UPDATE ppdb_applications SET status = :status, admin_notes = :admin_notes WHERE id = :id');
-    $statement->execute([
-        'id' => $id,
-        'status' => $status,
-        'admin_notes' => $notes,
-    ]);
-    $row = admin_ppdb_application($id);
-    log_admin_activity('update_status', 'ppdb_applications', 'Status pendaftar PPDB diubah menjadi ' . $status . '.', 'ppdb_application', $id, [
-        'registration_number' => $row['registration_number'] ?? null,
-    ]);
-}
-
-function delete_ppdb_application(int $id): void
-{
-    $pdo = db();
-    if ($pdo) {
-        $row = admin_ppdb_application($id);
-        $statement = $pdo->prepare('DELETE FROM ppdb_applications WHERE id = :id');
-        $statement->execute(['id' => $id]);
-        log_admin_activity('delete', 'ppdb_applications', 'Pendaftar PPDB dihapus: ' . ($row['registration_number'] ?? ('ID ' . $id)), 'ppdb_application', $id);
-    }
-}
-
-function ppdb_application_count(?string $status = null): int
-{
-    $pdo = db();
-    if (!$pdo) {
-        return 0;
-    }
-
-    ensure_academic_year_columns();
-    if ($status === null) {
-        $statement = $pdo->prepare('SELECT COUNT(*) FROM ppdb_applications WHERE academic_year = :academic_year');
-        $statement->execute(['academic_year' => current_academic_year()]);
-        return (int) $statement->fetchColumn();
-    }
-
-    $statement = $pdo->prepare('SELECT COUNT(*) FROM ppdb_applications WHERE status = :status AND academic_year = :academic_year');
-    $statement->execute(['status' => $status, 'academic_year' => current_academic_year()]);
-    return (int) $statement->fetchColumn();
-}
 
 function public_search_results(string $query, int $limitPerType = 8): array
 {
@@ -1826,7 +1811,7 @@ function public_search_results(string $query, int $limitPerType = 8): array
             'title' => $row['title'],
             'excerpt' => $row['excerpt'],
             'meta' => $row['category'] . ' - ' . date('d F Y', strtotime($row['published_at'])),
-            'url' => base_url('berita/' . $row['slug']),
+            'url' => base_url('berita/' . rawurlencode($row['slug'])),
         ];
     }
 
@@ -1917,7 +1902,7 @@ function public_search_seed_results(string $query, int $limitPerType = 8): array
                 'title' => $item['title'],
                 'excerpt' => $item['desc'],
                 'meta' => ($item['category'] ?? 'Berita') . ' - ' . ($item['date'] ?? ''),
-                'url' => base_url('berita/' . $item['slug']),
+                'url' => base_url('berita/' . rawurlencode($item['slug'])),
             ];
         }
     }

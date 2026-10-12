@@ -27,7 +27,7 @@
                                 <span><?= e(initials_from_text($staff['name'])); ?></span>
                             </div>
                         <?php else: ?>
-                            <img src="<?= image_asset_path($staff['photo_path']); ?>" alt="<?= e($staff['name']); ?>" loading="lazy">
+                            <img src="<?= e(image_asset_path($staff['photo_path'])); ?>" alt="<?= e($staff['name']); ?>" loading="lazy">
                         <?php endif; ?>
                         <div>
                             <h3><?= e($staff['name']); ?></h3>

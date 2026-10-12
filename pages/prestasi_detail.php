@@ -10,7 +10,7 @@
 <section class="section">
     <div class="container narrow-content">
         <?php if (!is_placeholder_image($achievementItem['image_path'] ?? null)): ?>
-            <img class="feature-image-photo" src="<?= image_asset_path($achievementItem['image_path']); ?>" alt="<?= e($achievementItem['title']); ?>">
+            <img class="feature-image-photo" src="<?= e(image_asset_path($achievementItem['image_path'])); ?>" alt="<?= e($achievementItem['title']); ?>">
         <?php endif; ?>
         <article class="panel">
             <span class="eyebrow"><?= e($achievementItem['category']); ?></span>
@@ -21,7 +21,7 @@
                     <p><?= e($paragraph); ?></p>
                 <?php endif; ?>
             <?php endforeach; ?>
-            <a class="text-link" href="<?= base_url('prestasi'); ?>">Kembali ke daftar prestasi</a>
+            <a class="text-link" href="<?= e(base_url('prestasi')); ?>">Kembali ke daftar prestasi</a>
         </article>
     </div>
 </section>
@@ -41,13 +41,13 @@
                             <span><?= e(initials_from_text($item['title'])); ?></span>
                         </div>
                     <?php else: ?>
-                        <img src="<?= image_asset_path($item['image_path']); ?>" alt="<?= e($item['title']); ?>" loading="lazy">
+                        <img src="<?= e(image_asset_path($item['image_path'])); ?>" alt="<?= e($item['title']); ?>" loading="lazy">
                     <?php endif; ?>
                     <span class="eyebrow"><?= e($item['category']); ?> - <?= e($item['level']); ?></span>
                     <h3><?= e($item['title']); ?></h3>
                     <p><?= e($item['achiever_name']); ?></p>
                     <small><?= e(date('d F Y', strtotime($item['achievement_date']))); ?></small>
-                    <a class="text-link" href="<?= base_url('prestasi/' . (int) $item['id']); ?>">Lihat prestasi</a>
+                    <a class="text-link" href="<?= e(base_url('prestasi/' . (int) $item['id'])); ?>">Lihat prestasi</a>
                 </article>
             <?php endforeach; ?>
         </div>

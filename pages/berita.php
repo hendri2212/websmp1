@@ -10,11 +10,11 @@
     <div class="container card-grid two">
         <?php foreach ($news as $item): ?>
             <article class="card">
-                <img class="card-cover" src="<?= image_asset_path($item['image_path']); ?>" alt="<?= e($item['title']); ?>" loading="lazy">
+                <img class="card-cover" src="<?= e(image_asset_path($item['image_path'])); ?>" alt="<?= e($item['title']); ?>" loading="lazy">
                 <small><?= e($item['category']); ?> - <?= e($item['date']); ?></small>
                 <h3><?= e($item['title']); ?></h3>
                 <p><?= e($item['desc']); ?></p>
-                <a class="text-link" href="<?= base_url('berita/' . $item['slug']); ?>">Baca selengkapnya</a>
+                <a class="text-link" href="<?= e(base_url('berita/' . rawurlencode($item['slug']))); ?>">Baca selengkapnya</a>
             </article>
         <?php endforeach; ?>
     </div>

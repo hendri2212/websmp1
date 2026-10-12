@@ -30,23 +30,23 @@ $faviconVersion = is_file($faviconPath) ? (string) filemtime($faviconPath) : $st
     <meta name="twitter:title" content="<?= e($pageTitle); ?>">
     <meta name="twitter:description" content="<?= e($metaDescription); ?>">
     <meta name="twitter:image" content="<?= e($metaImageUrl); ?>">
-    <link rel="icon" type="image/png" href="<?= asset('public/favicon.png?v=' . $faviconVersion); ?>">
-    <link rel="apple-touch-icon" href="<?= asset('public/favicon.png?v=' . $faviconVersion); ?>">
-    <link rel="stylesheet" href="<?= asset('public/assets/css/style.css?v=' . $stylesheetVersion); ?>">
+    <link rel="icon" type="image/png" href="<?= e(asset('public/favicon.png?v=' . $faviconVersion)); ?>">
+    <link rel="apple-touch-icon" href="<?= e(asset('public/favicon.png?v=' . $faviconVersion)); ?>">
+    <link rel="stylesheet" href="<?= e(asset('public/assets/css/style.css?v=' . $stylesheetVersion)); ?>">
     <style><?= theme_css_variables($content['siteTheme'] ?? []); ?></style>
 </head>
 <body>
 <div class="site-shell">
     <header class="site-header">
         <div class="container header-row">
-            <a class="brand" href="<?= base_url(); ?>">
-                <img src="<?= asset(ltrim($logoPath, '/')); ?>" alt="Logo sekolah">
+            <a class="brand" href="<?= e(base_url()); ?>">
+                <img src="<?= e(asset(ltrim($logoPath, '/'))); ?>" alt="Logo sekolah">
                 <div>
                     <strong><?= e($schoolProfile['name']); ?></strong>
                     <span>Website Resmi Sekolah</span>
                 </div>
             </a>
-            <form class="header-search" action="<?= base_url('cari'); ?>" method="get" role="search">
+            <form class="header-search" action="<?= e(base_url('cari')); ?>" method="get" role="search">
                 <input type="search" name="q" value="<?= e($_GET['q'] ?? ''); ?>" placeholder="Cari..." aria-label="Cari informasi website">
                 <button type="submit" aria-label="Cari">Cari</button>
             </form>
@@ -57,7 +57,7 @@ $faviconVersion = is_file($faviconPath) ? (string) filemtime($faviconPath) : $st
             <nav class="site-nav" id="site-nav">
                 <?php foreach ($content['navigation'] as $item): ?>
                     <?php if (($item['visible'] ?? true) === true): ?>
-                        <a class="<?= is_active_path($item['href']) ? 'active' : ''; ?>" href="<?= base_url(ltrim($item['href'], '/')); ?>">
+                        <a class="<?= is_active_path($item['href']) ? 'active' : ''; ?>" href="<?= e(base_url(ltrim($item['href'], '/'))); ?>">
                             <?= e($item['label']); ?>
                         </a>
                     <?php endif; ?>

@@ -21,9 +21,9 @@ $extracurricularRows = extracurriculars($selectedCategory !== '' ? $selectedCate
 
         <?php if ($categories): ?>
             <div class="document-filter">
-                <a class="button <?= $selectedCategory === '' ? 'primary blue' : 'secondary'; ?>" href="<?= base_url('ekstrakurikuler'); ?>">Semua</a>
+                <a class="button <?= $selectedCategory === '' ? 'primary blue' : 'secondary'; ?>" href="<?= e(base_url('ekstrakurikuler')); ?>">Semua</a>
                 <?php foreach ($categories as $category): ?>
-                    <a class="button <?= $selectedCategory === $category ? 'primary blue' : 'secondary'; ?>" href="<?= base_url('ekstrakurikuler?category=' . rawurlencode($category)); ?>"><?= e($category); ?></a>
+                    <a class="button <?= $selectedCategory === $category ? 'primary blue' : 'secondary'; ?>" href="<?= e(base_url('ekstrakurikuler?category=' . rawurlencode($category))); ?>"><?= e($category); ?></a>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
@@ -42,7 +42,7 @@ $extracurricularRows = extracurriculars($selectedCategory !== '' ? $selectedCate
                                 <small><?= e($item['category']); ?></small>
                             </div>
                         <?php else: ?>
-                            <img src="<?= image_asset_path($item['image_path']); ?>" alt="<?= e($item['name']); ?>" loading="lazy">
+                            <img src="<?= e(image_asset_path($item['image_path'])); ?>" alt="<?= e($item['name']); ?>" loading="lazy">
                         <?php endif; ?>
                         <div>
                             <span class="eyebrow"><?= e($item['category']); ?></span>

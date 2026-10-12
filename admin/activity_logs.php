@@ -16,7 +16,7 @@ require __DIR__ . '/../templates/admin_header.php';
 ?>
 <div class="admin-card">
     <h1>Log Aktivitas Admin</h1>
-    <p>Catatan audit untuk login, logout, perubahan konten, penghapusan data, backup database, export PPDB, dan perubahan password.</p>
+    <p>Catatan audit untuk login, logout, perubahan konten, penghapusan data, backup database, dan perubahan password.</p>
 
     <form method="get" class="filter-bar">
         <label>
@@ -43,7 +43,7 @@ require __DIR__ . '/../templates/admin_header.php';
         </label>
         <div class="filter-actions">
             <button class="button primary blue" type="submit">Filter</button>
-            <a class="button secondary" href="<?= base_url('admin/activity_logs.php'); ?>">Reset</a>
+            <a class="button secondary" href="<?= e(base_url('admin/activity_logs.php')); ?>">Reset</a>
         </div>
     </form>
 </div>

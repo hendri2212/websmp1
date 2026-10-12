@@ -216,6 +216,5 @@ CREATE TABLE IF NOT EXISTS contact_messages (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-INSERT INTO admins (username, full_name, role, is_active, password_hash)
-VALUES ('admin', 'Administrator', 'superadmin', 1, '$2y$10$k65bk0fGXKxOOhMLcw0P/uI0AaTwc3Gm2KiaPlB.fnYLPOubIeK6q')
-ON DUPLICATE KEY UPDATE username = VALUES(username), role = 'superadmin', is_active = 1;
+-- No default account. Provision the first administrator explicitly through the
+-- offline CLI-only initialize_admin.php; never import this installer at runtime.

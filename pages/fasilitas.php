@@ -21,9 +21,9 @@ $facilityRows = school_facilities($selectedCategory !== '' ? $selectedCategory :
 
         <?php if ($categories): ?>
             <div class="document-filter">
-                <a class="button <?= $selectedCategory === '' ? 'primary blue' : 'secondary'; ?>" href="<?= base_url('fasilitas'); ?>">Semua</a>
+                <a class="button <?= $selectedCategory === '' ? 'primary blue' : 'secondary'; ?>" href="<?= e(base_url('fasilitas')); ?>">Semua</a>
                 <?php foreach ($categories as $category): ?>
-                    <a class="button <?= $selectedCategory === $category ? 'primary blue' : 'secondary'; ?>" href="<?= base_url('fasilitas?category=' . rawurlencode($category)); ?>"><?= e($category); ?></a>
+                    <a class="button <?= $selectedCategory === $category ? 'primary blue' : 'secondary'; ?>" href="<?= e(base_url('fasilitas?category=' . rawurlencode($category))); ?>"><?= e($category); ?></a>
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
@@ -42,7 +42,7 @@ $facilityRows = school_facilities($selectedCategory !== '' ? $selectedCategory :
                                 <small><?= e($facility['category']); ?></small>
                             </div>
                         <?php else: ?>
-                            <img src="<?= image_asset_path($facility['image_path']); ?>" alt="<?= e($facility['name']); ?>" loading="lazy" draggable="false" oncontextmenu="return false">
+                            <img src="<?= e(image_asset_path($facility['image_path'])); ?>" alt="<?= e($facility['name']); ?>" loading="lazy" draggable="false" oncontextmenu="return false">
                         <?php endif; ?>
                         <div>
                             <span class="eyebrow"><?= e($facility['category']); ?></span>

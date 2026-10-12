@@ -5,11 +5,10 @@ require_admin_permission('production_check');
 $pageTitle = 'Cek Kesiapan Production';
 $appConfig = app_config();
 $content = site_content();
-$dbConfig = require __DIR__ . '/../config/database.php';
 $rootPath = realpath(__DIR__ . '/..') ?: dirname(__DIR__);
 $envPath = $rootPath . DIRECTORY_SEPARATOR . '.env';
 $htaccessPath = $rootPath . DIRECTORY_SEPARATOR . '.htaccess';
-$isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['SERVER_PORT'] ?? null) === '443');
+$isHttps = request_is_https();
 $uploadMax = ini_get('upload_max_filesize') ?: '-';
 $postMax = ini_get('post_max_size') ?: '-';
 $memoryLimit = ini_get('memory_limit') ?: '-';
@@ -51,15 +50,10 @@ function production_check_writable(string $relativePath): array
     );
 }
 
-$defaultAdminPassword = false;
 $adminCount = 0;
 if (db_available()) {
     ensure_admin_role_columns();
     $adminCount = (int) db()->query('SELECT COUNT(*) FROM admins WHERE is_active = 1')->fetchColumn();
-    $statement = db()->prepare("SELECT password_hash FROM admins WHERE username = 'admin' LIMIT 1");
-    $statement->execute();
-    $hash = $statement->fetchColumn();
-    $defaultAdminPassword = is_string($hash) && password_verify('admin123', $hash);
 }
 
 $checks = [
@@ -78,8 +72,8 @@ $checks = [
     production_check_row(
         'File .env',
         is_file($envPath) ? 'ok' : 'warning',
-        is_file($envPath) ? 'File .env ditemukan.' : 'File .env belum ditemukan, aplikasi memakai nilai default.',
-        'Buat .env di hosting berdasarkan .env.example dan isi kredensial database production.'
+        is_file($envPath) ? 'File .env ditemukan.' : 'File .env tidak ditemukan; konfigurasi wajib berasal dari environment server.',
+        'Gunakan environment server atau .env privat dengan konfigurasi production eksplisit.'
     ),
     production_check_row(
         'Environment',
@@ -102,7 +96,7 @@ $checks = [
     production_check_row(
         'Koneksi Database',
         db_available() ? 'ok' : 'error',
-        db_available() ? 'Database terhubung ke ' . $dbConfig['host'] . ':' . $dbConfig['port'] . '.' : 'Database belum terhubung.',
+        db_available() ? 'Database terhubung.' : 'Database belum terhubung.',
         'Cek DB_HOST, DB_DATABASE, DB_USERNAME, dan DB_PASSWORD di .env.'
     ),
     production_check_row(
@@ -113,9 +107,9 @@ $checks = [
     ),
     production_check_row(
         'Password Admin Awal',
-        $defaultAdminPassword ? 'error' : 'ok',
-        $defaultAdminPassword ? 'Akun admin masih memakai password awal admin123.' : 'Password awal tidak terdeteksi pada akun admin.',
-        'Ganti password admin awal sebelum website live.'
+        'warning',
+        'Keamanan password akun existing belum diverifikasi. Credential installer historis memerlukan peninjauan dan rotasi secara privat jika pernah digunakan.',
+        'Installer baru tidak membuat akun default. Tinjau akun existing dan rotasi credential legacy secara privat sebelum release.'
     ),
     production_check_row(
         'File .htaccess',
@@ -127,12 +121,12 @@ $checks = [
         'Batas Upload PHP',
         $uploadMax !== '-' && $postMax !== '-' ? 'ok' : 'warning',
         'upload_max_filesize=' . $uploadMax . ', post_max_size=' . $postMax . ', memory_limit=' . $memoryLimit . '.',
-        'Sesuaikan batas upload di hosting bila file PPDB atau dokumen resmi sering gagal diunggah.'
+        'Sesuaikan batas upload di hosting bila dokumen resmi sering gagal diunggah.'
     ),
     production_check_row(
         'Optimasi Gambar GD',
-        extension_loaded('gd') ? 'ok' : 'warning',
-        extension_loaded('gd') ? 'Ekstensi GD aktif. Kompresi gambar otomatis bisa berjalan.' : 'Ekstensi GD belum aktif. Upload tetap valid, tetapi kompresi otomatis tidak berjalan.',
+        extension_loaded('gd') ? 'ok' : 'error',
+        extension_loaded('gd') ? 'Ekstensi GD aktif. Dukungan JPG, PNG, dan WEBP tetap perlu diverifikasi.' : 'Ekstensi GD belum aktif. Upload gambar ditolak karena validasi dan pemrosesan gambar memerlukan GD.',
         'Aktifkan ekstensi gd di php.ini hosting/XAMPP untuk kompresi gambar otomatis dan output WEBP bila tersedia.'
     ),
 ];
@@ -147,7 +141,6 @@ $checks = array_merge($checks, [
     production_check_writable('public/uploads/achievements'),
     production_check_writable('public/uploads/extracurriculars'),
     production_check_writable('storage/uploads'),
-    production_check_writable('storage/uploads/ppdb'),
     production_check_writable('storage/uploads/documents'),
 ]);
 
@@ -166,8 +159,8 @@ require __DIR__ . '/../templates/admin_header.php';
         <span class="status-badge status-diterima"><?= (int) $summary['ok']; ?> OK</span>
         <span class="status-badge status-diproses"><?= (int) $summary['warning']; ?> perlu dicek</span>
         <span class="status-badge status-ditolak"><?= (int) $summary['error']; ?> masalah</span>
-        <a class="button secondary" href="<?= base_url('admin/db_backup.php'); ?>">Backup Database</a>
-        <a class="button secondary" href="<?= base_url('admin/change_password.php'); ?>">Ganti Password</a>
+        <a class="button secondary" href="<?= e(base_url('admin/db_backup.php')); ?>">Backup Database</a>
+        <a class="button secondary" href="<?= e(base_url('admin/change_password.php')); ?>">Ganti Password</a>
     </div>
 
     <?php if ($summary['error'] > 0): ?>

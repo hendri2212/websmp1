@@ -9,13 +9,13 @@
 <?php $relatedNews = related_news_items($newsItem['slug'], $newsItem['category'], 3); ?>
 <section class="section">
     <div class="container narrow-content">
-        <img class="feature-image-photo" src="<?= asset(ltrim($newsItem['image_path'], '/')); ?>" alt="<?= e($newsItem['title']); ?>">
+        <img class="feature-image-photo" src="<?= e(asset(ltrim($newsItem['image_path'], '/'))); ?>" alt="<?= e($newsItem['title']); ?>">
         <article class="panel">
             <p class="lead"><?= e($newsItem['desc']); ?></p>
             <?php foreach ($newsItem['content'] as $paragraph): ?>
                 <p><?= e($paragraph); ?></p>
             <?php endforeach; ?>
-            <a class="button primary" href="<?= base_url('berita'); ?>">Kembali ke Semua Berita</a>
+            <a class="button primary" href="<?= e(base_url('berita')); ?>">Kembali ke Semua Berita</a>
         </article>
     </div>
 </section>
@@ -30,11 +30,11 @@
         <div class="card-grid three related-grid">
             <?php foreach ($relatedNews as $item): ?>
                 <article class="card compact-card">
-                    <img class="card-cover" src="<?= image_asset_path($item['image_path']); ?>" alt="<?= e($item['title']); ?>" loading="lazy">
+                    <img class="card-cover" src="<?= e(image_asset_path($item['image_path'])); ?>" alt="<?= e($item['title']); ?>" loading="lazy">
                     <small><?= e($item['category']); ?> - <?= e($item['date']); ?></small>
                     <h3><?= e($item['title']); ?></h3>
                     <p><?= e(plain_text_excerpt($item['desc'], 110)); ?></p>
-                    <a class="text-link" href="<?= base_url('berita/' . $item['slug']); ?>">Baca selengkapnya</a>
+                    <a class="text-link" href="<?= e(base_url('berita/' . rawurlencode($item['slug']))); ?>">Baca selengkapnya</a>
                 </article>
             <?php endforeach; ?>
         </div>

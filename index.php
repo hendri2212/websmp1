@@ -2,8 +2,17 @@
 
 require __DIR__ . '/includes/bootstrap.php';
 
-$content = site_content();
 $path = current_path();
+if (in_array($path, ['/ppdb/bukti', '/pages/ppdb_receipt.php'], true)) {
+    require __DIR__ . '/pages/ppdb_receipt.php';
+    exit;
+}
+require_http_methods($path === '/kontak' ? ['GET', 'HEAD', 'POST'] : ['GET', 'HEAD']);
+if (!db_available()) {
+    send_generic_error_response(503);
+    exit;
+}
+$content = site_content();
 $pageTitle = $content['schoolProfile']['name'];
 $metaDescription = $content['schoolProfile']['description'] ?? '';
 $metaImage = $content['schoolProfile']['logoPath'] ?? '/public/logo-sekolah.png';
@@ -74,7 +83,8 @@ switch (true) {
         $view = 'pages/cari.php';
         break;
     case preg_match('#^/prestasi/(\d+)$#', $path, $matches):
-        $achievementItem = achievement_public_row((int) $matches[1]);
+        $achievementId = database_id($matches[1]);
+        $achievementItem = $achievementId !== null ? achievement_public_row($achievementId) : null;
         if (!$achievementItem) {
             http_response_code(404);
             $pageTitle = 'Halaman Tidak Ditemukan';
@@ -120,7 +130,7 @@ switch (true) {
         $view = 'pages/berita.php';
         break;
     case str_starts_with($path, '/berita/'):
-        $slug = basename($path);
+        $slug = rawurldecode(basename($path));
         $newsItem = news_item_by_slug($slug);
         if (!$newsItem) {
             http_response_code(404);
@@ -140,13 +150,8 @@ switch (true) {
         break;
     case $path === '/ppdb':
         $pageTitle = 'PPDB - ' . $content['schoolProfile']['name'];
-        $metaDescription = 'Informasi dan formulir pendaftaran peserta didik baru ' . $content['schoolProfile']['name'] . '.';
+        $metaDescription = 'Informasi PPDB/SPMB ' . $content['schoolProfile']['name'] . '. Pendaftaran resmi ditangani Dinas Pendidikan.';
         $view = 'pages/ppdb.php';
-        break;
-    case $path === '/ppdb/bukti':
-        $pageTitle = 'Bukti PPDB - ' . $content['schoolProfile']['name'];
-        $metaDescription = 'Cetak dan cek bukti pendaftaran PPDB resmi sekolah.';
-        $view = 'pages/ppdb_receipt.php';
         break;
     case $path === '/kontak':
         $pageTitle = 'Kontak - ' . $content['schoolProfile']['name'];
@@ -160,7 +165,7 @@ switch (true) {
         break;
     case $path === '/kebijakan-privasi':
         $pageTitle = 'Kebijakan Privasi - ' . $content['schoolProfile']['name'];
-        $metaDescription = 'Kebijakan privasi penggunaan data pribadi untuk layanan website sekolah dan pendaftaran PPDB online.';
+        $metaDescription = 'Kebijakan privasi penggunaan data pribadi untuk layanan informasi dan komunikasi website sekolah.';
         $view = 'pages/kebijakan_privasi.php';
         break;
     default:

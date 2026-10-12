@@ -29,7 +29,7 @@ $accreditationFile = trim((string) ($accreditation['filePath'] ?? ''));
                     <?php if ($accreditationSkDate !== ''): ?><span>Tanggal SK: <?= e($accreditationSkDate); ?></span><?php endif; ?>
                 </div>
                 <?php if ($accreditationFile !== ''): ?>
-                    <a class="button primary blue" href="<?= base_url('akreditasi/lihat'); ?>">Lihat Lembar Akreditasi</a>
+                    <a class="button primary blue" href="<?= e(base_url('akreditasi/lihat')); ?>">Lihat Lembar Akreditasi</a>
                 <?php else: ?>
                     <p class="muted">Lembar akreditasi PDF belum diunggah oleh admin.</p>
                 <?php endif; ?>
@@ -47,7 +47,7 @@ $accreditationFile = trim((string) ($accreditation['filePath'] ?? ''));
         </div>
         <div class="two-grid narrow profile-principal-grid">
             <article class="panel photo-panel profile-photo-panel">
-                <img class="portrait" src="<?= asset(ltrim($principalPhotoPath, '/')); ?>" alt="Kepala sekolah">
+                <img class="portrait" src="<?= e(asset(ltrim($principalPhotoPath, '/'))); ?>" alt="Kepala sekolah">
                 <strong><?= e($content['principalMessage']['name']); ?></strong>
                 <span><?= e($content['principalMessage']['title']); ?></span>
             </article>
@@ -66,11 +66,7 @@ $accreditationFile = trim((string) ($accreditation['filePath'] ?? ''));
         <div class="section-head-row compact">
             <div class="section-heading">
                 <span class="eyebrow">Profil Sekolah</span>
-<<<<<<< HEAD
                 <h2>Informasi kelembagaan</h2>
-=======
-                <h2>Informasi kelembagaan yang dapat diperbarui dari panel admin</h2>
->>>>>>> 98147e3 (upload pertama)
             </div>
             <div class="carousel-actions" aria-label="Navigasi profil sekolah">
                 <button class="carousel-button" type="button" data-carousel-prev="profile-section-carousel" aria-label="Geser profil ke kiri">&#8249;</button>
@@ -123,7 +119,7 @@ $accreditationFile = trim((string) ($accreditation['filePath'] ?? ''));
                     <li><?= e($item); ?></li>
                 <?php endforeach; ?>
             </ul>
-            <p><a class="text-link" href="<?= base_url('fasilitas'); ?>">Lihat detail fasilitas sekolah</a></p>
+            <p><a class="text-link" href="<?= e(base_url('fasilitas')); ?>">Lihat detail fasilitas sekolah</a></p>
         </article>
     </div>
 </section>

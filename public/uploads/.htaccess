@@ -1,5 +1,20 @@
-Options -Indexes
+Options -Indexes -ExecCGI
+SetHandler none
 
-<FilesMatch "\.(php|phtml|phar|cgi|pl|asp|aspx|jsp)$">
+# Public uploads contain images only; documents are served through private handlers.
+<FilesMatch "(?i)^(?!.*\.(jpg|jpeg|png|webp)$)">
     Require all denied
+</FilesMatch>
+
+<FilesMatch "(?i)\.(php[0-9]*|pht|phtml|phar|phps|cgi|pl|py|rb|asp|aspx|jsp|shtml|sh|ps1|vbs|wsf|exe|com|bat|cmd)(\.|$)">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_mime.c>
+    RemoveHandler .jpg .jpeg .png .webp .php .php5 .php7 .php8 .phtml .pht .phar .phps
+    RemoveType .php .php5 .php7 .php8 .phtml .pht .phar .phps
+</IfModule>
+
+<FilesMatch "(?i)\.(jpg|jpeg|png|webp)$">
+    SetHandler none
 </FilesMatch>

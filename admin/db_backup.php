@@ -69,8 +69,22 @@ function build_database_backup(PDO $pdo, string $databaseName): string
     return implode("\n", $lines);
 }
 
+function backup_path_within(string $path, string $root): bool
+{
+    $path = realpath($path);
+    $root = realpath($root);
+    if ($path === false || $root === false) { return false; }
+    $path = str_replace('\\', '/', $path);
+    $root = rtrim(str_replace('\\', '/', $root), '/') . '/';
+    if (PHP_OS_FAMILY === 'Windows') { $path = strtolower($path); $root = strtolower($root); }
+    return str_starts_with($path, $root);
+}
+
 function backup_relative_path(string $absolutePath, string $rootPath): string
 {
+    if (!file_is_within_directory($absolutePath, $rootPath) || is_link($absolutePath)) {
+        throw new RuntimeException('File backup tidak dapat diverifikasi.');
+    }
     $relative = ltrim(str_replace('\\', '/', substr($absolutePath, strlen($rootPath))), '/');
     return $relative;
 }
@@ -80,6 +94,9 @@ function backup_add_directory_to_zip(ZipArchive $zip, string $directory, string 
     if (!is_dir($directory)) {
         return 0;
     }
+    if (is_link($directory) || !backup_path_within($directory, $rootPath)) {
+        throw new RuntimeException('Direktori backup tidak dapat diverifikasi.');
+    }
 
     $count = 0;
     $iterator = new RecursiveIteratorIterator(
@@ -88,16 +105,23 @@ function backup_add_directory_to_zip(ZipArchive $zip, string $directory, string 
     );
 
     foreach ($iterator as $fileInfo) {
+        if ($fileInfo->isLink() || !backup_path_within($fileInfo->getPathname(), $directory)) {
+            throw new RuntimeException('File backup tidak dapat diverifikasi.');
+        }
         if (!$fileInfo->isFile()) {
             continue;
+        }
+        if (preg_match('/\A(?:\.env(?:\..*)?|\.htpasswd|(?:database|config|credentials|connection)\.(?:php|ini|json)|.*\.(?:ini|cnf))\z/i', $fileInfo->getFilename())) {
+            throw new RuntimeException('File konfigurasi tidak boleh disertakan dalam backup upload.');
         }
 
         $absolutePath = $fileInfo->getPathname();
         $relativePath = backup_relative_path($absolutePath, $rootPath);
         $zipPath = trim($zipPrefix . '/' . $relativePath, '/');
-        if ($zip->addFile($absolutePath, $zipPath)) {
-            $count++;
+        if (!$zip->addFile($absolutePath, $zipPath)) {
+            throw new RuntimeException('File backup gagal ditambahkan.');
         }
+        $count++;
     }
 
     return $count;
@@ -105,6 +129,9 @@ function backup_add_directory_to_zip(ZipArchive $zip, string $directory, string 
 
 function build_full_backup_zip(PDO $pdo, string $databaseName, array $tableSummaries, string $filename): array
 {
+    if (!preg_match('/\Abackup-lengkap-[a-zA-Z0-9_-]+-[0-9]{8}-[0-9]{6}\.zip\z/', $filename)) {
+        return ['path'=>null, 'error'=>'Nama backup tidak valid.', 'files'=>0];
+    }
     if (!class_exists('ZipArchive')) {
         return ['path' => null, 'error' => 'Ekstensi PHP zip belum aktif, sehingga paket ZIP belum bisa dibuat.', 'files' => 0];
     }
@@ -114,15 +141,45 @@ function build_full_backup_zip(PDO $pdo, string $databaseName, array $tableSumma
         return ['path' => null, 'error' => 'Folder project tidak bisa dibaca.', 'files' => 0];
     }
 
-    $tempPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . $filename;
+    $privateDirectory = $projectRoot;
+    foreach (['storage', 'backups', '.temporary'] as $segment) {
+        $privateDirectory .= DIRECTORY_SEPARATOR . $segment;
+        if (is_link($privateDirectory) || (!is_dir($privateDirectory) && !mkdir($privateDirectory, 0700))
+            || !backup_path_within($privateDirectory, $projectRoot)) {
+            throw new RuntimeException('Penyimpanan backup tidak tersedia.');
+        }
+    }
+    $tempPath = $privateDirectory . DIRECTORY_SEPARATOR . 'backup-' . bin2hex(random_bytes(24)) . '.zip';
+    $reservation = fopen($tempPath, 'x+b');
+    if (!$reservation) {
+        throw new RuntimeException('Penyimpanan backup tidak tersedia.');
+    }
+    fclose($reservation);
+    chmod($tempPath, 0600);
+    register_shutdown_function(static function () use ($tempPath): void {
+        if (is_file($tempPath) && !is_link($tempPath) && !@unlink($tempPath)) {
+            error_log('Temporary backup cleanup deferred; private storage requires review.');
+        }
+    });
     $zip = new ZipArchive();
+    try {
     if ($zip->open($tempPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
-        return ['path' => null, 'error' => 'File ZIP sementara tidak bisa dibuat.', 'files' => 0];
+        throw new RuntimeException('File ZIP sementara tidak bisa dibuat.');
     }
 
     $sql = build_database_backup($pdo, $databaseName);
-    $zip->addFromString('database/backup-' . preg_replace('/[^a-zA-Z0-9_-]/', '-', $databaseName) . '.sql', $sql);
-    $zip->addFromString('database/schema.sql', file_exists($projectRoot . '/database/schema.sql') ? file_get_contents($projectRoot . '/database/schema.sql') : '');
+    if (!$zip->addFromString('database/backup-' . preg_replace('/[^a-zA-Z0-9_-]/', '-', $databaseName) . '.sql', $sql)) {
+        throw new RuntimeException('Isi backup gagal ditulis.');
+    }
+    // Installation schema is optional in isolated fixtures, but read failures must not silently produce an empty entry.
+    $schemaPath = $projectRoot . '/database/schema.sql';
+    if (is_link($schemaPath) || (is_file($schemaPath) && !file_is_within_directory($schemaPath, $projectRoot . '/database'))) {
+        throw new RuntimeException('Schema backup tidak dapat diverifikasi.');
+    }
+    $schema = is_file($schemaPath) ? file_get_contents($schemaPath) : '';
+    if ($schema === false || !$zip->addFromString('database/schema.sql', $schema)) {
+        throw new RuntimeException('Isi backup gagal ditulis.');
+    }
 
     $fileCount = 2;
     $fileCount += backup_add_directory_to_zip($zip, $projectRoot . '/public/uploads', $projectRoot, 'files');
@@ -139,14 +196,24 @@ function build_full_backup_zip(PDO $pdo, string $databaseName, array $tableSumma
             'files/public/uploads',
             'files/storage/uploads',
         ],
-        'restore_note' => 'Import file SQL ke database, lalu salin folder files/public/uploads dan files/storage/uploads ke project website.',
+        'restore_note' => 'Gunakan database/backup-*.sql untuk pemulihan data, bukan database/schema.sql (schema instalasi kosong). Review target dan statement SQL sebelum import. Salin files/public/uploads dan files/storage/uploads secara terkendali.',
     ];
-    $zip->addFromString('manifest.json', json_encode($manifest, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
+    if (!$zip->addFromString('manifest.json', json_encode($manifest, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR))) {
+        throw new RuntimeException('Isi backup gagal ditulis.');
+    }
     $fileCount++;
 
-    $zip->close();
+    if (!$zip->close()) {
+        throw new RuntimeException('File ZIP gagal diselesaikan.');
+    }
 
     return ['path' => $tempPath, 'error' => null, 'files' => $fileCount];
+    } catch (Throwable $exception) {
+        error_log('Backup generation failed (' . get_class($exception) . ').');
+        try { $zip->close(); } catch (Throwable $closeException) {}
+        if (is_file($tempPath) && !is_link($tempPath)) { @unlink($tempPath); }
+        throw new RuntimeException('Backup gagal dibuat. Silakan coba lagi.');
+    }
 }
 
 $config = require __DIR__ . '/../config/database.php';
@@ -164,6 +231,8 @@ if ($pdo) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_token_is_valid($_POST['csrf_token'] ?? null)) {
         $error = 'Sesi form sudah tidak valid. Muat ulang halaman lalu coba lagi.';
+    } elseif (($validationError = input_validation_error('db_backup', $_POST, $_FILES)) !== '') {
+        $error = $validationError;
     } elseif (!$pdo) {
         $error = 'Database belum terhubung sehingga backup tidak bisa dibuat.';
     } else {
@@ -184,8 +253,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 header('Content-Type: application/zip');
                 header('Content-Disposition: attachment; filename="' . $filename . '"');
                 header('Content-Length: ' . filesize($zipResult['path']));
-                readfile($zipResult['path']);
-                unlink($zipResult['path']);
+                try {
+                    readfile($zipResult['path']);
+                } finally {
+                    if (is_file($zipResult['path'])) { unlink($zipResult['path']); }
+                }
                 exit;
             }
         } else {
