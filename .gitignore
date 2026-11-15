@@ -1,5 +1,10 @@
 /storage/sessions/
 
+# Uploaded media are runtime data; retain directory placeholders only.
+/public/uploads/**
+!/public/uploads/**/
+!/public/uploads/**/.gitkeep
+
 # Local testing, backups, and generated state.
 /storage/testing/
 /storage/backups/

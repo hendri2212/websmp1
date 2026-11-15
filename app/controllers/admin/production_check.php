@@ -107,7 +107,7 @@ $checks = [
         'Password Admin Awal',
         'warning',
         'Keamanan password akun existing belum diverifikasi. Credential installer historis memerlukan peninjauan dan rotasi secara privat jika pernah digunakan.',
-        'Installer baru tidak membuat akun default. Tinjau akun existing dan rotasi credential legacy secara privat sebelum release.'
+        'Script inisialisasi membuat akun admin dengan password awal 12345. Ganti password awal melalui menu Ganti Password sebelum release.'
     ),
     production_check_row(
         'Routing dan Proteksi Nginx',

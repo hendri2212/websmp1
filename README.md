@@ -41,10 +41,10 @@ Untuk menambah fitur, tambahkan fungsi data pada model, handler pada controller,
 1. Siapkan PHP 8.0 atau lebih baru, MySQL/MariaDB, dan ekstensi PHP `pdo_mysql`, `mbstring`, serta `gd` untuk pemrosesan gambar. Ekstensi `zip` diperlukan untuk backup ZIP. Untuk hosting Nginx, sesuaikan contoh `config/nginx.conf`.
 2. Arahkan document root Nginx ke root project (`index.php`), atau gunakan server PHP lokal dengan perintah di bawah. Jangan menjadikan `public/` sebagai document root. HTTP localhost boleh dipakai untuk development.
 3. Provision database lokal baru/terisolasi dan akun database milik developer dengan privilege terbatas pada database tersebut. Jangan menggunakan database sekolah atau credential production.
-4. Review database/schema.sql sebelum provisioning offline: installer memakai nama database development eksplisit, bukan migration database existing. Pilih target kosong yang benar; jangan import mentah ke database berisi data. Runtime tidak membuat schema atau akun otomatis.
+4. Tentukan nama database sendiri, lalu buat database kosong dengan charset `utf8mb4` dan collation `utf8mb4_unicode_ci`. Pilih database tersebut di phpMyAdmin, lalu import `database/schema.sql`. Schema tidak memuat `CREATE DATABASE` atau `USE` dan tidak membaca `.env` otomatis. Isi `DB_DATABASE` di `.env` dengan nama database yang sama. Schema bukan migration database existing; runtime tidak membuat schema atau akun otomatis.
 5. Salin .env.example menjadi .env di root project, lalu isi setiap field wajib dengan konfigurasi milik developer. Template sengaja tidak dapat langsung digunakan; tidak berisi akun/password default.
 6. Pastikan PHP dapat menulis ke `storage/` dan `public/uploads/`, dengan permission terbatas pada pengguna server. Jangan menyalin session, backup, atau arsip PPDB ke lokasi publik.
-7. Untuk akun admin awal pada database kosong, ikuti bagian Inisialisasi Admin di bawah. Tidak ada akun demo atau password bawaan.
+7. Untuk akun admin awal pada database kosong, ikuti bagian Inisialisasi Admin di bawah. Script inisialisasi menyediakan akun default seperti dijelaskan di bawah.
 8. Buka URL development yang dipilih, lalu /admin/login.php. Bila konfigurasi salah, gunakan log privat dan pesan generik; jangan mengaktifkan display_errors publik.
 
 ## Menjalankan Lokal dengan MAMP (macOS)
@@ -119,11 +119,20 @@ Folder `tests/` telah dihapus karena bukan dependensi runtime website. Suite pen
 
 ## Inisialisasi Admin
 
-Installer tidak menyediakan akun/password default. Akun existing tidak diubah atau diaktifkan oleh import schema.
+`database/schema.sql` hanya membuat struktur tabel. Untuk membuat akun pertama pada database dengan tabel `admins` kosong, jalankan dari root proyek:
 
-Untuk database baru dengan tabel admins kosong, operator memakai `database/initialize_admin.php` secara offline/CLI dengan opsi `--initialize`, username dan nama lengkap eksplisit. Password unik 12-72 byte wajib diberikan melalui STDIN dari secret pipe privat, bukan argument, history, file publik atau input terminal yang terlihat. Script menolak mode HTTP, input kosong, storage nontransaksional dan database yang sudah mempunyai akun; tidak mereset akun existing.
+```bash
+php database/initialize_admin.php --initialize
+```
 
-Installer/schema/seed/script inisialisasi tidak masuk public release. Akun yang dahulu dibuat installer legacy harus ditinjau dan credential-nya dirotasi secara privat sebelum release; penghapusan default dari source tidak mengubah password database existing.
+Akun yang dibuat:
+
+- Username: `admin`
+- Password: `12345` (disimpan sebagai hash)
+- Nama: `Administrator`
+- Role: `superadmin`, status aktif
+
+Script menggunakan konfigurasi database dari `.env`, hanya berjalan lewat CLI, dan menolak tabel akun yang sudah berisi data atau memakai engine nontransaksional. Menjalankan ulang tidak mereset akun existing.
 
 ## Fitur Admin Saat Ini
 

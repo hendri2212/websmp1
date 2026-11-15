@@ -469,29 +469,6 @@ LOCK TABLES `staff_members` WRITE;
 /*!40000 ALTER TABLE `staff_members` ENABLE KEYS */;
 UNLOCK TABLES;
 
---
--- Table structure for table `stage3_test_environment`
---
-
-DROP TABLE IF EXISTS `stage3_test_environment`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `stage3_test_environment` (
-  `id` tinyint(4) NOT NULL,
-  `marker` char(64) NOT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `stage3_test_environment`
---
-
-LOCK TABLES `stage3_test_environment` WRITE;
-/*!40000 ALTER TABLE `stage3_test_environment` DISABLE KEYS */;
-INSERT INTO `stage3_test_environment` VALUES (1,'c2cf83397dc81ba71e416c8899983709e9d90cae8c7888b78d843b73e2331887');
-/*!40000 ALTER TABLE `stage3_test_environment` ENABLE KEYS */;
-UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

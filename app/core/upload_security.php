@@ -13,7 +13,8 @@ function upload_filename_error(array $file, array $extensions): string
     $fullPath = $file['full_path'] ?? $name;
     if (!is_string($fullPath) || $fullPath !== $name || !mb_check_encoding($name, 'UTF-8')
         || mb_strlen($name, 'UTF-8') > 255 || preg_match('/[\x00-\x1f\x7f\/\\\\]/', $name)
-        || substr_count($name, '.') !== 1 || str_starts_with($name, '.')
+        || str_starts_with($name, '.')
+        || preg_match('/\.(?:php[0-9]*|phtml|pht|phar|phps|cgi|pl|py|rb|asp|aspx|jsp|shtml|sh|ps1|vbs|wsf|exe|com|bat|cmd)(?:\.|$)/i', $name)
         || !in_array(strtolower(pathinfo($name, PATHINFO_EXTENSION)), $extensions, true)) {
         return 'Nama atau ekstensi file upload tidak diizinkan.';
     }

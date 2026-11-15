@@ -109,15 +109,24 @@ function media_paths_in_value(mixed $value): array
 
 function media_reference_paths($pdo): array
 {
-    $paths = media_paths_in_value(seed_content());
+    $settings = $pdo->query('SELECT setting_key, setting_value FROM site_settings')->fetchAll();
+    $defaults = seed_content();
+    foreach ($settings as $setting) {
+        // Stored sections replace defaults; an overridden default is not a live reference.
+        if ($setting['setting_value'] !== '' && $setting['setting_value'] !== null) {
+            json_decode($setting['setting_value'], true, 512, JSON_THROW_ON_ERROR);
+            unset($defaults[$setting['setting_key']]);
+        }
+    }
+    $paths = media_paths_in_value($defaults);
     foreach (['news'=>'image_path', 'gallery_items'=>'image_path', 'staff_members'=>'photo_path',
         'school_achievements'=>'image_path', 'extracurriculars'=>'image_path',
         'school_facilities'=>'image_path', 'school_documents'=>'file_path'] as $table=>$column) {
         $rows = $pdo->query('SELECT `' . $column . '` FROM `' . $table . '`')->fetchAll(PDO::FETCH_COLUMN);
         $paths = array_merge($paths, media_paths_in_value($rows));
     }
-    foreach ($pdo->query('SELECT setting_value FROM site_settings')->fetchAll(PDO::FETCH_COLUMN) as $json) {
-        $paths = array_merge($paths, media_paths_in_value(json_decode($json, true, 512, JSON_THROW_ON_ERROR)));
+    foreach ($settings as $setting) {
+        $paths = array_merge($paths, media_paths_in_value(json_decode($setting['setting_value'], true, 512, JSON_THROW_ON_ERROR)));
     }
     // Retain only historical file references; never read applicant identity or collect PPDB directories.
     $paths = array_merge($paths, media_paths_in_value($pdo->query('SELECT family_card_path, birth_certificate_path, report_card_path, photo_path FROM ppdb_applications')->fetchAll()));

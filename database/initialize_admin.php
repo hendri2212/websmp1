@@ -4,23 +4,16 @@ declare(strict_types=1);
 require_once __DIR__ . '/../app/core/paths.php';
 
 if (PHP_SAPI !== 'cli') { http_response_code(403); exit('CLI only'); }
-if (count($argv) !== 4 || ($argv[1] ?? '') !== '--initialize') {
-    fwrite(STDERR, "Use --initialize <username> <full-name> with a private password pipe on STDIN.\n");
+if (count($argv) !== 2 || ($argv[1] ?? '') !== '--initialize') {
+    fwrite(STDERR, "Use: php database/initialize_admin.php --initialize\n");
     exit(1);
 }
 
 $pdo = null; $locked = false; $lockName = null; $password = null; $failed = false;
 try {
-    if (stream_isatty(STDIN)) { throw new RuntimeException('Private input required'); }
-    $username = $argv[2]; $fullName = $argv[3];
-    $password = rtrim((string) stream_get_contents(STDIN, 1025), "\r\n");
-    if (!preg_match('/\A[a-zA-Z0-9_.-]{3,50}\z/', $username)
-        || !mb_check_encoding($fullName, 'UTF-8') || trim($fullName) === '' || mb_strlen($fullName, 'UTF-8') > 120
-        || preg_match('/[\x00-\x1f\x7f]/', $fullName)
-        || strlen($password) < 12 || strlen($password) > 72 || trim($password) === ''
-        || preg_match('/[\x00-\x1f\x7f]/', $password)) {
-        throw new RuntimeException('Invalid explicit initial account');
-    }
+    $username = 'admin';
+    $fullName = 'Administrator';
+    $password = '12345';
     require APP_ROOT . '/app/core/database.php';
     $pdo = db();
     if (!$pdo) { throw new RuntimeException('Database unavailable'); }
@@ -42,12 +35,12 @@ try {
     $statement->execute([$username, $fullName, $hash]);
     if ($statement->rowCount() !== 1) { throw new RuntimeException('Account not inserted'); }
     $pdo->commit();
-    echo "Initial administrator created. No existing accounts changed.\n";
+    echo "Default administrator created: admin. No existing accounts changed.\n";
 } catch (Throwable $exception) {
     if ($pdo instanceof PDO && $pdo->inTransaction()) {
         try { $pdo->rollBack(); } catch (Throwable $exception) { /* Close the connection without exposing its error. */ }
     }
-    fwrite(STDERR, "Initialization refused or failed. Verify private configuration, input and empty account storage.\n");
+    fwrite(STDERR, "Initialization refused or failed. Verify private configuration and empty account storage.\n");
     $failed = true;
 } finally {
     $password = null;
