@@ -13,6 +13,40 @@ Project PHP Native + MySQL/MariaDB dengan panel admin dan PPDB/SPMB pasif/inform
 7. Untuk akun admin awal pada database kosong, ikuti bagian Inisialisasi Admin di bawah. Tidak ada akun demo atau password bawaan.
 8. Buka URL development yang dipilih, lalu /admin/login.php. Bila konfigurasi salah, gunakan log privat dan pesan generik; jangan mengaktifkan display_errors publik.
 
+## Menjalankan Lokal dengan MAMP (macOS)
+
+Proyek ini memakai PHP native tanpa `package.json` atau `composer.json`. Tidak perlu menjalankan `npm install`, `composer install`, atau proses build untuk membuka website.
+
+Untuk konfigurasi lokal yang sudah disiapkan:
+
+1. Buka MAMP, lalu klik **Start Servers**. Pastikan Apache berjalan pada port `8888` dan MySQL pada port `8889`.
+2. Buka website: [http://localhost:8888/websmp1/](http://localhost:8888/websmp1/).
+3. Buka admin: [http://localhost:8888/websmp1/admin/login.php](http://localhost:8888/websmp1/admin/login.php). Gunakan akun dan password dari database yang diimport.
+
+Database `website_sekolah` sudah diisi dari `website_sekolah.sql`; tidak perlu import ulang setiap menjalankan aplikasi. `.env` lokal sudah disiapkan dengan `APP_ENV=local`, `APP_URL=http://localhost:8888/websmp1`, `DB_HOST=127.0.0.1`, `DB_PORT=8889`, dan `DB_DATABASE=website_sekolah`. Credential database tersimpan di `.env` privat.
+
+Apache MAMP memakai document root `/Applications/MAMP/htdocs`. Folder proyek `/Users/hendriarifin/CODE/websmp1` dihubungkan melalui symbolic link `/Applications/MAMP/htdocs/websmp1`. Jika menyiapkan ulang pada mesin dengan lokasi proyek yang sama dan link belum ada, jalankan:
+
+```bash
+ln -s /Users/hendriarifin/CODE/websmp1 /Applications/MAMP/htdocs/websmp1
+```
+
+Untuk clone baru pada mesin lain, ikuti **Setup Setelah Clone**, sesuaikan lokasi symbolic link dan `.env` dengan konfigurasi MAMP mesin tersebut. Jika memakai dump `website_sekolah.sql` milik sendiri, import ke database kosong melalui phpMyAdmin MAMP sebagai pengganti `database/schema.sql`; jangan import keduanya. Dump yang sudah berisi akun admin tidak membutuhkan inisialisasi admin baru.
+
+Jika website tidak terbuka, periksa Apache MAMP dan symbolic link. Jika koneksi database gagal, periksa MySQL MAMP, port, nama database, serta credential di `.env`. Jika port Apache diubah, sesuaikan juga URL browser dan `APP_URL`.
+
+## Menjalankan Lokal dengan Server PHP
+
+Sebagai alternatif Apache MAMP, jalankan perintah berikut dari root proyek:
+
+```bash
+APP_URL=http://localhost:8080 php -S localhost:8080 preview_router.php
+```
+
+Buka [website](http://localhost:8080/) atau [login admin](http://localhost:8080/admin/login.php). MySQL MAMP tetap harus aktif pada port `8889` sesuai `.env` lokal; Apache tidak diperlukan. Perintah ini mengganti `APP_URL` hanya untuk proses server tersebut tanpa mengubah `.env`.
+
+Gunakan `preview_router.php` agar routing aplikasi dan pembatasan akses file privat diterapkan oleh server PHP. Server ini untuk development lokal. Hentikan dengan `Ctrl+C`.
+
 ## Variabel Environment
 
 | Variabel | Wajib | Nilai/aturan |
@@ -39,13 +73,11 @@ Production harus eksplisit. Config invalid/missing ditolak dengan error generik,
 
 Tidak ada credential production yang disediakan repository. Ikuti [DEPLOYMENT.md](DEPLOYMENT.md) untuk persiapan release allowlist, konfigurasi privat, backup/restore, permission dan gate hosting, bukan upload seluruh project.
 
-## Testing Aman
+## Pengujian dan Script Maintenance
 
-Suite database membutuhkan instance testing yang lolos tests/stage3_database_preflight.php, konfigurasi privat dan fixture provisioning terisolasi. Menyalin .env.example tidak menyediakan environment regression itu. Jangan mengubah guard agar menunjuk database lokal/production sembarangan.
+Folder `tests/` telah dihapus karena bukan dependensi runtime website. Suite pengujian otomatis dan script pembuat paket release yang sebelumnya berada di folder tersebut tidak lagi tersedia.
 
-Harness HTTP/browser juga membutuhkan dependency testing terpisah: PHP CLI dengan cURL/DOM/proc_open dan extension relevan, Apache testing, Node.js, serta browser yang sesuai konfigurasi harness. tests/stage4_ppdb_public_browser_test.cjs membaca playwright-core dari storage/testing/stage3-mariadb/browser-tools/node_modules/playwright-core; versi toolbox yang diuji pada closure ini adalah 1.60.0. Provision toolbox privat dari paket terverifikasi sebelum menjalankan suite; jangan menyalin seluruh state testing pengguna lain atau memasukkan node_modules ke release. Harness browser/Apache saat ini memiliki asumsi lokasi executable Windows yang perlu diperiksa pada mesin baru. Ketiadaan toolbox adalah kegagalan setup test, bukan alasan menghapus assertion browser.
-
-Jangan jalankan tests/admin_form_smoke_test.php atau database/seed_final_content.php. Keduanya legacy DO NOT COMMIT dan disposisi tracked masih harus diputuskan sebelum checkpoint. Tests/laporan boleh ada di repository sesuai manifest, tetapi tidak ikut public release.
+`database/maintenance_legacy_schema.php` bergantung pada preflight dari folder `tests/` sehingga tidak dapat dijalankan tanpa memulihkan dependensi pengujiannya. Jangan menghapus atau melewati guard tersebut untuk menjalankan maintenance. `database/seed_final_content.php` adalah script legacy yang tidak direkomendasikan untuk dijalankan. Setup database lokal tetap mengikuti bagian Setup Setelah Clone; admin awal memakai `database/initialize_admin.php` hanya pada tabel akun kosong.
 
 ## Inisialisasi Admin
 
@@ -147,7 +179,7 @@ Gunakan checklist ini setelah fitur website selesai diuji dan sebelum website di
 - Pastikan password admin awal sudah diganti.
 - Buat akun operator sesuai role: `superadmin`, `editor`, dan `ppdb`.
 - Pastikan tidak semua operator memakai akun `superadmin`.
-- Jangan jalankan `tests/admin_form_smoke_test.php`: test legacy tidak memverifikasi database terisolasi dan masih menjalankan workflow pendaftaran PPDB yang sudah dinonaktifkan. Gunakan suite `tests/stage3_auth_http_test.php` dan `tests/stage3_content_http_test.php` hanya setelah konfigurasi testing privat tersedia dan `tests/stage3_database_preflight.php` lulus; jangan gunakan database sekolah/production.
+- Periksa login, hak akses role, dan pengelolaan konten secara manual pada database lokal terisolasi sebelum release; suite otomatis lama sudah dihapus.
 - Buka halaman `Cek Production` dan pastikan tidak ada masalah kritis.
 - Jalankan backup database setelah semua konten asli masuk.
 - Gunakan `Backup SQL` untuk pemulihan database saja.

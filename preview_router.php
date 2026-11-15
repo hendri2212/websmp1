@@ -27,6 +27,11 @@ if (str_starts_with($previewPath, '/public/')) {
     return false;
 }
 
+if (in_array($previewPath, ['/admin', '/admin/'], true)) {
+    require __DIR__ . '/admin/index.php';
+    return true;
+}
+
 if (preg_match('~^/admin/[a-z_]+\.php$~', $previewPath)) {
     if (!is_file(__DIR__ . $previewPath)) {
         http_response_code(404);

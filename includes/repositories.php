@@ -36,11 +36,23 @@ function site_content(): array
         }
     }
 
+    $content['schoolProfile']['logoPath'] = normalized_school_logo_path($content['schoolProfile']['logoPath'] ?? null);
     $content['navigation'] = normalized_navigation($content['navigation'] ?? [], seed_content()['navigation'] ?? []);
     $content['siteAcademic'] = normalized_site_academic($content['siteAcademic'] ?? [], seed_content()['siteAcademic'] ?? []);
     $content['siteHome'] = normalized_site_home($content['siteHome'] ?? [], seed_content()['siteHome'] ?? []);
 
     return $content;
+}
+
+function normalized_school_logo_path(mixed $path): string
+{
+    $path = is_string($path) ? '/' . ltrim(trim($path), '/') : '';
+    if (!str_starts_with($path, '/public/')
+        || !file_is_within_directory(__DIR__ . '/..' . $path, __DIR__ . '/../public')) {
+        return '/public/logo-sekolah.png';
+    }
+
+    return $path;
 }
 
 function normalized_site_academic(array $settings, array $defaults): array
