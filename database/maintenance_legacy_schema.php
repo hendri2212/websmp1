@@ -57,17 +57,6 @@ try {
             }
         }
     }
-    if (!in_array('admin_activity_logs', $tables, true)) {
-        $operations[] = ['sql' => 'CREATE TABLE admin_activity_logs (
-            id INT AUTO_INCREMENT PRIMARY KEY, admin_id INT NULL, username VARCHAR(80) NULL,
-            role VARCHAR(40) NULL, action VARCHAR(80) NOT NULL, module VARCHAR(80) NOT NULL,
-            entity_type VARCHAR(80) NULL, entity_id INT NULL, description TEXT NOT NULL,
-            metadata LONGTEXT NULL, ip_address VARCHAR(45) NULL, user_agent VARCHAR(255) NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_admin_activity_created_at (created_at), INDEX idx_admin_activity_action (action),
-            INDEX idx_admin_activity_module (module), INDEX idx_admin_activity_username (username)
-        ) ENGINE=InnoDB', 'params' => null];
-    }
     echo "Verified isolated testing database only. Operations: " . count($operations) . "\n";
     echo "Legacy ADD defaults: role=editor, is_active=1, news is_active=1. Review before apply.\n";
     echo "DDL is not covered by a rollback guarantee; partial failure requires a new plan.\n";

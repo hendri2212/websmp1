@@ -191,7 +191,6 @@ function save_site_sections(array $payload): void
 
     commit_uploaded_files();
     retry_media_cleanup($pdo);
-    log_admin_activity('update', 'settings', 'Pengaturan website diperbarui.', 'site_settings');
 }
 
 function school_profile_sections(): array

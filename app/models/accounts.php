@@ -1,52 +1,5 @@
 <?php
 
-function admin_activity_logs(array $filters = [], int $limit = 200): array
-{
-    ensure_admin_activity_logs_table();
-    $pdo = db();
-    if (!$pdo) {
-        return [];
-    }
-
-    $where = [];
-    $params = [];
-
-    if (!empty($filters['q'])) {
-        $where[] = '(username LIKE :q OR module LIKE :q OR action LIKE :q OR description LIKE :q OR ip_address LIKE :q)';
-        $params['q'] = '%' . $filters['q'] . '%';
-    }
-    if (!empty($filters['module'])) {
-        $where[] = 'module = :module';
-        $params['module'] = $filters['module'];
-    }
-    if (!empty($filters['action'])) {
-        $where[] = 'action = :action';
-        $params['action'] = $filters['action'];
-    }
-
-    $sql = 'SELECT * FROM admin_activity_logs';
-    if ($where) {
-        $sql .= ' WHERE ' . implode(' AND ', $where);
-    }
-    $sql .= ' ORDER BY created_at DESC, id DESC LIMIT ' . max(1, min(500, $limit));
-
-    $statement = $pdo->prepare($sql);
-    $statement->execute($params);
-    return $statement->fetchAll();
-}
-
-function admin_activity_log_options(string $field): array
-{
-    ensure_admin_activity_logs_table();
-    $pdo = db();
-    if (!$pdo || !in_array($field, ['module', 'action'], true)) {
-        return [];
-    }
-
-    $rows = $pdo->query('SELECT DISTINCT ' . $field . ' FROM admin_activity_logs ORDER BY ' . $field . ' ASC')->fetchAll(PDO::FETCH_COLUMN);
-    return array_values(array_filter($rows));
-}
-
 function admin_users(): array
 {
     ensure_admin_role_columns();
@@ -153,7 +106,7 @@ function save_admin_user_locked(PDO $pdo, array $data): array
         $sql .= ' WHERE id = :id';
         $statement = $pdo->prepare($sql);
         $statement->execute($params);
-        log_admin_activity('update', 'admins', 'Akun admin diperbarui: ' . $data['username'], 'admin', (int) $data['id']);
+
         return ['success' => true, 'message' => 'Akun admin berhasil diperbarui.'];
     }
 
@@ -169,7 +122,6 @@ function save_admin_user_locked(PDO $pdo, array $data): array
         'is_active' => (int) $data['is_active'],
         'password_hash' => password_hash($data['password'], PASSWORD_DEFAULT),
     ]);
-    log_admin_activity('create', 'admins', 'Akun admin dibuat: ' . $data['username'], 'admin', (int) $pdo->lastInsertId());
 
     return ['success' => true, 'message' => 'Akun admin berhasil dibuat.'];
 }
@@ -209,7 +161,7 @@ function delete_admin_user_locked(PDO $pdo, int $id): array
     if ($statement->rowCount() !== 1) {
         return ['success' => false, 'message' => 'Akun admin tidak ditemukan atau sudah dihapus.'];
     }
-    log_admin_activity('delete', 'admins', 'Akun admin dihapus: ' . ($admin['username'] ?? ('ID ' . $id)), 'admin', $id);
+
     return ['success' => true, 'message' => 'Akun admin berhasil dihapus.'];
 }
 

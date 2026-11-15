@@ -18,26 +18,6 @@ CREATE TABLE IF NOT EXISTS site_settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS admin_activity_logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    admin_id INT NULL,
-    username VARCHAR(80) NULL,
-    role VARCHAR(40) NULL,
-    action VARCHAR(80) NOT NULL,
-    module VARCHAR(80) NOT NULL,
-    entity_type VARCHAR(80) NULL,
-    entity_id INT NULL,
-    description TEXT NOT NULL,
-    metadata LONGTEXT NULL,
-    ip_address VARCHAR(45) NULL,
-    user_agent VARCHAR(255) NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    INDEX idx_admin_activity_created_at (created_at),
-    INDEX idx_admin_activity_action (action),
-    INDEX idx_admin_activity_module (module),
-    INDEX idx_admin_activity_username (username)
-);
-
 CREATE TABLE IF NOT EXISTS news (
     id INT AUTO_INCREMENT PRIMARY KEY,
     slug VARCHAR(180) NOT NULL UNIQUE,

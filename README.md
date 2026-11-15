@@ -134,9 +134,8 @@ Installer/schema/seed/script inisialisasi tidak masuk public release. Akun yang 
 - Navigasi publik responsif dengan tombol menu/hamburger untuk tampilan mobile
 - Role admin untuk membatasi akses superadmin, editor konten, dan operator PPDB
 - Backup dan export database SQL dari panel superadmin
-- Log aktivitas admin untuk login, logout, perubahan konten, penghapusan data, backup, dan ganti password
 - Cek kesiapan production dari panel superadmin: environment, HTTPS, database, password awal, konfigurasi Nginx, batas upload, dan permission folder
-- Dashboard ringkasan dengan kartu statistik, ringkasan konten, agenda terdekat, dan aktivitas admin terbaru
+- Dashboard ringkasan dengan kartu statistik, ringkasan konten, agenda terdekat
 - Notifikasi admin berupa badge pesan masuk baru di sidebar
 - SEO dasar: meta description, canonical URL, Open Graph, Twitter card, sitemap.xml, dan robots.txt
 - Audit keamanan final: security headers, no-cache admin, proteksi file sensitif, sanitasi nama download, dan mitigasi CSV injection
@@ -231,4 +230,3 @@ Gunakan checklist ini setelah fitur website selesai diuji dan sebelum website di
 - Jangan menghapus data PPDB historis tanpa keputusan retensi.
 - Hapus berita, galeri, dokumen, fasilitas, atau konten lain yang berisi kata `TEST`.
 - Hapus file upload test yang tidak lagi dipakai.
-- Log aktivitas boleh tetap disimpan sebagai riwayat audit internal.

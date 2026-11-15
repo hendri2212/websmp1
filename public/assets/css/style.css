@@ -750,6 +750,7 @@ p { line-height: 1.8; }
 }
 .admin-body { height: 100vh; overflow: hidden; }
 .admin-shell { height: 100vh; min-height: 100vh; grid-template-columns: 280px minmax(0, 1fr); align-items: stretch; overflow: hidden; }
+.admin-shell-login { grid-template-columns: minmax(0, 1fr); }
 .admin-sidebar {
     height: 100vh; overflow: hidden;
     background: var(--navy); color: white; padding: 28px 20px;

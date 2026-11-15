@@ -85,14 +85,13 @@ function save_school_document(array $data): void
     if (!empty($data['id'])) {
         ensure_academic_year_columns();
         execute_media_mutation($pdo, 'UPDATE school_documents SET title = :title, category = :category, description = :description, file_path = :file_path, original_filename = :original_filename, file_size = :file_size, is_active = :is_active, academic_year = :academic_year, sort_order = :sort_order WHERE id = :id', $data, 'school_documents', 'file_path');
-        log_admin_activity('update', 'documents', 'Dokumen diperbarui: ' . $data['title'], 'school_document', (int) $data['id']);
+
         return;
     }
 
     unset($data['id']);
     ensure_academic_year_columns();
-    $savedId = execute_media_mutation($pdo, 'INSERT INTO school_documents (title, category, description, file_path, original_filename, file_size, is_active, academic_year, sort_order) VALUES (:title, :category, :description, :file_path, :original_filename, :file_size, :is_active, :academic_year, :sort_order)', $data, 'school_documents', 'file_path');
-    log_admin_activity('create', 'documents', 'Dokumen dibuat: ' . $data['title'], 'school_document', $savedId);
+    execute_media_mutation($pdo, 'INSERT INTO school_documents (title, category, description, file_path, original_filename, file_size, is_active, academic_year, sort_order) VALUES (:title, :category, :description, :file_path, :original_filename, :file_size, :is_active, :academic_year, :sort_order)', $data, 'school_documents', 'file_path');
 }
 
 function delete_school_document(mixed $id): bool
@@ -103,9 +102,8 @@ function delete_school_document(mixed $id): bool
         throw new RuntimeException('Database tidak tersedia. File tidak dihapus.');
     }
     if ($pdo) {
-        $row = admin_document_row($id);
         execute_media_mutation($pdo, 'DELETE FROM school_documents WHERE id = :id', ['id' => $id], 'school_documents', 'file_path');
-        log_admin_activity('delete', 'documents', 'Dokumen dihapus: ' . ($row['title'] ?? ('ID ' . $id)), 'school_document', $id);
+
         return true;
     }
     return false;

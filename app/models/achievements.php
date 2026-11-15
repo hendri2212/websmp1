@@ -150,14 +150,13 @@ function save_achievement(array $data): void
     if (!empty($data['id'])) {
         ensure_academic_year_columns();
         execute_media_mutation($pdo, 'UPDATE school_achievements SET title = :title, level = :level, category = :category, achiever_name = :achiever_name, achievement_date = :achievement_date, description = :description, image_path = :image_path, is_active = :is_active, academic_year = :academic_year, sort_order = :sort_order WHERE id = :id', $data, 'school_achievements', 'image_path');
-        log_admin_activity('update', 'achievements', 'Prestasi diperbarui: ' . $data['title'], 'achievement', (int) $data['id']);
+
         return;
     }
 
     unset($data['id']);
     ensure_academic_year_columns();
-    $savedId = execute_media_mutation($pdo, 'INSERT INTO school_achievements (title, level, category, achiever_name, achievement_date, description, image_path, is_active, academic_year, sort_order) VALUES (:title, :level, :category, :achiever_name, :achievement_date, :description, :image_path, :is_active, :academic_year, :sort_order)', $data, 'school_achievements', 'image_path');
-    log_admin_activity('create', 'achievements', 'Prestasi dibuat: ' . $data['title'], 'achievement', $savedId);
+    execute_media_mutation($pdo, 'INSERT INTO school_achievements (title, level, category, achiever_name, achievement_date, description, image_path, is_active, academic_year, sort_order) VALUES (:title, :level, :category, :achiever_name, :achievement_date, :description, :image_path, :is_active, :academic_year, :sort_order)', $data, 'school_achievements', 'image_path');
 }
 
 function delete_achievement(mixed $id): bool
@@ -168,9 +167,8 @@ function delete_achievement(mixed $id): bool
         throw new RuntimeException('Database tidak tersedia. File tidak dihapus.');
     }
     if ($pdo) {
-        $row = admin_achievement_row($id);
         execute_media_mutation($pdo, 'DELETE FROM school_achievements WHERE id = :id', ['id' => $id], 'school_achievements', 'image_path');
-        log_admin_activity('delete', 'achievements', 'Prestasi dihapus: ' . ($row['title'] ?? ('ID ' . $id)), 'achievement', $id);
+
         return true;
     }
     return false;

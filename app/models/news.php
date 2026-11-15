@@ -126,14 +126,13 @@ function save_news(array $data): void
     if (!empty($data['id'])) {
         ensure_news_publication_column();
         execute_media_mutation($pdo, 'UPDATE news SET slug = :slug, title = :title, category = :category, excerpt = :excerpt, content = :content, image_path = :image_path, published_at = :published_at, is_active = :is_active WHERE id = :id', $data, 'news', 'image_path');
-        log_admin_activity('update', 'news', 'Berita diperbarui: ' . $data['title'], 'news', (int) $data['id']);
+
         return;
     }
 
     unset($data['id']);
     ensure_news_publication_column();
-    $savedId = execute_media_mutation($pdo, 'INSERT INTO news (slug, title, category, excerpt, content, image_path, published_at, is_active) VALUES (:slug, :title, :category, :excerpt, :content, :image_path, :published_at, :is_active)', $data, 'news', 'image_path');
-    log_admin_activity('create', 'news', 'Berita dibuat: ' . $data['title'], 'news', $savedId);
+    execute_media_mutation($pdo, 'INSERT INTO news (slug, title, category, excerpt, content, image_path, published_at, is_active) VALUES (:slug, :title, :category, :excerpt, :content, :image_path, :published_at, :is_active)', $data, 'news', 'image_path');
 }
 
 function delete_news(mixed $id): bool
@@ -144,9 +143,8 @@ function delete_news(mixed $id): bool
         throw new RuntimeException('Database tidak tersedia. File tidak dihapus.');
     }
     if ($pdo) {
-        $row = admin_news_row($id);
         execute_media_mutation($pdo, 'DELETE FROM news WHERE id = :id', ['id' => $id], 'news', 'image_path');
-        log_admin_activity('delete', 'news', 'Berita dihapus: ' . ($row['title'] ?? ('ID ' . $id)), 'news', $id);
+
         return true;
     }
     return false;

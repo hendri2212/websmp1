@@ -21,12 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($zipResult['error']) {
                 $error = $zipResult['error'];
             } else {
-                log_admin_activity('export', 'db_backup', 'Backup lengkap ZIP diunduh.', 'database', null, [
-                    'database' => $config['database'],
-                    'filename' => $filename,
-                    'tables' => count($tableSummaries),
-                    'files' => $zipResult['files'],
-                ]);
+
 
                 header('Content-Type: application/zip');
                 header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -41,11 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $sql = build_database_backup($pdo, $config['database']);
             $filename = 'backup-' . preg_replace('/[^a-zA-Z0-9_-]/', '-', $config['database']) . '-' . date('Ymd-His') . '.sql';
-            log_admin_activity('export', 'db_backup', 'Backup database diunduh.', 'database', null, [
-                'database' => $config['database'],
-                'filename' => $filename,
-                'tables' => count($tableSummaries),
-            ]);
+
 
             header('Content-Type: application/sql; charset=utf-8');
             header('Content-Disposition: attachment; filename="' . $filename . '"');

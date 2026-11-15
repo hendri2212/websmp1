@@ -81,13 +81,12 @@ function save_facility(array $data): void
 
     if (!empty($data['id'])) {
         execute_media_mutation($pdo, 'UPDATE school_facilities SET name = :name, category = :category, location = :location, capacity = :capacity, condition_status = :condition_status, description = :description, image_path = :image_path, is_active = :is_active, sort_order = :sort_order WHERE id = :id', $data, 'school_facilities', 'image_path');
-        log_admin_activity('update', 'facilities', 'Fasilitas diperbarui: ' . $data['name'], 'facility', (int) $data['id']);
+
         return;
     }
 
     unset($data['id']);
-    $savedId = execute_media_mutation($pdo, 'INSERT INTO school_facilities (name, category, location, capacity, condition_status, description, image_path, is_active, sort_order) VALUES (:name, :category, :location, :capacity, :condition_status, :description, :image_path, :is_active, :sort_order)', $data, 'school_facilities', 'image_path');
-    log_admin_activity('create', 'facilities', 'Fasilitas dibuat: ' . $data['name'], 'facility', $savedId);
+    execute_media_mutation($pdo, 'INSERT INTO school_facilities (name, category, location, capacity, condition_status, description, image_path, is_active, sort_order) VALUES (:name, :category, :location, :capacity, :condition_status, :description, :image_path, :is_active, :sort_order)', $data, 'school_facilities', 'image_path');
 }
 
 function delete_facility(mixed $id): bool
@@ -98,9 +97,8 @@ function delete_facility(mixed $id): bool
         throw new RuntimeException('Database tidak tersedia. File tidak dihapus.');
     }
     if ($pdo) {
-        $row = admin_facility_row($id);
         execute_media_mutation($pdo, 'DELETE FROM school_facilities WHERE id = :id', ['id' => $id], 'school_facilities', 'image_path');
-        log_admin_activity('delete', 'facilities', 'Fasilitas dihapus: ' . ($row['name'] ?? ('ID ' . $id)), 'facility', $id);
+
         return true;
     }
     return false;

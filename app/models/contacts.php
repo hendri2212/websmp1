@@ -41,7 +41,6 @@ function update_contact_message_status(mixed $id, string $status): void
         'id' => $id,
         'status' => $status,
     ]);
-    log_admin_activity('update_status', 'contact_messages', 'Status pesan masuk diubah menjadi ' . $status . '.', 'contact_message', $id);
 }
 
 function delete_contact_message(mixed $id): bool
@@ -57,7 +56,7 @@ function delete_contact_message(mixed $id): bool
         if ($statement->rowCount() !== 1) {
             return false;
         }
-        log_admin_activity('delete', 'contact_messages', 'Pesan masuk dihapus.', 'contact_message', $id);
+
         return true;
     }
     return false;

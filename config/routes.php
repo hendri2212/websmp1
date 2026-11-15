@@ -2,7 +2,6 @@
 
 return [
     '/admin/achievements.php' => 'admin/achievements.php',
-    '/admin/activity_logs.php' => 'admin/activity_logs.php',
     '/admin/admins.php' => 'admin/admins.php',
     '/admin/agenda.php' => 'admin/agenda.php',
     '/admin/announcements.php' => 'admin/announcements.php',

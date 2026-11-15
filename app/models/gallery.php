@@ -62,13 +62,12 @@ function save_gallery_item(array $data): void
 
     if (!empty($data['id'])) {
         execute_media_mutation($pdo, 'UPDATE gallery_items SET title = :title, description = :description, image_path = :image_path, sort_order = :sort_order WHERE id = :id', $data, 'gallery_items', 'image_path');
-        log_admin_activity('update', 'gallery', 'Galeri diperbarui: ' . $data['title'], 'gallery_item', (int) $data['id']);
+
         return;
     }
 
     unset($data['id']);
-    $savedId = execute_media_mutation($pdo, 'INSERT INTO gallery_items (title, description, image_path, sort_order) VALUES (:title, :description, :image_path, :sort_order)', $data, 'gallery_items', 'image_path');
-    log_admin_activity('create', 'gallery', 'Galeri dibuat: ' . $data['title'], 'gallery_item', $savedId);
+    execute_media_mutation($pdo, 'INSERT INTO gallery_items (title, description, image_path, sort_order) VALUES (:title, :description, :image_path, :sort_order)', $data, 'gallery_items', 'image_path');
 }
 
 function delete_gallery_item(mixed $id): bool
@@ -79,9 +78,8 @@ function delete_gallery_item(mixed $id): bool
         throw new RuntimeException('Database tidak tersedia. File tidak dihapus.');
     }
     if ($pdo) {
-        $row = admin_gallery_row($id);
         execute_media_mutation($pdo, 'DELETE FROM gallery_items WHERE id = :id', ['id' => $id], 'gallery_items', 'image_path');
-        log_admin_activity('delete', 'gallery', 'Galeri dihapus: ' . ($row['title'] ?? ('ID ' . $id)), 'gallery_item', $id);
+
         return true;
     }
     return false;

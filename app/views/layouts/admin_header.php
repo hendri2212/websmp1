@@ -1,5 +1,6 @@
 <?php
 $pageTitle = $pageTitle ?? 'Admin';
+$showAdminSidebar = admin_is_logged_in();
 
 $logoPath = $content['schoolProfile']['logoPath'] ?? '/public/logo-sekolah.png';
 $stylesheetPath = APP_ROOT . '/public/assets/css/style.css';
@@ -19,7 +20,8 @@ $faviconVersion = is_file($faviconPath) ? (string) filemtime($faviconPath) : $st
     <style><?= theme_css_variables($content['siteTheme'] ?? []); ?></style>
 </head>
 <body class="admin-body">
-<div class="admin-shell">
+<div class="admin-shell<?= $showAdminSidebar ? '' : ' admin-shell-login'; ?>">
+    <?php if ($showAdminSidebar): ?>
     <aside class="admin-sidebar">
         <a class="admin-brand" href="<?= e(base_url('admin/dashboard.php')); ?>">
             <img src="<?= e(asset('public/favicon.png?v=' . $faviconVersion)); ?>" alt="Logo sekolah">
@@ -32,7 +34,6 @@ $faviconVersion = is_file($faviconPath) ? (string) filemtime($faviconPath) : $st
                 ['permission' => 'settings', 'href' => 'admin/settings.php', 'label' => 'Profil & Pengaturan'],
                 ['permission' => 'admins', 'href' => 'admin/admins.php', 'label' => 'Akun Admin'],
                 ['permission' => 'db_backup', 'href' => 'admin/db_backup.php', 'label' => 'Backup Database'],
-                ['permission' => 'activity_logs', 'href' => 'admin/activity_logs.php', 'label' => 'Log Aktivitas'],
                 ['permission' => 'production_check', 'href' => 'admin/production_check.php', 'label' => 'Cek Production'],
                 ['permission' => 'facilities', 'href' => 'admin/facilities.php', 'label' => 'Fasilitas'],
                 ['permission' => 'agenda', 'href' => 'admin/agenda.php', 'label' => 'Agenda'],
@@ -65,4 +66,5 @@ $faviconVersion = is_file($faviconPath) ? (string) filemtime($faviconPath) : $st
             </form>
         </nav>
     </aside>
+    <?php endif; ?>
     <main class="admin-main">

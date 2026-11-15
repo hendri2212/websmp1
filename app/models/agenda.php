@@ -79,7 +79,7 @@ function save_agenda_item(array $data): void
         ensure_academic_year_columns();
         $statement = $pdo->prepare('UPDATE agenda_items SET title = :title, category = :category, location = :location, description = :description, starts_at = :starts_at, ends_at = :ends_at, is_active = :is_active, academic_year = :academic_year, sort_order = :sort_order WHERE id = :id');
         $statement->execute($data);
-        log_admin_activity('update', 'agenda', 'Agenda diperbarui: ' . $data['title'], 'agenda_item', (int) $data['id']);
+
         return;
     }
 
@@ -87,7 +87,6 @@ function save_agenda_item(array $data): void
     ensure_academic_year_columns();
     $statement = $pdo->prepare('INSERT INTO agenda_items (title, category, location, description, starts_at, ends_at, is_active, academic_year, sort_order) VALUES (:title, :category, :location, :description, :starts_at, :ends_at, :is_active, :academic_year, :sort_order)');
     $statement->execute($data);
-    log_admin_activity('create', 'agenda', 'Agenda dibuat: ' . $data['title'], 'agenda_item', (int) $pdo->lastInsertId());
 }
 
 function delete_agenda_item(mixed $id): bool
@@ -98,13 +97,12 @@ function delete_agenda_item(mixed $id): bool
         throw new RuntimeException('Database tidak tersedia. Data tidak dihapus.');
     }
     if ($pdo) {
-        $row = admin_agenda_row($id);
         $statement = $pdo->prepare('DELETE FROM agenda_items WHERE id = :id');
         $statement->execute(['id' => $id]);
         if ($statement->rowCount() !== 1) {
             return false;
         }
-        log_admin_activity('delete', 'agenda', 'Agenda dihapus: ' . ($row['title'] ?? ('ID ' . $id)), 'agenda_item', $id);
+
         return true;
     }
     return false;

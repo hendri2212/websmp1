@@ -81,13 +81,12 @@ function save_extracurricular(array $data): void
 
     if (!empty($data['id'])) {
         execute_media_mutation($pdo, 'UPDATE extracurriculars SET name = :name, category = :category, coach = :coach, schedule_text = :schedule_text, location = :location, description = :description, image_path = :image_path, is_active = :is_active, sort_order = :sort_order WHERE id = :id', $data, 'extracurriculars', 'image_path');
-        log_admin_activity('update', 'extracurriculars', 'Ekstrakurikuler diperbarui: ' . $data['name'], 'extracurricular', (int) $data['id']);
+
         return;
     }
 
     unset($data['id']);
-    $savedId = execute_media_mutation($pdo, 'INSERT INTO extracurriculars (name, category, coach, schedule_text, location, description, image_path, is_active, sort_order) VALUES (:name, :category, :coach, :schedule_text, :location, :description, :image_path, :is_active, :sort_order)', $data, 'extracurriculars', 'image_path');
-    log_admin_activity('create', 'extracurriculars', 'Ekstrakurikuler dibuat: ' . $data['name'], 'extracurricular', $savedId);
+    execute_media_mutation($pdo, 'INSERT INTO extracurriculars (name, category, coach, schedule_text, location, description, image_path, is_active, sort_order) VALUES (:name, :category, :coach, :schedule_text, :location, :description, :image_path, :is_active, :sort_order)', $data, 'extracurriculars', 'image_path');
 }
 
 function delete_extracurricular(mixed $id): bool
@@ -98,9 +97,8 @@ function delete_extracurricular(mixed $id): bool
         throw new RuntimeException('Database tidak tersedia. File tidak dihapus.');
     }
     if ($pdo) {
-        $row = admin_extracurricular_row($id);
         execute_media_mutation($pdo, 'DELETE FROM extracurriculars WHERE id = :id', ['id' => $id], 'extracurriculars', 'image_path');
-        log_admin_activity('delete', 'extracurriculars', 'Ekstrakurikuler dihapus: ' . ($row['name'] ?? ('ID ' . $id)), 'extracurricular', $id);
+
         return true;
     }
     return false;

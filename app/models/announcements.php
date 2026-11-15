@@ -44,14 +44,13 @@ function save_announcement(array $data): void
     if (!empty($data['id'])) {
         $statement = $pdo->prepare('UPDATE announcements SET title = :title, content = :content, link_label = :link_label, link_url = :link_url, starts_at = :starts_at, ends_at = :ends_at, is_active = :is_active, sort_order = :sort_order WHERE id = :id');
         $statement->execute($data);
-        log_admin_activity('update', 'announcements', 'Pengumuman diperbarui: ' . $data['title'], 'announcement', (int) $data['id']);
+
         return;
     }
 
     unset($data['id']);
     $statement = $pdo->prepare('INSERT INTO announcements (title, content, link_label, link_url, starts_at, ends_at, is_active, sort_order) VALUES (:title, :content, :link_label, :link_url, :starts_at, :ends_at, :is_active, :sort_order)');
     $statement->execute($data);
-    log_admin_activity('create', 'announcements', 'Pengumuman dibuat: ' . $data['title'], 'announcement', (int) $pdo->lastInsertId());
 }
 
 function delete_announcement(mixed $id): bool
@@ -62,13 +61,12 @@ function delete_announcement(mixed $id): bool
         throw new RuntimeException('Database tidak tersedia. Data tidak dihapus.');
     }
     if ($pdo) {
-        $row = admin_announcement_row($id);
         $statement = $pdo->prepare('DELETE FROM announcements WHERE id = :id');
         $statement->execute(['id' => $id]);
         if ($statement->rowCount() !== 1) {
             return false;
         }
-        log_admin_activity('delete', 'announcements', 'Pengumuman dihapus: ' . ($row['title'] ?? ('ID ' . $id)), 'announcement', $id);
+
         return true;
     }
     return false;

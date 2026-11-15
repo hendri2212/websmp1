@@ -36,7 +36,7 @@ function admin_permissions(): array
 {
     return [
         'superadmin' => [
-            'dashboard', 'settings', 'admins', 'db_backup', 'activity_logs', 'production_check', 'facilities', 'agenda', 'documents', 'achievements',
+            'dashboard', 'settings', 'admins', 'db_backup', 'production_check', 'facilities', 'agenda', 'documents', 'achievements',
             'extracurriculars', 'staff', 'news', 'announcements', 'gallery', 'faqs', 'ppdb_content',
             'contact_messages', 'change_password',
         ],
@@ -50,7 +50,7 @@ function admin_permissions(): array
 
 function admin_sensitive_permissions(): array
 {
-    return ['settings', 'admins', 'db_backup', 'activity_logs', 'production_check'];
+    return ['settings', 'admins', 'db_backup', 'production_check'];
 }
 
 function admin_permission_labels(): array
@@ -59,7 +59,6 @@ function admin_permission_labels(): array
         'settings' => 'Profil & pengaturan website',
         'admins' => 'Akun admin/operator',
         'db_backup' => 'Backup database dan file',
-        'activity_logs' => 'Log aktivitas admin',
         'production_check' => 'Cek production',
         'news' => 'Berita',
         'announcements' => 'Pengumuman',
@@ -90,7 +89,7 @@ function admin_role_permission_label(string $role, string $permission): string
 function admin_role_descriptions(): array
 {
     return [
-        'superadmin' => 'Akses penuh termasuk pengaturan, backup, akun admin, log, dan cek production.',
+        'superadmin' => 'Akses penuh termasuk pengaturan, backup, akun admin, dan cek production.',
         'editor' => 'Mengelola konten publik dan pesan masuk tanpa akses ke fitur sensitif.',
         'ppdb' => 'Mengelola informasi PPDB tanpa pendaftaran lokal atau akses ke konten umum lain.',
     ];
@@ -169,7 +168,7 @@ function admin_login(mixed $username, mixed $password): bool
             $_SESSION['admin_id'] = (int) $admin['id'];
             $_SESSION['admin_username'] = $admin['username'];
             $_SESSION['admin_role'] = $admin['role'];
-            log_admin_activity('login', 'auth', 'Login admin berhasil.');
+
             return true;
         }
     } catch (Throwable $exception) {
@@ -177,30 +176,25 @@ function admin_login(mixed $username, mixed $password): bool
         return false;
     }
 
-    log_admin_activity('login_failed', 'auth', 'Percobaan login admin gagal.', null, null, ['username' => $username]);
     return false;
 }
 
 function admin_logout(): void
 {
-    try {
-        log_admin_activity('logout', 'auth', 'Logout admin.');
-    } finally {
-        $_SESSION = [];
-        if (session_status() === PHP_SESSION_ACTIVE) {
-            session_destroy();
-        }
-        if (ini_get('session.use_cookies') && !headers_sent()) {
-            $params = session_get_cookie_params();
-            setcookie(session_name(), '', [
-                'expires' => time() - 3600,
-                'path' => $params['path'],
-                'domain' => $params['domain'],
-                'secure' => $params['secure'],
-                'httponly' => $params['httponly'],
-                'samesite' => $params['samesite'],
-            ]);
-        }
+    $_SESSION = [];
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_destroy();
+    }
+    if (ini_get('session.use_cookies') && !headers_sent()) {
+        $params = session_get_cookie_params();
+        setcookie(session_name(), '', [
+            'expires' => time() - 3600,
+            'path' => $params['path'],
+            'domain' => $params['domain'],
+            'secure' => $params['secure'],
+            'httponly' => $params['httponly'],
+            'samesite' => $params['samesite'],
+        ]);
     }
 }
 
@@ -235,59 +229,7 @@ function update_admin_password(string $username, string $currentPassword, string
         'username' => $username,
     ]);
 
-    log_admin_activity('change_password', 'auth', 'Password admin berhasil diperbarui.', 'admin', (int) $admin['id'], ['username' => $username]);
     return ['success' => true, 'message' => 'Password admin berhasil diperbarui.'];
-}
-
-function ensure_admin_activity_logs_table(): void
-{
-    static $done = false;
-    $pdo = db();
-    if ($done || !$pdo) {
-        return;
-    }
-
-    require_schema_columns($pdo, 'admin_activity_logs', ['id', 'admin_id', 'username', 'role', 'action', 'module',
-        'entity_type', 'entity_id', 'description', 'metadata', 'ip_address', 'user_agent', 'created_at']);
-
-    $done = true;
-}
-
-function log_admin_activity(
-    string $action,
-    string $module,
-    string $description,
-    ?string $entityType = null,
-    ?int $entityId = null,
-    array $metadata = []
-): void {
-    try {
-        $pdo = db();
-        if (!$pdo) {
-            return;
-        }
-        ensure_admin_activity_logs_table();
-        $statement = $pdo->prepare('INSERT INTO admin_activity_logs (
-            admin_id, username, role, action, module, entity_type, entity_id, description, metadata, ip_address, user_agent
-        ) VALUES (
-            :admin_id, :username, :role, :action, :module, :entity_type, :entity_id, :description, :metadata, :ip_address, :user_agent
-        )');
-        $statement->execute([
-            'admin_id' => $_SESSION['admin_id'] ?? null,
-            'username' => $_SESSION['admin_username'] ?? ($metadata['username'] ?? null),
-            'role' => $_SESSION['admin_role'] ?? null,
-            'action' => substr($action, 0, 80),
-            'module' => substr($module, 0, 80),
-            'entity_type' => $entityType ? substr($entityType, 0, 80) : null,
-            'entity_id' => $entityId,
-            'description' => $description,
-            'metadata' => $metadata ? json_encode($metadata, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
-            'ip_address' => substr($_SERVER['REMOTE_ADDR'] ?? '', 0, 45) ?: null,
-            'user_agent' => substr($_SERVER['HTTP_USER_AGENT'] ?? '', 0, 255) ?: null,
-        ]);
-    } catch (Throwable $exception) {
-        // Logging tidak boleh menggagalkan aksi utama admin.
-    }
 }
 
 function require_admin(): void

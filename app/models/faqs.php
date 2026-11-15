@@ -60,14 +60,13 @@ function save_faq(array $data): void
     if (!empty($data['id'])) {
         $statement = $pdo->prepare('UPDATE faqs SET question = :question, answer = :answer, category = :category, is_active = :is_active, sort_order = :sort_order WHERE id = :id');
         $statement->execute($data);
-        log_admin_activity('update', 'faqs', 'FAQ diperbarui: ' . $data['question'], 'faq', (int) $data['id']);
+
         return;
     }
 
     unset($data['id']);
     $statement = $pdo->prepare('INSERT INTO faqs (question, answer, category, is_active, sort_order) VALUES (:question, :answer, :category, :is_active, :sort_order)');
     $statement->execute($data);
-    log_admin_activity('create', 'faqs', 'FAQ dibuat: ' . $data['question'], 'faq', (int) $pdo->lastInsertId());
 }
 
 function delete_faq(mixed $id): bool
@@ -78,13 +77,12 @@ function delete_faq(mixed $id): bool
         throw new RuntimeException('Database tidak tersedia. Data tidak dihapus.');
     }
     if ($pdo) {
-        $row = admin_faq_row($id);
         $statement = $pdo->prepare('DELETE FROM faqs WHERE id = :id');
         $statement->execute(['id' => $id]);
         if ($statement->rowCount() !== 1) {
             return false;
         }
-        log_admin_activity('delete', 'faqs', 'FAQ dihapus: ' . ($row['question'] ?? ('ID ' . $id)), 'faq', $id);
+
         return true;
     }
     return false;

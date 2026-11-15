@@ -2,7 +2,7 @@
     <div class="dashboard-hero-copy">
         <span class="status-badge status-diverifikasi"><?= e(admin_role_label()); ?></span>
         <h1>Dashboard Admin</h1>
-        <p>Ringkasan operasional website sekolah: konten, informasi PPDB, pesan masuk, agenda, dan aktivitas admin terbaru.</p>
+        <p>Ringkasan operasional website sekolah: konten, informasi PPDB, pesan masuk, agenda.</p>
     </div>
     <div class="dashboard-quick-actions">
         <?php if (admin_can('settings')): ?><a class="button secondary" href="<?= e(base_url('admin/settings.php')); ?>">Pengaturan</a><?php endif; ?>
@@ -155,28 +155,5 @@
         </div>
     <?php endif; ?>
 
-    <?php if (admin_can('activity_logs')): ?>
-        <div class="admin-card">
-            <div class="dashboard-section-head">
-                <div>
-                    <h2>Aktivitas Terbaru</h2>
-                    <p class="muted">Riwayat singkat aksi admin.</p>
-                </div>
-                <a class="button secondary" href="<?= e(base_url('admin/activity_logs.php')); ?>">Log</a>
-            </div>
-            <?php if (!$recentLogs): ?>
-                <p class="muted">Belum ada aktivitas admin yang tercatat.</p>
-            <?php else: ?>
-                <div class="dashboard-list">
-                    <?php foreach ($recentLogs as $log): ?>
-                        <div class="dashboard-list-item">
-                            <strong><?= e($log['description']); ?></strong>
-                            <span><?= e(($log['username'] ?? '-') . ' - ' . date('d M Y H:i', strtotime($log['created_at']))); ?></span>
-                            <small><?= e($log['module'] . ' / ' . $log['action']); ?></small>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
-    <?php endif; ?>
+
 </div>

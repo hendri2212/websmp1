@@ -25,7 +25,6 @@ $activeExtracurriculars = extracurricular_count(true);
 $activeFacilities = facility_count(true);
 $activeFaqs = faq_count(true);
 $upcomingAgenda = $dbReady ? upcoming_agenda_items(5) : [];
-$recentLogs = ($dbReady && admin_can('activity_logs')) ? admin_activity_logs([], 6) : [];
 $contentStatusRows = array_values(array_filter(
     $dbReady ? admin_content_status_summary() : [],
     static fn(array $row): bool => admin_can($row['permission'])
