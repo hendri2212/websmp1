@@ -1,6 +1,8 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/../app/core/paths.php';
+
 
 // This maintenance entry point is deliberately restricted to the verified testing instance.
 if (PHP_SAPI !== 'cli') {
@@ -15,10 +17,10 @@ if ($argv[1] === '--apply' && ($argv[2] ?? '') !== '--confirm-testing-schema') {
     exit(1);
 }
 
-require __DIR__ . '/../tests/stage3_database_preflight.php';
+require APP_ROOT . '/tests/stage3_database_preflight.php';
 try {
     $pdo = stage3_test_database();
-    $defaults = require __DIR__ . '/../config/site_data.php';
+    $defaults = require APP_ROOT . '/config/site_data.php';
     $year = $defaults['siteAcademic']['currentYear'] ?? '2025/2026';
     if (!is_string($year) || !preg_match('/\A[0-9]{4}\/[0-9]{4}\z/', $year)) {
         throw new RuntimeException('Invalid maintenance academic year.');

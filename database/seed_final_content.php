@@ -1,6 +1,8 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/../app/core/paths.php';
+
 
 if (PHP_SAPI !== 'cli') {
     http_response_code(403);
@@ -8,14 +10,14 @@ if (PHP_SAPI !== 'cli') {
 }
 
 if (PHP_SAPI === 'cli') {
-    $sessionPath = __DIR__ . '/../tests/.tmp_sessions';
+    $sessionPath = APP_ROOT . '/tests/.tmp_sessions';
     if (!is_dir($sessionPath)) {
         mkdir($sessionPath, 0775, true);
     }
     session_save_path($sessionPath);
 }
 
-require_once __DIR__ . '/../includes/bootstrap.php';
+require_once APP_ROOT . '/app/bootstrap.php';
 
 if (!db_available()) {
     fwrite(STDERR, 'Database belum terhubung.' . PHP_EOL);

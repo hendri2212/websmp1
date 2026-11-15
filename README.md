@@ -1,15 +1,49 @@
-# Website Sekolah PHP Native
+# Website Sekolah — MVC PHP Sederhana
 
-Project PHP Native + MySQL/MariaDB dengan panel admin dan PPDB/SPMB pasif/informatif. Belum commit, push, atau deploy; hasil testing bukan pernyataan siap production.
+Website sekolah berbasis PHP native + MySQL/MariaDB dengan struktur MVC prosedural, panel admin, dan PPDB/SPMB pasif/informatif. Tanpa framework, Composer, atau build npm.
+
+## Struktur Folder MVC
+
+```text
+app/
+├── bootstrap.php          # Memuat konfigurasi, session, helper, dan model
+├── controllers/
+│   ├── site.php           # Routing dan persiapan data halaman publik
+│   ├── admin/             # Handler login, CRUD, pengaturan, dan backup
+│   └── files/             # Respons PDF, sitemap, robots, dan endpoint pensiun
+├── models/                # Query dan operasi data per fitur
+├── views/
+│   ├── site/              # Tampilan publik
+│   ├── admin/             # Tampilan admin
+│   └── layouts/           # Header dan footer bersama
+└── core/                  # Koneksi PDO, render view, validasi, upload, dan helper
+config/
+├── routes.php             # Pemetaan URL admin dan endpoint kompatibilitas
+├── app.php                # Konfigurasi aplikasi
+├── database.php           # Konfigurasi database
+├── env.php                # Pembaca .env
+└── site_data.php          # Konten default
+public/                    # CSS, gambar, dan upload publik
+storage/                   # Session, dokumen privat, dan backup
+database/                  # Schema dan script CLI
+index.php                  # Satu pintu masuk request aplikasi
+preview_router.php         # Router untuk server PHP lokal
+```
+
+Alur request: `index.php` → controller → model → view. `config/routes.php` memetakan URL admin secara eksplisit; halaman publik dipilih di `app/controllers/site.php`. URL existing seperti `/admin/news.php` tetap berlaku walaupun folder `admin/` di root sudah dipindahkan.
+
+Controller memeriksa izin, memvalidasi request, memanggil model, lalu mengirim data ke `render_view()`. Model berisi fungsi query per fitur, misalnya `app/models/news.php`. View hanya menampilkan data dan form; pemrosesan POST dilakukan di controller. Layout dirender melalui `app/core/view.php`.
+
+Untuk menambah fitur, tambahkan fungsi data pada model, handler pada controller, dan tampilan pada view. Daftarkan URL admin di `config/routes.php`, atau route publik di controller site. Gunakan helper CSRF, validasi, dan izin yang sudah tersedia. Folder `app/`, `config/`, `database/`, dan `storage/` diblokir dari akses HTTP langsung; jalankan server lokal dengan `preview_router.php`.
 
 ## Setup Setelah Clone
 
-1. Periksa requirement PHP/web SAPI, extension, database dan routing dalam [hosting checklist](HOSTING_REQUIREMENTS_CHECKLIST.md). Testing tools tidak diperlukan untuk request production.
+1. Siapkan PHP 8.0 atau lebih baru, MySQL/MariaDB, dan ekstensi PHP `pdo_mysql`, `mbstring`, serta `gd` untuk pemrosesan gambar. Ekstensi `zip` diperlukan untuk backup ZIP. Untuk Apache, aktifkan `mod_rewrite` dan izinkan aturan `.htaccess`.
 2. Sediakan Apache-compatible development virtual host yang menunjuk root project (index.php), atau konfigurasi ekuivalen yang diuji. Jangan menjadikan public/ sebagai document root. HTTP localhost boleh dipakai untuk development.
 3. Provision database lokal baru/terisolasi dan akun database milik developer dengan privilege terbatas pada database tersebut. Jangan menggunakan database sekolah atau credential production.
 4. Review database/schema.sql sebelum provisioning offline: installer memakai nama database development eksplisit, bukan migration database existing. Pilih target kosong yang benar; jangan import mentah ke database berisi data. Runtime tidak membuat schema atau akun otomatis.
 5. Salin .env.example menjadi .env di root project, lalu isi setiap field wajib dengan konfigurasi milik developer. Template sengaja tidak dapat langsung digunakan; tidak berisi akun/password default.
-6. Sediakan storage privat dan direktori upload aktif dengan permission terbatas sesuai [panduan persiapan](DEPLOYMENT.md). Jangan menyalin session/backup/state testing atau arsip PPDB ke lokasi publik.
+6. Pastikan PHP dapat menulis ke `storage/` dan `public/uploads/`, dengan permission terbatas pada pengguna server. Jangan menyalin session, backup, atau arsip PPDB ke lokasi publik.
 7. Untuk akun admin awal pada database kosong, ikuti bagian Inisialisasi Admin di bawah. Tidak ada akun demo atau password bawaan.
 8. Buka URL development yang dipilih, lalu /admin/login.php. Bila konfigurasi salah, gunakan log privat dan pesan generik; jangan mengaktifkan display_errors publik.
 
@@ -23,7 +57,7 @@ Untuk konfigurasi lokal yang sudah disiapkan:
 2. Buka website: [http://localhost:8888/websmp1/](http://localhost:8888/websmp1/).
 3. Buka admin: [http://localhost:8888/websmp1/admin/login.php](http://localhost:8888/websmp1/admin/login.php). Gunakan akun dan password dari database yang diimport.
 
-Database `website_sekolah` sudah diisi dari `website_sekolah.sql`; tidak perlu import ulang setiap menjalankan aplikasi. `.env` lokal sudah disiapkan dengan `APP_ENV=local`, `APP_URL=http://localhost:8888/websmp1`, `DB_HOST=127.0.0.1`, `DB_PORT=8889`, dan `DB_DATABASE=website_sekolah`. Credential database tersimpan di `.env` privat.
+Database lokal `website_sekolah` terakhir diisi dari `website_sekolah_test_stage3.sql`; tidak perlu import ulang setiap menjalankan aplikasi. `.env` lokal sudah disiapkan dengan `APP_ENV=local`, `APP_URL=http://localhost:8888/websmp1`, `DB_HOST=127.0.0.1`, `DB_PORT=8889`, dan `DB_DATABASE=website_sekolah`. Credential database tersimpan di `.env` privat.
 
 Apache MAMP memakai document root `/Applications/MAMP/htdocs`. Folder proyek `/Users/hendriarifin/CODE/websmp1` dihubungkan melalui symbolic link `/Applications/MAMP/htdocs/websmp1`. Jika menyiapkan ulang pada mesin dengan lokasi proyek yang sama dan link belum ada, jalankan:
 
@@ -61,7 +95,7 @@ Gunakan `preview_router.php` agar routing aplikasi dan pembatasan akses file pri
 | DB_PASSWORD | Ya | Isi credential privat milik akun tersebut. Validator local mengizinkan kosong secara eksplisit untuk kompatibilitas, tetapi template kosong bukan password default dan panduan ini tidak menyarankan akun tanpa password. Production menolak kosong. |
 | DB_CHARSET | Ya | Tepat utf8mb4. |
 
-.env.example untuk development; .env.production.example untuk struktur field production. Kedua template tidak memuat credential dan tidak masuk web bundle. .env sebenarnya di-ignore dan harus tetap privat; jangan commit atau force-add.
+`.env.example` menyediakan struktur konfigurasi development. Untuk production, isi field yang sama dengan `APP_ENV=production` dan nilai sesuai hosting. .env sebenarnya di-ignore dan harus tetap privat; jangan commit atau force-add.
 
 Resolver memeriksa $_ENV, lalu $_SERVER, lalu getenv(), kemudian .env. Nilai environment server termasuk string kosong mengalahkan nilai file; hapus override lama bila ingin memakai file. Konfigurasi dibaca sekali per proses/request; restart worker atau proses panjang setelah mengganti environment.
 
@@ -71,7 +105,7 @@ Parser .env existing hanya mendukung baris KEY=VALUE sederhana, komentar penuh y
 
 Production harus eksplisit. Config invalid/missing ditolak dengan error generik, bukan mencoba root/localhost/database development. Kebijakan saat ini menolak DB loopback/localhost, root, nama database development/testing yang diblokir, dan password kosong. Provider database localhost membutuhkan review kompatibilitas terpisah; jangan mengganti mode menjadi local untuk menghindari validator.
 
-Tidak ada credential production yang disediakan repository. Ikuti [DEPLOYMENT.md](DEPLOYMENT.md) untuk persiapan release allowlist, konfigurasi privat, backup/restore, permission dan gate hosting, bukan upload seluruh project.
+Tidak ada credential production yang disediakan repository. Untuk hosting, siapkan konfigurasi privat, backup database dan media, permission direktori, serta aturan `.htaccess`. Manifest `RELEASE_ALLOWLIST.json` mengikuti struktur MVC; pembuat paket otomatis lama sudah dihapus bersama folder `tests/`.
 
 ## Pengujian dan Script Maintenance
 

@@ -32,7 +32,7 @@ RewriteEngine On
 
 # Block private paths before the existing-file passthrough, including hidden directories.
 RewriteRule (^|/)\. - [F,L]
-RewriteRule ^(config|includes|storage|database|tests|templates)(/|$) - [F,L,NC]
+RewriteRule ^(app|config|includes|storage|database|tests|templates)(/|$) - [F,L,NC]
 # Views are included by index.php; retain only the explicit retired receipt URL.
 RewriteRule ^pages/(?!ppdb_receipt\.php(/|$)) - [F,L,NC]
 RewriteRule (^|/)(backup|backups|dumps|logs|source_docs)(/|$) - [F,L,NC]

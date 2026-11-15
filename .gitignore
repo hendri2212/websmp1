@@ -16,3 +16,8 @@ sess_*
 
 # Stage reports.
 LAPORAN*TAHAP*.md
+
+# Private environment configuration.
+.env
+.env.*
+!.env.example

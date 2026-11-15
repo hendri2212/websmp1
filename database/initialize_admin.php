@@ -1,6 +1,8 @@
 <?php
 
 declare(strict_types=1);
+require_once __DIR__ . '/../app/core/paths.php';
+
 if (PHP_SAPI !== 'cli') { http_response_code(403); exit('CLI only'); }
 if (count($argv) !== 4 || ($argv[1] ?? '') !== '--initialize') {
     fwrite(STDERR, "Use --initialize <username> <full-name> with a private password pipe on STDIN.\n");
@@ -19,7 +21,7 @@ try {
         || preg_match('/[\x00-\x1f\x7f]/', $password)) {
         throw new RuntimeException('Invalid explicit initial account');
     }
-    require __DIR__ . '/../includes/database.php';
+    require APP_ROOT . '/app/core/database.php';
     $pdo = db();
     if (!$pdo) { throw new RuntimeException('Database unavailable'); }
     $database = $pdo->query('SELECT DATABASE()')->fetchColumn();
