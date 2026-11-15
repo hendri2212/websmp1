@@ -1,6 +1,6 @@
 <?php
 
-// The PHP development server does not enforce Apache .htaccess rules.
+// Local development routing and private-path protection; production uses Nginx.
 if (PHP_SAPI !== 'cli-server') {
     http_response_code(403);
     exit('Akses ditolak.');

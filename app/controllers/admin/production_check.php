@@ -6,7 +6,6 @@ $appConfig = app_config();
 $content = site_content();
 $rootPath = APP_ROOT;
 $envPath = $rootPath . DIRECTORY_SEPARATOR . '.env';
-$htaccessPath = $rootPath . DIRECTORY_SEPARATOR . '.htaccess';
 $isHttps = request_is_https();
 $uploadMax = ini_get('upload_max_filesize') ?: '-';
 $postMax = ini_get('post_max_size') ?: '-';
@@ -111,10 +110,10 @@ $checks = [
         'Installer baru tidak membuat akun default. Tinjau akun existing dan rotasi credential legacy secara privat sebelum release.'
     ),
     production_check_row(
-        'File .htaccess',
-        is_file($htaccessPath) ? 'ok' : 'warning',
-        is_file($htaccessPath) ? '.htaccess ditemukan.' : '.htaccess belum ditemukan.',
-        'Pastikan .htaccess ikut terupload agar routing dan proteksi file sensitif aktif.'
+        'Routing dan Proteksi Nginx',
+        'warning',
+        'Konfigurasi Nginx aktif tidak dapat diverifikasi hanya dari PHP.',
+        'Gunakan config/nginx.conf sebagai contoh, lalu uji routing dan penolakan akses folder privat pada server.'
     ),
     production_check_row(
         'Batas Upload PHP',

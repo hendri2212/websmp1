@@ -38,8 +38,8 @@ Untuk menambah fitur, tambahkan fungsi data pada model, handler pada controller,
 
 ## Setup Setelah Clone
 
-1. Siapkan PHP 8.0 atau lebih baru, MySQL/MariaDB, dan ekstensi PHP `pdo_mysql`, `mbstring`, serta `gd` untuk pemrosesan gambar. Ekstensi `zip` diperlukan untuk backup ZIP. Untuk Apache, aktifkan `mod_rewrite` dan izinkan aturan `.htaccess`.
-2. Sediakan Apache-compatible development virtual host yang menunjuk root project (index.php), atau konfigurasi ekuivalen yang diuji. Jangan menjadikan public/ sebagai document root. HTTP localhost boleh dipakai untuk development.
+1. Siapkan PHP 8.0 atau lebih baru, MySQL/MariaDB, dan ekstensi PHP `pdo_mysql`, `mbstring`, serta `gd` untuk pemrosesan gambar. Ekstensi `zip` diperlukan untuk backup ZIP. Untuk hosting Nginx, sesuaikan contoh `config/nginx.conf`.
+2. Arahkan document root Nginx ke root project (`index.php`), atau gunakan server PHP lokal dengan perintah di bawah. Jangan menjadikan `public/` sebagai document root. HTTP localhost boleh dipakai untuk development.
 3. Provision database lokal baru/terisolasi dan akun database milik developer dengan privilege terbatas pada database tersebut. Jangan menggunakan database sekolah atau credential production.
 4. Review database/schema.sql sebelum provisioning offline: installer memakai nama database development eksplisit, bukan migration database existing. Pilih target kosong yang benar; jangan import mentah ke database berisi data. Runtime tidak membuat schema atau akun otomatis.
 5. Salin .env.example menjadi .env di root project, lalu isi setiap field wajib dengan konfigurasi milik developer. Template sengaja tidak dapat langsung digunakan; tidak berisi akun/password default.
@@ -53,25 +53,21 @@ Proyek ini memakai PHP native tanpa `package.json` atau `composer.json`. Tidak p
 
 Untuk konfigurasi lokal yang sudah disiapkan:
 
-1. Buka MAMP, lalu klik **Start Servers**. Pastikan Apache berjalan pada port `8888` dan MySQL pada port `8889`.
-2. Buka website: [http://localhost:8888/websmp1/](http://localhost:8888/websmp1/).
-3. Buka admin: [http://localhost:8888/websmp1/admin/login.php](http://localhost:8888/websmp1/admin/login.php). Gunakan akun dan password dari database yang diimport.
+1. Buka MAMP, lalu aktifkan MySQL pada port `8889`.
+2. Jalankan server PHP dengan perintah pada bagian berikutnya.
+3. Buka [website](http://localhost:8080/) atau [login admin](http://localhost:8080/admin/login.php). Gunakan akun dan password dari database yang diimport.
 
 Database lokal `website_sekolah` terakhir diisi dari `website_sekolah_test_stage3.sql`; tidak perlu import ulang setiap menjalankan aplikasi. `.env` lokal sudah disiapkan dengan `APP_ENV=local`, `APP_URL=http://localhost:8888/websmp1`, `DB_HOST=127.0.0.1`, `DB_PORT=8889`, dan `DB_DATABASE=website_sekolah`. Credential database tersimpan di `.env` privat.
 
-Apache MAMP memakai document root `/Applications/MAMP/htdocs`. Folder proyek `/Users/hendriarifin/CODE/websmp1` dihubungkan melalui symbolic link `/Applications/MAMP/htdocs/websmp1`. Jika menyiapkan ulang pada mesin dengan lokasi proyek yang sama dan link belum ada, jalankan:
+Apache MAMP tidak diperlukan untuk menjalankan aplikasi. Proyek tidak lagi menyediakan `.htaccess`; gunakan server PHP lokal atau konfigurasi Nginx.
 
-```bash
-ln -s /Users/hendriarifin/CODE/websmp1 /Applications/MAMP/htdocs/websmp1
-```
+Untuk clone baru pada mesin lain, ikuti **Setup Setelah Clone**, sesuaikan `.env` dengan konfigurasi database mesin tersebut. Jika memakai dump `website_sekolah.sql` milik sendiri, import ke database kosong melalui phpMyAdmin MAMP sebagai pengganti `database/schema.sql`; jangan import keduanya. Dump yang sudah berisi akun admin tidak membutuhkan inisialisasi admin baru.
 
-Untuk clone baru pada mesin lain, ikuti **Setup Setelah Clone**, sesuaikan lokasi symbolic link dan `.env` dengan konfigurasi MAMP mesin tersebut. Jika memakai dump `website_sekolah.sql` milik sendiri, import ke database kosong melalui phpMyAdmin MAMP sebagai pengganti `database/schema.sql`; jangan import keduanya. Dump yang sudah berisi akun admin tidak membutuhkan inisialisasi admin baru.
-
-Jika website tidak terbuka, periksa Apache MAMP dan symbolic link. Jika koneksi database gagal, periksa MySQL MAMP, port, nama database, serta credential di `.env`. Jika port Apache diubah, sesuaikan juga URL browser dan `APP_URL`.
+Jika website tidak terbuka, periksa proses server PHP atau Nginx. Jika koneksi database gagal, periksa MySQL MAMP, port, nama database, serta credential di `.env`. Jika port web diubah, sesuaikan juga URL browser dan `APP_URL`.
 
 ## Menjalankan Lokal dengan Server PHP
 
-Sebagai alternatif Apache MAMP, jalankan perintah berikut dari root proyek:
+Jalankan perintah berikut dari root proyek:
 
 ```bash
 APP_URL=http://localhost:8080 php -S localhost:8080 preview_router.php
@@ -80,6 +76,14 @@ APP_URL=http://localhost:8080 php -S localhost:8080 preview_router.php
 Buka [website](http://localhost:8080/) atau [login admin](http://localhost:8080/admin/login.php). MySQL MAMP tetap harus aktif pada port `8889` sesuai `.env` lokal; Apache tidak diperlukan. Perintah ini mengganti `APP_URL` hanya untuk proses server tersebut tanpa mengubah `.env`.
 
 Gunakan `preview_router.php` agar routing aplikasi dan pembatasan akses file privat diterapkan oleh server PHP. Server ini untuk development lokal. Hentikan dengan `Ctrl+C`.
+
+## Hosting dengan Nginx
+
+`config/nginx.conf` adalah contoh server block, bukan konfigurasi yang otomatis dimuat aplikasi. Sesuaikan `server_name`, `root`, dan `fastcgi_pass` dengan domain, folder deployment, dan PHP-FPM server. Salin atau include konfigurasi tersebut melalui konfigurasi Nginx hosting, lalu validasi dengan `nginx -t` sebelum reload.
+
+Routing diteruskan ke `index.php`, termasuk URL admin lama. Hanya front controller yang dieksekusi PHP-FPM. Akses HTTP ke folder privat, file tersembunyi, dump SQL, dan konfigurasi diblokir. Folder upload publik hanya melayani format gambar/video yang didukung. Konfigurasi HTTPS/sertifikat dan batas PHP seperti `upload_max_filesize`, `post_max_size`, `memory_limit`, serta `expose_php` ditetapkan di hosting/PHP-FPM.
+
+Setelah memasang konfigurasi, periksa `/admin`, halaman publik, dan pastikan `/.env`, `/app/bootstrap.php`, `/storage/`, serta URL dump SQL ditolak. Contoh Nginx ini belum diuji pada server hosting. Folder `storage/sessions/` menyimpan session lokal dan akan terisi kembali saat aplikasi diakses; mengosongkannya membuat pengguna lokal perlu login ulang.
 
 ## Variabel Environment
 
@@ -105,7 +109,7 @@ Parser .env existing hanya mendukung baris KEY=VALUE sederhana, komentar penuh y
 
 Production harus eksplisit. Config invalid/missing ditolak dengan error generik, bukan mencoba root/localhost/database development. Kebijakan saat ini menolak DB loopback/localhost, root, nama database development/testing yang diblokir, dan password kosong. Provider database localhost membutuhkan review kompatibilitas terpisah; jangan mengganti mode menjadi local untuk menghindari validator.
 
-Tidak ada credential production yang disediakan repository. Untuk hosting, siapkan konfigurasi privat, backup database dan media, permission direktori, serta aturan `.htaccess`. Manifest `RELEASE_ALLOWLIST.json` mengikuti struktur MVC; pembuat paket otomatis lama sudah dihapus bersama folder `tests/`.
+Tidak ada credential production yang disediakan repository. Untuk hosting, siapkan konfigurasi privat, backup database dan media, permission direktori, serta aturan Nginx. Manifest allowlist/denylist dan pembuat paket otomatis lama sudah dihapus karena tidak dipakai aplikasi.
 
 ## Pengujian dan Script Maintenance
 
@@ -131,7 +135,7 @@ Installer/schema/seed/script inisialisasi tidak masuk public release. Akun yang 
 - Role admin untuk membatasi akses superadmin, editor konten, dan operator PPDB
 - Backup dan export database SQL dari panel superadmin
 - Log aktivitas admin untuk login, logout, perubahan konten, penghapusan data, backup, dan ganti password
-- Cek kesiapan production dari panel superadmin: environment, HTTPS, database, password awal, `.htaccess`, batas upload, dan permission folder
+- Cek kesiapan production dari panel superadmin: environment, HTTPS, database, password awal, konfigurasi Nginx, batas upload, dan permission folder
 - Dashboard ringkasan dengan kartu statistik, ringkasan konten, agenda terdekat, dan aktivitas admin terbaru
 - Notifikasi admin berupa badge pesan masuk baru di sidebar
 - SEO dasar: meta description, canonical URL, Open Graph, Twitter card, sitemap.xml, dan robots.txt
