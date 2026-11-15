@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit('CLI only');
+}
+
 if (PHP_SAPI === 'cli') {
     $sessionPath = __DIR__ . '/../tests/.tmp_sessions';
     if (!is_dir($sessionPath)) {
@@ -11,11 +16,6 @@ if (PHP_SAPI === 'cli') {
 }
 
 require_once __DIR__ . '/../includes/bootstrap.php';
-
-if (PHP_SAPI !== 'cli') {
-    http_response_code(403);
-    exit('CLI only');
-}
 
 if (!db_available()) {
     fwrite(STDERR, 'Database belum terhubung.' . PHP_EOL);
@@ -269,7 +269,7 @@ foreach ($extracurriculars as $item) {
 $faqs = [
     ['question' => 'Di mana alamat SMP Negeri 1 Kotabaru?', 'answer' => 'Alamat sekolah berada di Jl. M. Alwi No. 158 Kotabaru, Semayap, Kecamatan Pulau Laut Utara, Kabupaten Kotabaru, Kalimantan Selatan 72117.', 'category' => 'Profil', 'is_active' => 1, 'sort_order' => 1],
     ['question' => 'Bagaimana cara menghubungi sekolah?', 'answer' => 'Sekolah dapat dihubungi melalui telepon (0518) 21602 atau email smpn1_54ktb@yahoo.co.id pada jam layanan Senin-Jumat pukul 07.00-15.00.', 'category' => 'Layanan', 'is_active' => 1, 'sort_order' => 2],
-    ['question' => 'Apakah informasi PPDB tersedia di website?', 'answer' => 'Ya. Informasi PPDB, persyaratan, catatan penting, dan formulir pendaftaran tersedia pada menu PPDB. Jadwal resmi mengikuti pengumuman sekolah dan dinas terkait.', 'category' => 'PPDB', 'is_active' => 1, 'sort_order' => 3],
+    ['question' => 'Apakah informasi PPDB tersedia di website?', 'answer' => 'Ya. Informasi PPDB, persyaratan, dan catatan penting tersedia pada menu PPDB. Pendaftaran resmi ditangani Dinas Pendidikan, bukan website sekolah. Jadwal resmi mengikuti pengumuman sekolah dan dinas terkait.', 'category' => 'PPDB', 'is_active' => 1, 'sort_order' => 3],
     ['question' => 'Dokumen apa saja yang biasanya diperlukan untuk PPDB?', 'answer' => 'Calon peserta didik biasanya perlu menyiapkan kartu keluarga, akta kelahiran, dokumen identitas atau pendukung sesuai jalur pendaftaran, pas foto, dan dokumen tambahan sesuai pengumuman panitia.', 'category' => 'PPDB', 'is_active' => 1, 'sort_order' => 4],
     ['question' => 'Apakah sekolah memiliki kegiatan ekstrakurikuler?', 'answer' => 'Ya. Sekolah menyediakan kegiatan pengembangan minat dan bakat seperti Pramuka, Jurnalistik, PMR, Futsal, Paduan Suara, Seni Tari, dan kegiatan lain yang dapat diperbarui melalui menu Ekstrakurikuler.', 'category' => 'Kesiswaan', 'is_active' => 1, 'sort_order' => 5],
     ['question' => 'Bagaimana cara melihat agenda sekolah?', 'answer' => 'Agenda kegiatan sekolah dapat dilihat melalui menu Agenda. Admin sekolah dapat memperbarui jadwal kegiatan sesuai tahun ajaran aktif.', 'category' => 'Agenda', 'is_active' => 1, 'sort_order' => 6],

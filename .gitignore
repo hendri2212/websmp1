@@ -29,6 +29,7 @@ vendor/
 
 # Database dumps; keep installer, migration and intentional SQL fixtures.
 *.sql
+!/website_sekolah.sql
 *.sql.gz
 *.sql.zip
 *.sql.bz2

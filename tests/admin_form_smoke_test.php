@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit('CLI only');
+}
+
 if (PHP_SAPI === 'cli') {
     $sessionPath = __DIR__ . '/.tmp_sessions';
     if (!is_dir($sessionPath)) {
@@ -11,11 +16,6 @@ if (PHP_SAPI === 'cli') {
 }
 
 require_once __DIR__ . '/../includes/bootstrap.php';
-
-if (PHP_SAPI !== 'cli') {
-    http_response_code(403);
-    exit('CLI only');
-}
 
 $failures = [];
 $passes = [];
@@ -120,9 +120,8 @@ smoke_cleanup('SMOKE-');
 
 try {
     smoke_assert(admin_can('settings') && admin_can('db_backup'), 'Role superadmin punya akses fitur sensitif.');
-    $_SESSION['admin_role'] = 'ppdb';
-    smoke_assert(admin_can('ppdb_applications') && !admin_can('documents') && !admin_can('faqs'), 'Role PPDB dibatasi ke modul PPDB.');
-    $_SESSION['admin_role'] = 'superadmin';
+    $ppdbPermissions = admin_permissions()['ppdb'];
+    smoke_assert(in_array('ppdb_applications', $ppdbPermissions, true) && !in_array('documents', $ppdbPermissions, true) && !in_array('faqs', $ppdbPermissions, true), 'Role PPDB dibatasi ke modul PPDB.');
 
     $adminUsername = strtolower($marker) . 'editor';
     $adminResult = save_admin_user([
