@@ -1,52 +1,32 @@
 <?php
 
 declare(strict_types=1);
-require_once __DIR__ . '/../app/core/paths.php';
 
-if (PHP_SAPI !== 'cli') { http_response_code(403); exit('CLI only'); }
-if (count($argv) !== 2 || ($argv[1] ?? '') !== '--initialize') {
+if (PHP_SAPI !== 'cli') {
+    http_response_code(403);
+    exit('CLI only');
+}
+if (count($argv) !== 2 || $argv[1] !== '--initialize') {
     fwrite(STDERR, "Use: php database/initialize_admin.php --initialize\n");
     exit(1);
 }
 
-$pdo = null; $locked = false; $lockName = null; $password = null; $failed = false;
+require_once __DIR__ . '/../app/core/database.php';
+
 try {
-    $username = 'admin';
-    $fullName = 'Administrator';
-    $password = '12345';
-    require APP_ROOT . '/app/core/database.php';
     $pdo = db();
-    if (!$pdo) { throw new RuntimeException('Database unavailable'); }
-    $database = $pdo->query('SELECT DATABASE()')->fetchColumn();
-    if (!is_string($database) || $database === '') { throw new RuntimeException('Database not selected'); }
-    $lockName = 'initial-admin-' . substr(hash('sha256', $database), 0, 48);
-    $lock = $pdo->prepare('SELECT GET_LOCK(?, 5)'); $lock->execute([$lockName]);
-    if ((int) $lock->fetchColumn() !== 1) { throw new RuntimeException('Initialization lock unavailable'); }
-    $locked = true;
-    $engine = $pdo->query("SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'admins'")->fetchColumn();
-    if ($engine !== 'InnoDB') { throw new RuntimeException('Transactional account storage required'); }
-    $pdo->beginTransaction();
-    if ($pdo->query('SELECT id FROM admins LIMIT 1 FOR UPDATE')->fetchColumn() !== false) {
-        throw new RuntimeException('Existing accounts must not be modified');
+    if (!$pdo) {
+        throw new RuntimeException('Database unavailable');
     }
-    $hash = password_hash($password, PASSWORD_DEFAULT);
-    $password = null;
+    if ($pdo->query('SELECT id FROM admins LIMIT 1')->fetchColumn() !== false) {
+        fwrite(STDERR, "Tabel admins sudah berisi akun. Tidak ada perubahan.\n");
+        exit(1);
+    }
+
     $statement = $pdo->prepare("INSERT INTO admins (username, full_name, role, is_active, password_hash) VALUES (?, ?, 'superadmin', 1, ?)");
-    $statement->execute([$username, $fullName, $hash]);
-    if ($statement->rowCount() !== 1) { throw new RuntimeException('Account not inserted'); }
-    $pdo->commit();
-    echo "Default administrator created: admin. No existing accounts changed.\n";
+    $statement->execute(['admin', 'Administrator', password_hash('12345', PASSWORD_DEFAULT)]);
+    echo "Akun admin berhasil dibuat.\n";
 } catch (Throwable $exception) {
-    if ($pdo instanceof PDO && $pdo->inTransaction()) {
-        try { $pdo->rollBack(); } catch (Throwable $exception) { /* Close the connection without exposing its error. */ }
-    }
-    fwrite(STDERR, "Initialization refused or failed. Verify private configuration and empty account storage.\n");
-    $failed = true;
-} finally {
-    $password = null;
-    if ($locked && $pdo instanceof PDO && is_string($lockName)) {
-        try { $release = $pdo->prepare('SELECT RELEASE_LOCK(?)'); $release->execute([$lockName]); }
-        catch (Throwable $exception) { /* Connection closure also releases the advisory lock. */ }
-    }
+    fwrite(STDERR, "Inisialisasi gagal. Periksa koneksi database dan struktur tabel admins.\n");
+    exit(1);
 }
-exit($failed ? 1 : 0);

@@ -41,11 +41,12 @@ Untuk menambah fitur, tambahkan fungsi data pada model, handler pada controller,
 1. Siapkan PHP 8.0 atau lebih baru, MySQL/MariaDB, dan ekstensi PHP `pdo_mysql`, `mbstring`, serta `gd` untuk pemrosesan gambar. Ekstensi `zip` diperlukan untuk backup ZIP. Untuk hosting Nginx, sesuaikan contoh `config/nginx.conf`.
 2. Arahkan document root Nginx ke root project (`index.php`), atau gunakan server PHP lokal dengan perintah di bawah. Jangan menjadikan `public/` sebagai document root. HTTP localhost boleh dipakai untuk development.
 3. Provision database lokal baru/terisolasi dan akun database milik developer dengan privilege terbatas pada database tersebut. Jangan menggunakan database sekolah atau credential production.
-4. Tentukan nama database sendiri, lalu buat database kosong dengan charset `utf8mb4` dan collation `utf8mb4_unicode_ci`. Pilih database tersebut di phpMyAdmin, lalu import `database/schema.sql`. Schema tidak memuat `CREATE DATABASE` atau `USE` dan tidak membaca `.env` otomatis. Isi `DB_DATABASE` di `.env` dengan nama database yang sama. Schema bukan migration database existing; runtime tidak membuat schema atau akun otomatis.
+4. Tentukan nama database sendiri, lalu buat database kosong dengan charset `utf8mb4` dan collation `utf8mb4_unicode_ci`.
 5. Salin .env.example menjadi .env di root project, lalu isi setiap field wajib dengan konfigurasi milik developer. Template sengaja tidak dapat langsung digunakan; tidak berisi akun/password default.
-6. Pastikan PHP dapat menulis ke `storage/` dan `public/uploads/`, dengan permission terbatas pada pengguna server. Jangan menyalin session, backup, atau arsip PPDB ke lokasi publik.
-7. Untuk akun admin awal pada database kosong, ikuti bagian Inisialisasi Admin di bawah. Script inisialisasi menyediakan akun default seperti dijelaskan di bawah.
-8. Buka URL development yang dipilih, lalu /admin/login.php. Bila konfigurasi salah, gunakan log privat dan pesan generik; jangan mengaktifkan display_errors publik.
+6. Isi `DB_DATABASE` sesuai nama database yang dibuat, lalu jalankan `php database/migrate.php` dari root proyek. Alternatif: pilih database tersebut di phpMyAdmin dan import `database/schema.sql`.
+7. Pastikan PHP dapat menulis ke `storage/` dan `public/uploads/`, dengan permission terbatas pada pengguna server. Jangan menyalin session, backup, atau arsip PPDB ke lokasi publik.
+8. Untuk akun admin awal pada database kosong, ikuti bagian Inisialisasi Admin di bawah. Script inisialisasi menyediakan akun default seperti dijelaskan di bawah.
+9. Buka URL development yang dipilih, lalu /admin/login.php. Bila konfigurasi salah, gunakan log privat dan pesan generik; jangan mengaktifkan display_errors publik.
 
 ## Menjalankan Lokal dengan MAMP (macOS)
 
@@ -117,6 +118,18 @@ Folder `tests/` telah dihapus karena bukan dependensi runtime website. Suite pen
 
 `database/maintenance_legacy_schema.php` bergantung pada preflight dari folder `tests/` sehingga tidak dapat dijalankan tanpa memulihkan dependensi pengujiannya. Jangan menghapus atau melewati guard tersebut untuk menjalankan maintenance. `database/seed_final_content.php` adalah script legacy yang tidak direkomendasikan untuk dijalankan. Setup database lokal tetap mengikuti bagian Setup Setelah Clone; admin awal memakai `database/initialize_admin.php` hanya pada tabel akun kosong.
 
+## Migration melalui CLI
+
+Buat database terlebih dahulu, lalu isi konfigurasi `.env`, termasuk `DB_DATABASE`. Jalankan dari root proyek:
+
+```bash
+php database/migrate.php
+```
+
+Script membaca koneksi dari `.env` dan menjalankan `database/schema.sql` pada database tersebut. Script hanya berjalan lewat CLI. Tabel yang belum ada dibuat dengan `CREATE TABLE IF NOT EXISTS`; menjalankan ulang tidak menghapus tabel atau data existing.
+
+Migration ini untuk setup struktur awal. Perubahan kolom atau indeks pada tabel existing memerlukan SQL `ALTER TABLE` terpisah; mengubah `schema.sql` lalu menjalankan ulang tidak memperbarui tabel tersebut. MySQL menjalankan DDL dengan implicit commit, sehingga kegagalan di tengah proses dapat meninggalkan sebagian tabel sudah dibuat. Setelah penyebabnya diperbaiki, jalankan ulang.
+
 ## Inisialisasi Admin
 
 `database/schema.sql` hanya membuat struktur tabel. Untuk membuat akun pertama pada database dengan tabel `admins` kosong, jalankan dari root proyek:
@@ -132,7 +145,7 @@ Akun yang dibuat:
 - Nama: `Administrator`
 - Role: `superadmin`, status aktif
 
-Script menggunakan konfigurasi database dari `.env`, hanya berjalan lewat CLI, dan menolak tabel akun yang sudah berisi data atau memakai engine nontransaksional. Menjalankan ulang tidak mereset akun existing.
+Script menggunakan konfigurasi database dari `.env`, hanya berjalan lewat CLI, dan menolak tabel akun yang sudah berisi data. Menjalankan ulang tidak mereset akun existing.
 
 ## Fitur Admin Saat Ini
 
