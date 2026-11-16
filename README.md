@@ -24,7 +24,7 @@ config/
 ├── env.php                # Pembaca .env
 public/                    # CSS, gambar, dan upload publik
 storage/                   # Session, dokumen privat, dan backup
-database/                  # Schema dan script CLI
+database/                  # Schema, runner CLI, dan seeders/ per tabel
 index.php                  # Satu pintu masuk request aplikasi
 preview_router.php         # Router untuk server PHP lokal
 ```
@@ -129,15 +129,67 @@ Script membaca koneksi dari `.env` dan menjalankan `database/schema.sql` pada da
 
 Migration ini untuk setup struktur awal. Perubahan kolom atau indeks pada tabel existing memerlukan SQL `ALTER TABLE` terpisah; mengubah `schema.sql` lalu menjalankan ulang tidak memperbarui tabel tersebut. MySQL menjalankan DDL dengan implicit commit, sehingga kegagalan di tengah proses dapat meninggalkan sebagian tabel sudah dibuat. Setelah penyebabnya diperbaiki, jalankan ulang.
 
-## Seeder Konten Teks (Opsional)
+## Migration Fresh melalui CLI
 
-Sumber seed hanya dipakai saat CLI diminta secara eksplisit; tidak dimuat runtime website. Jalankan migration terlebih dahulu. Seeder ini belum dijalankan dalam proses refactor.
+Untuk menghapus seluruh tabel dan view pada database `DB_DATABASE` di `.env`, lalu membuat ulang struktur kosong:
 
 ```bash
-php database/seed_final_content.php --seed
+php database/migrate.php --fresh
 ```
 
-Seeder menambahkan pengaturan/konten teks ke `site_settings`, 15 fasilitas tanpa foto ke `school_facilities`, 6 ekskul tanpa foto ke `extracurriculars`, 19 informasi PPDB (termasuk 4 kriteria) ke `ppdb_entries`, 3 agenda, 2 pengumuman, dan 8 FAQ. Data seed awal perlu ditinjau, termasuk tanggal agenda. Record existing dengan kunci/judul/nama yang sama dilewati; pengaturan existing tidak ditimpa.
+Semua data tabel, termasuk akun admin, dihapus. Tabel tambahan yang tidak ada dalam `schema.sql` juga dihapus. Upload di disk tetap tersedia. Proses fresh tidak menjalankan seeder otomatis.
+
+Sesudah fresh, buat akun admin awal:
+
+```bash
+php database/seed.php --seed --class=AdminsSeeder
+```
+
+Jika ingin mengisi konten teks juga, jalankan terpisah:
+
+```bash
+php database/seed.php --seed
+```
+
+Perintah `php database/migrate.php` tanpa `--fresh` tetap hanya membuat tabel yang belum ada. Fresh memakai DDL MySQL, sehingga kegagalan di tengah proses dapat meninggalkan sebagian tabel sudah dihapus atau dibuat.
+
+## Seeder Konten Teks (Opsional)
+
+Seeder dipisah per tabel dalam `database/seeders/`, memakai base class `Seeder` dan pemanggil `DatabaseSeeder`. Sumber seed tidak dimuat runtime website. Jalankan migration terlebih dahulu. Seeder ini belum dijalankan dalam proses refactor.
+
+```bash
+php database/seed.php --seed
+```
+
+Daftar seeder tanpa menjalankannya:
+
+```bash
+php database/seed.php --list
+```
+
+Jalankan satu tabel saja, misalnya FAQ:
+
+```bash
+php database/seed.php --seed --class=FaqsSeeder
+```
+
+| File dalam `database/seeders/` | Tabel |
+| --- | --- |
+| `SiteSettingsSeeder.php` | `site_settings` |
+| `SchoolFacilitiesSeeder.php` | `school_facilities` |
+| `ExtracurricularsSeeder.php` | `extracurriculars` |
+| `PpdbEntriesSeeder.php` | `ppdb_entries` |
+| `AgendaItemsSeeder.php` | `agenda_items` |
+| `AnnouncementsSeeder.php` | `announcements` |
+| `FaqsSeeder.php` | `faqs` |
+| `AdminsSeeder.php` | `admins` |
+
+`DatabaseSeeder` memanggil tujuh seeder konten teks; akun admin tetap terpisah. `AdminsSeeder` hanya membuat akun pada tabel `admins` kosong. Script duplikat `initialize_admin.php` sudah dihapus; gunakan runner yang sama untuk semua seeder. Runner membungkus seeder yang dipilih dalam satu transaksi. File `seed_final_content.php` lama sudah diganti oleh struktur ini.
+
+
+Seeder menambahkan pengaturan/konten teks ke `site_settings`, 15 fasilitas tanpa foto ke `school_facilities`, 6 ekskul tanpa foto ke `extracurriculars`, 23 informasi PPDB (termasuk 4 kriteria dan 4 teks pengantar) ke `ppdb_entries`, 3 agenda, 2 pengumuman, dan 8 FAQ. Data seed awal perlu ditinjau, termasuk tanggal agenda. Record existing dengan kunci/judul/nama yang sama dilewati; nilai pengaturan existing tidak ditimpa; field pengaturan baru yang belum ada dilengkapi.
+
+Slogan sambutan disimpan di `site_settings` → `siteHome.principalSlogan`, penjelasan maintenance di `siteMaintenance.details`, dan pengantar PPDB di `ppdb_entries` dengan seksi `pengantar`. Label, judul antarmuka, pesan sistem, serta placeholder form tetap statis karena tidak memiliki tabel khusus antarmuka.
 
 Seeder tidak membuat guru/staf, berita, galeri, prestasi, dokumen, foto kepala sekolah, gambar, video, maupun berkas akreditasi. Data/media tersebut diisi lewat admin. Isi seed tidak muncul di website sampai disimpan ke database. Pada database kosong, menu navigasi dan teks publik juga kosong sampai diisi dari admin atau seed teks.
 
@@ -146,7 +198,7 @@ Seeder tidak membuat guru/staf, berita, galeri, prestasi, dokumen, foto kepala s
 `database/schema.sql` hanya membuat struktur tabel. Untuk membuat akun pertama pada database dengan tabel `admins` kosong, jalankan dari root proyek:
 
 ```bash
-php database/initialize_admin.php --initialize
+php database/seed.php --seed --class=AdminsSeeder
 ```
 
 Akun yang dibuat:
@@ -156,7 +208,7 @@ Akun yang dibuat:
 - Nama: `Administrator`
 - Role: `superadmin`, status aktif
 
-Script menggunakan konfigurasi database dari `.env`, hanya berjalan lewat CLI, dan menolak tabel akun yang sudah berisi data. Menjalankan ulang tidak mereset akun existing.
+Script menggunakan konfigurasi database dari `.env`, hanya berjalan lewat CLI, dan melewati pembuatan akun jika tabel `admins` sudah berisi data. Menjalankan ulang tidak mereset akun existing.
 
 ## Fitur Admin Saat Ini
 

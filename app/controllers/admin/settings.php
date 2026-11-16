@@ -61,11 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
 
         $maintenance = [
             'enabled' => isset($_POST['maintenance_enabled']),
-            'message' => trim($_POST['maintenance_message'] ?? ($content['siteMaintenance']['message'] ?? 'Website sekolah sedang dalam pemeliharaan singkat. Silakan kembali beberapa saat lagi.')),
+            'details' => trim($_POST['maintenance_details'] ?? $content['siteMaintenance']['details']),
+            'message' => trim($_POST['maintenance_message'] ?? ($content['siteMaintenance']['message'] ?? '')),
         ];
-        if ($maintenance['message'] === '') {
-            $maintenance['message'] = 'Website sekolah sedang dalam pemeliharaan singkat. Silakan kembali beberapa saat lagi.';
-        }
 
         $theme = [
             'primaryColor' => normalize_hex_color($_POST['theme_primary_color'] ?? null, '#0284c7'),
@@ -79,6 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
         ];
 
         $home = [
+            'principalSlogan' => trim($_POST['home_principal_slogan'] ?? $content['siteHome']['principalSlogan']),
             'heroTitle' => trim($_POST['home_hero_title'] ?? ($content['siteHome']['heroTitle'] ?? $profile['name'])),
             'heroSubtitle' => trim($_POST['home_hero_subtitle'] ?? ($content['siteHome']['heroSubtitle'] ?? $profile['heroDescription'])),
             'primaryButtonLabel' => trim($_POST['home_primary_button_label'] ?? ($content['siteHome']['primaryButtonLabel'] ?? '')),

@@ -12,13 +12,14 @@
                 </span>
             </summary>
             <p>Kelola informasi PPDB publik seperti jalur, alur, persyaratan, catatan, dan kontak panitia. Edaran atau PDF PPDB diunggah dari menu Dokumen dengan kategori <strong>PPDB</strong>.</p>
+            <p class="muted">Untuk teks pengantar, gunakan seksi <strong>pengantar</strong> dan judul <strong>halaman</strong>, <strong>kriteria</strong>, <strong>dokumen</strong>, atau <strong>kontak</strong>. Teks {tahun_ajaran} mengikuti tahun ajaran aktif.</p>
             <?php if (!db_available()): ?><div class="alert warning">Database belum tersedia untuk mengelola informasi PPDB.</div><?php endif; ?>
             <form method="post" class="form-grid">
                 <?= csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">
                 <label>
                     <span>Seksi</span>
-                    <input type="text" name="section" placeholder="informasi / kriteria / catatan / persyaratan" value="<?= e($editRow['section'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?>>
+                    <input type="text" name="section" placeholder="informasi / kriteria / catatan / persyaratan / pengantar" value="<?= e($editRow['section'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?>>
                 </label>
                 <label><span>Urutan</span><input type="number" name="sort_order" value="<?= e((string) ($editRow['sort_order'] ?? 0)); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label class="full"><span>Judul</span><input type="text" name="title" value="<?= e($editRow['title'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>

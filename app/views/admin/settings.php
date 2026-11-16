@@ -144,8 +144,9 @@
             </label>
             <label class="full">
                 <span>Pesan Maintenance</span>
-                <textarea name="maintenance_message" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['siteMaintenance']['message'] ?? 'Website sekolah sedang dalam pemeliharaan singkat. Silakan kembali beberapa saat lagi.'); ?></textarea>
+                <textarea name="maintenance_message" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['siteMaintenance']['message']); ?></textarea>
             </label>
+            <label class="full"><span>Penjelasan Maintenance</span><textarea name="maintenance_details" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['siteMaintenance']['details']); ?></textarea></label>
             <p class="muted">Saat aktif, pengunjung publik melihat halaman pemeliharaan. Admin tetap bisa login dan mengelola website.</p>
         </details>
         <details class="settings-section full">
@@ -203,6 +204,7 @@
             <div class="form-grid two-col">
                 <label><span>Kepala Sekolah</span><input type="text" name="principal_name" value="<?= e($content['principalMessage']['name']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label><span>Jabatan</span><input type="text" name="principal_title" value="<?= e($content['principalMessage']['title']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
+                <label class="full"><span>Slogan Sambutan di Beranda</span><input type="text" name="home_principal_slogan" value="<?= e($content['siteHome']['principalSlogan']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label class="full"><span>Salam Sambutan</span><input type="text" name="principal_greeting" value="<?= e($content['principalMessage']['greeting']); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label>
                     <span>Foto Kepala Sekolah</span>

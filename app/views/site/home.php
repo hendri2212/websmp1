@@ -105,7 +105,9 @@
                 <?php endif; ?>
                 <div>
                     <span class="eyebrow">Sambutan Singkat</span>
-                    <h3>Mewujudkan generasi yang unggul dalam prestasi, karakter, dan pemanfaatan teknologi.</h3>
+                    <?php if ($homeSettings['principalSlogan'] !== ''): ?>
+                    <h3><?= e($homeSettings['principalSlogan']); ?></h3>
+                    <?php endif; ?>
                     <p><?= e($content['principalMessage']['name']); ?> - <?= e($content['principalMessage']['title']); ?></p>
                 </div>
             </div>

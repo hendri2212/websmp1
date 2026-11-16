@@ -202,4 +202,4 @@ CREATE TABLE IF NOT EXISTS `staff_members` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Schema does not insert accounts. Create the default admin through:
--- php database/initialize_admin.php --initialize
+-- php database/seed.php --seed --class=AdminsSeeder

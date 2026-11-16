@@ -40,12 +40,12 @@ function input_rules(string $module): array
     }
     $settings = [];
     foreach (['name','short_name','tagline','phone','service_hours','principal_name','principal_title',
-        'principal_greeting','home_hero_title','home_primary_button_label','home_secondary_button_label',
+        'principal_greeting','home_principal_slogan','home_hero_title','home_primary_button_label','home_secondary_button_label',
         'home_profile_video_title','accreditation_status','accreditation_sk_number','accreditation_sk_date'] as $field) {
         $settings[$field] = [255, false];
     }
     foreach (['description','hero_description','address','principal_paragraphs','history_text','vision_text','mission_text',
-        'school_facilities','maintenance_message','home_hero_subtitle','home_profile_video_description',
+        'school_facilities','maintenance_details','maintenance_message','home_hero_subtitle','home_profile_video_description',
         'home_excellence_programs','accreditation_description'] as $field) {
         $settings[$field] = $text;
     }

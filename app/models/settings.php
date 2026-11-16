@@ -7,7 +7,7 @@ function site_content(): array
         'schoolProfile' => array_fill_keys(['name', 'shortName', 'tagline', 'description', 'heroDescription', 'address', 'phone', 'email', 'serviceHours', 'logoPath'], ''),
         'principalMessage' => array_fill_keys(['name', 'title', 'greeting', 'photoPath'], '') + ['paragraphs' => []],
         'schoolAccreditation' => array_fill_keys(['status', 'skNumber', 'skDate', 'description', 'filePath', 'originalFilename'], '') + ['fileSize' => 0],
-        'siteMaintenance' => ['enabled' => false, 'message' => ''],
+        'siteMaintenance' => ['enabled' => false, 'message' => '', 'details' => ''],
         'siteTheme' => [],
         'siteAcademic' => ['currentYear' => ''],
         'siteHome' => [],
@@ -71,7 +71,7 @@ function normalized_site_home(array $settings): array
     foreach (['showAnnouncements', 'showQuickLinks', 'showLogoCard', 'showStats', 'showPrincipalCard', 'showTeacherCarousel', 'showProfileIntro', 'showFeaturedAreas', 'showAgenda'] as $key) {
         $settings[$key] = (bool) ($settings[$key] ?? false);
     }
-    foreach (['heroTitle', 'heroSubtitle', 'primaryButtonLabel', 'primaryButtonUrl', 'secondaryButtonLabel', 'secondaryButtonUrl', 'profileVideoUrl', 'profileVideoTitle', 'profileVideoDescription'] as $key) {
+    foreach (['heroTitle', 'heroSubtitle', 'primaryButtonLabel', 'primaryButtonUrl', 'secondaryButtonLabel', 'secondaryButtonUrl', 'profileVideoUrl', 'profileVideoTitle', 'profileVideoDescription', 'principalSlogan'] as $key) {
         $settings[$key] = trim((string) ($settings[$key] ?? ''));
     }
     $settings['teacherLimit'] = max(4, min(24, (int) ($settings['teacherLimit'] ?? 12)));

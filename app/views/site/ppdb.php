@@ -2,7 +2,9 @@
     <div class="container">
         <span class="eyebrow inverse">PPDB</span>
         <h1>Penerimaan Peserta Didik Baru <?= e($content['schoolProfile']['shortName']); ?></h1>
-        <p>Informasi penerimaan peserta didik baru tahun ajaran <?= e(current_academic_year()); ?>. Pendaftaran resmi ditangani Dinas Pendidikan, bukan melalui website sekolah ini.</p>
+        <?php if (!empty($ppdbIntroductions['halaman'])): ?>
+            <p><?= e($ppdbIntroductions['halaman']); ?></p>
+            <?php endif; ?>
     </div>
 </section>
 
@@ -11,7 +13,9 @@
         <div class="section-heading">
             <span class="eyebrow">Kriteria Pendaftaran</span>
             <h2>Jalur PPDB yang tersedia</h2>
-            <p>Pilih jalur pendaftaran sesuai kondisi calon peserta didik dan siapkan dokumen pendukung yang diminta panitia.</p>
+            <?php if (!empty($ppdbIntroductions['kriteria'])): ?>
+            <p><?= e($ppdbIntroductions['kriteria']); ?></p>
+            <?php endif; ?>
         </div>
         <div class="ppdb-criteria-grid">
             <?php foreach (($ppdbSections['kriteria'] ?? []) as $item): ?>
@@ -58,7 +62,9 @@
         <div class="section-heading">
             <span class="eyebrow">Edaran PPDB</span>
             <h2>Dokumen dan pengumuman resmi</h2>
-            <p>Unduh surat edaran, jadwal, formulir informasi, atau dokumen PPDB lain yang diterbitkan sekolah.</p>
+            <?php if (!empty($ppdbIntroductions['dokumen'])): ?>
+            <p><?= e($ppdbIntroductions['dokumen']); ?></p>
+            <?php endif; ?>
         </div>
         <?php if ($ppdbDocuments): ?>
             <div class="document-grid">
@@ -112,7 +118,9 @@
         <div class="section-heading">
             <span class="eyebrow">Kontak Panitia</span>
             <h2>Layanan informasi PPDB</h2>
-            <p>Hubungi panitia pada jam layanan untuk memastikan jadwal, persyaratan, dan kanal pendaftaran resmi.</p>
+            <?php if (!empty($ppdbIntroductions['kontak'])): ?>
+            <p><?= e($ppdbIntroductions['kontak']); ?></p>
+            <?php endif; ?>
         </div>
         <div class="card-grid three">
             <?php foreach ($ppdbContactItems as $item): ?>

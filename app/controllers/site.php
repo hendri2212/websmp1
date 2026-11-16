@@ -19,7 +19,7 @@ if (!empty($content['siteMaintenance']['enabled']) && !in_array($path, ['/robots
     http_response_code(503);
     header('Retry-After: 3600');
     $pageTitle = 'Website Sedang Dalam Pemeliharaan - ' . $content['schoolProfile']['name'];
-    $metaDescription = plain_text_excerpt($content['siteMaintenance']['message'] ?? 'Website sekolah sedang dalam pemeliharaan singkat.', 160);
+    $metaDescription = plain_text_excerpt($content['siteMaintenance']['message'], 160);
     $view = 'site/maintenance.php';
     render_view($view, get_defined_vars(), 'site');
     exit;
@@ -282,6 +282,10 @@ switch ($view) {
         }
         unset($_SESSION['ppdb_receipt']);
         $ppdbSections = ppdb_sections_data();
+        $ppdbIntroductions = [];
+        foreach ($ppdbSections['pengantar'] ?? [] as $item) {
+            $ppdbIntroductions[$item['title']] = str_replace('{tahun_ajaran}', current_academic_year(), $item['desc']);
+        }
         $ppdbSteps = isset($ppdbSections['alur']) ? array_column($ppdbSections['alur'], 'desc') : [];
         $ppdbDocuments = public_documents('PPDB');
         $ppdbContactItems = $ppdbSections['kontak'] ?? [];
