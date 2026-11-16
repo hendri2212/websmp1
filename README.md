@@ -191,7 +191,7 @@ Seeder menambahkan pengaturan/konten teks ke `site_settings`, 15 fasilitas tanpa
 
 Slogan sambutan disimpan di `site_settings` → `siteHome.principalSlogan`, penjelasan maintenance di `siteMaintenance.details`, dan pengantar PPDB di `ppdb_entries` dengan seksi `pengantar`. Label, judul antarmuka, pesan sistem, serta placeholder form tetap statis karena tidak memiliki tabel khusus antarmuka.
 
-Seeder tidak membuat guru/staf, berita, galeri, prestasi, dokumen, foto kepala sekolah, gambar, video, maupun berkas akreditasi. Data/media tersebut diisi lewat admin. Isi seed tidak muncul di website sampai disimpan ke database. Pada database kosong, menu navigasi dan teks publik juga kosong sampai diisi dari admin atau seed teks.
+Seeder tidak membuat guru/staf, berita, galeri, prestasi, dokumen, foto kepala sekolah, file gambar/video, maupun berkas akreditasi. `SiteSettingsSeeder` menyimpan URL YouTube awal `https://www.youtube.com/watch?v=bbWLfO9AE6M` pada `siteHome.profileVideoUrl`, dengan `profileVideoSource=youtube`; file video tidak diunggah atau disalin. Data/media tersebut diisi lewat admin. Isi seed tidak muncul di website sampai disimpan ke database. Pada database kosong, menu navigasi dan teks publik juga kosong sampai diisi dari admin atau seed teks.
 
 ## Inisialisasi Admin
 

@@ -246,7 +246,18 @@ function youtube_video_id(string $url): ?string
 function video_embed_url(string $url): string
 {
     $id = youtube_video_id($url);
-    return $id === null ? '' : 'https://www.youtube.com/embed/' . $id;
+    if ($id === null) {
+        return '';
+    }
+    $page = parse_url(absolute_url());
+    $origin = $page['scheme'] . '://' . $page['host'] . (isset($page['port']) ? ':' . $page['port'] : '');
+    return 'https://www.youtube.com/embed/' . $id . '?' . http_build_query([
+        'autoplay' => 1,
+        'mute' => 1,
+        'playsinline' => 1,
+        'enablejsapi' => 1,
+        'origin' => $origin,
+    ], '', '&', PHP_QUERY_RFC3986);
 }
 
 function profile_video_upload_path(string $url): ?string

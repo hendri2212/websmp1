@@ -34,6 +34,8 @@ final class SiteSettingsSeeder extends Seeder
                 'currentYear' => '2026/2027',
             ],
             'siteHome' => [
+                'profileVideoUrl' => 'https://www.youtube.com/watch?v=bbWLfO9AE6M',
+                'profileVideoSource' => 'youtube',
                 'principalSlogan' => 'Mewujudkan generasi yang unggul dalam prestasi, karakter, dan pemanfaatan teknologi.',
                 'heroTitle' => 'SMP Negeri 1 Kotabaru',
                 'heroSubtitle' => 'Media informasi resmi SMP Negeri 1 Kotabaru yang memuat profil sekolah, layanan akademik, kegiatan kesiswaan, publikasi, serta arah pengembangan sekolah yang adaptif, reflektif, dan berorientasi pada pembelajaran mendalam.',

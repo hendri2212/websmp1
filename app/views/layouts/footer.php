@@ -65,27 +65,32 @@ document.addEventListener('DOMContentLoaded', function () {
     var youtubeFrame = document.querySelector('[data-youtube-autoplay]');
     if (youtubeFrame) {
         var youtubeError = youtubeFrame.parentElement.querySelector('[data-youtube-error]');
-        startWhenVisible(youtubeFrame, function () {
-            var embedUrl = new URL(youtubeFrame.src);
-            embedUrl.searchParams.set('origin', window.location.origin);
-            youtubeFrame.src = embedUrl.toString();
-            function initializeYoutube() {
-                new YT.Player(youtubeFrame.id, {
-                    events: {
-                        onReady: function (event) {
-                            event.target.mute();
-                            event.target.playVideo();
-                        },
-                        onError: function () {
-                            if (youtubeError) { youtubeError.hidden = false; }
-                        },
-                        onStateChange: function (event) {
-                            if (youtubeError && event.data === YT.PlayerState.PLAYING) { youtubeError.hidden = true; }
+        var autoplayBlocked = youtubeFrame.parentElement.querySelector('[data-youtube-autoplay-blocked]');
+        function initializeYoutube() {
+            new YT.Player(youtubeFrame.id, {
+                events: {
+                    onReady: function (event) {
+                        event.target.mute();
+                        event.target.playVideo();
+                    },
+                    onAutoplayBlocked: function () {
+                        if (autoplayBlocked) { autoplayBlocked.hidden = false; }
+                    },
+                    onError: function () {
+                        if (youtubeError) { youtubeError.hidden = false; }
+                    },
+                    onStateChange: function (event) {
+                        if (event.data === YT.PlayerState.PLAYING) {
+                            if (youtubeError) { youtubeError.hidden = true; }
+                            if (autoplayBlocked) { autoplayBlocked.hidden = true; }
                         }
                     }
-                });
-            }
-            if (window.YT && window.YT.Player) { initializeYoutube(); return; }
+                }
+            });
+        }
+        if (window.YT && window.YT.Player) {
+            initializeYoutube();
+        } else {
             var previousReady = window.onYouTubeIframeAPIReady;
             window.onYouTubeIframeAPIReady = function () {
                 if (typeof previousReady === 'function') { previousReady(); }
@@ -95,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
             apiScript.src = 'https://www.youtube.com/iframe_api';
             apiScript.async = true;
             document.head.appendChild(apiScript);
-        });
+        }
     }
     document.querySelectorAll('[data-achievement-slider]').forEach(function (slider) {
         var slides = Array.from(slider.querySelectorAll('.hero-achievement-slide'));

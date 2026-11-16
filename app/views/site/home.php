@@ -143,9 +143,10 @@
                 </video>
                 <p class="profile-video-error" data-profile-video-error role="alert" hidden>Video tidak dapat diputar di browser ini.</p>
             <?php elseif ($profileVideoUrl !== ''): ?>
-                <iframe id="profile-youtube-player" data-youtube-autoplay src="<?= e($profileVideoUrl . '?enablejsapi=1&playsinline=1'); ?>" title="<?= e($profileVideoTitle); ?>" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                <iframe id="profile-youtube-player" data-youtube-autoplay src="<?= e($profileVideoUrl); ?>" title="<?= e($profileVideoTitle); ?>" loading="eager" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                 <div class="profile-youtube-fallback">
                     <p data-youtube-error role="status" hidden>Video tidak dapat diputar di halaman ini. Silakan tonton melalui YouTube.</p>
+                    <p data-youtube-autoplay-blocked role="status" hidden>Autoplay diblokir browser. Tekan tombol play pada video.</p>
                     <a class="text-link" href="<?= e($profileYoutubeWatchUrl); ?>" target="_blank" rel="noopener noreferrer">Tonton di YouTube</a>
                 </div>
             <?php else: ?>
