@@ -2,7 +2,9 @@
     <div class="container">
         <span class="eyebrow inverse">Ekstrakurikuler</span>
         <h1>Ekstrakurikuler <?= e($content['schoolProfile']['shortName']); ?></h1>
-        <p>Wadah pengembangan minat, bakat, kepemimpinan, sportivitas, kreativitas, dan karakter peserta didik.</p>
+        <?php if (!empty($content['pageIntroductions']['ekstrakurikuler'])): ?>
+        <p><?= e($content['pageIntroductions']['ekstrakurikuler']); ?></p>
+        <?php endif; ?>
     </div>
 </section>
 

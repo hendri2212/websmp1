@@ -1,11 +1,13 @@
-<?php $logoPath = $content['schoolProfile']['logoPath'] ?? '/public/logo-sekolah.png'; ?>
+<?php $logoPath = $content['schoolProfile']['logoPath'] ?? ''; ?>
     </main>
     <footer class="site-footer">
         <div class="accent-line"></div>
         <div class="container footer-grid">
             <div>
                 <div class="footer-brand">
+                    <?php if ($logoPath !== ''): ?>
                     <img src="<?= e(asset(ltrim($logoPath, '/'))); ?>" alt="Logo sekolah">
+                    <?php endif; ?>
                     <div>
                         <strong><?= e($content['schoolProfile']['name']); ?></strong>
                         <span>Lembaga pendidikan resmi</span>

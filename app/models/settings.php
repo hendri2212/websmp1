@@ -1,67 +1,48 @@
 <?php
 
-function seed_content(): array
-{
-    static $seed;
-    if ($seed === null) {
-        $seed = require APP_ROOT . '/config/site_data.php';
-    }
-    return $seed;
-}
-
 function site_content(): array
 {
-    $content = seed_content();
+    // Empty shapes keep forms renderable; editorial content comes only from the database.
+    $content = [
+        'schoolProfile' => array_fill_keys(['name', 'shortName', 'tagline', 'description', 'heroDescription', 'address', 'phone', 'email', 'serviceHours', 'logoPath'], ''),
+        'principalMessage' => array_fill_keys(['name', 'title', 'greeting', 'photoPath'], '') + ['paragraphs' => []],
+        'schoolAccreditation' => array_fill_keys(['status', 'skNumber', 'skDate', 'description', 'filePath', 'originalFilename'], '') + ['fileSize' => 0],
+        'siteMaintenance' => ['enabled' => false, 'message' => ''],
+        'siteTheme' => [],
+        'siteAcademic' => ['currentYear' => ''],
+        'siteHome' => [],
+        'homeProfileIntro' => array_fill_keys(['title', 'description', 'heading', 'text'], ''),
+        'stats' => array_fill(0, 4, ['label' => '', 'value' => '']),
+        'profileSections' => array_fill(0, 3, ['title' => '', 'text' => '']),
+    ];
+    foreach (['navigation', 'quickLinks', 'featuredAreas', 'excellencePrograms', 'schoolHighlights', 'schoolIdentity', 'schoolObjectives', 'academicPrograms', 'academicServices', 'academicSupportItems', 'academicCommitments', 'studentPrograms', 'studentDevelopmentAreas', 'studentGuidancePoints', 'galleryHighlights', 'contactChannels', 'contactServices', 'contactNotes', 'pageIntroductions', 'privacySections'] as $key) {
+        $content[$key] = [];
+    }
     $pdo = db();
-
-    if (!$pdo) {
-        return $content;
-    }
-
-    $keys = ['schoolProfile', 'siteMaintenance', 'siteTheme', 'siteAcademic', 'siteHome', 'navigation', 'stats', 'quickLinks', 'featuredAreas', 'excellencePrograms', 'schoolHighlights', 'schoolAgenda', 'profileSections', 'principalMessage', 'schoolIdentity', 'schoolAccreditation', 'schoolObjectives', 'schoolFacilities', 'academicPrograms', 'academicServices', 'academicSupportItems', 'academicCommitments', 'staffMembers', 'studentPrograms', 'studentDevelopmentAreas', 'extracurriculars', 'studentGuidancePoints', 'galleryHighlights', 'ppdbSteps', 'ppdbRequirements', 'ppdbInformation', 'ppdbCriteria', 'ppdbNotes', 'contactChannels', 'contactServices', 'contactNotes'];
-    $rows = $pdo->query('SELECT setting_key, setting_value FROM site_settings')->fetchAll();
-    $settings = [];
-    foreach ($rows as $row) {
-        $settings[$row['setting_key']] = $row['setting_value'];
-    }
-
-    foreach ($keys as $key) {
-        if (!empty($settings[$key])) {
-            $decoded = json_decode($settings[$key], true);
-            if (json_last_error() === JSON_ERROR_NONE) {
-                $content[$key] = $decoded;
+    if ($pdo) {
+        foreach ($pdo->query('SELECT setting_key, setting_value FROM site_settings')->fetchAll() as $row) {
+            $key = $row['setting_key'];
+            $value = json_decode($row['setting_value'], true);
+            if (array_key_exists($key, $content) && is_array($value)) {
+                $content[$key] = array_is_list($content[$key]) ? $value : array_replace($content[$key], $value);
             }
         }
     }
-
-    $content['schoolProfile']['logoPath'] = normalized_school_logo_path($content['schoolProfile']['logoPath'] ?? null);
-    $content['navigation'] = normalized_navigation($content['navigation'] ?? [], seed_content()['navigation'] ?? []);
-    $content['siteAcademic'] = normalized_site_academic($content['siteAcademic'] ?? [], seed_content()['siteAcademic'] ?? []);
-    $content['siteHome'] = normalized_site_home($content['siteHome'] ?? [], seed_content()['siteHome'] ?? []);
-
+    $content['schoolProfile']['logoPath'] = normalized_school_logo_path($content['schoolProfile']['logoPath']);
+    $content['navigation'] = normalized_navigation($content['navigation']);
+    $content['siteHome'] = normalized_site_home($content['siteHome']);
     return $content;
 }
 
 function normalized_school_logo_path(mixed $path): string
 {
     $path = is_string($path) ? '/' . ltrim(trim($path), '/') : '';
-    if (!str_starts_with($path, '/public/')
-        || !file_is_within_directory(APP_ROOT . $path, APP_ROOT . '/public')) {
-        return '/public/logo-sekolah.png';
-    }
-
-    return $path;
-}
-
-function normalized_site_academic(array $settings, array $defaults): array
-{
-    $currentYear = trim((string) ($settings['currentYear'] ?? $defaults['currentYear'] ?? '2025/2026'));
-    return ['currentYear' => $currentYear !== '' ? $currentYear : '2025/2026'];
+    return str_starts_with($path, '/public/') && file_is_within_directory(APP_ROOT . $path, APP_ROOT . '/public') ? $path : '';
 }
 
 function current_academic_year(): string
 {
-    return site_content()['siteAcademic']['currentYear'] ?? '2025/2026';
+    return trim((string) site_content()['siteAcademic']['currentYear']);
 }
 
 function repository_quote_identifier(string $identifier): string
@@ -85,42 +66,32 @@ function ensure_academic_year_columns(): void
     $done = true;
 }
 
-function normalized_site_home(array $settings, array $defaults): array
+function normalized_site_home(array $settings): array
 {
-    $normalized = array_replace($defaults, $settings);
     foreach (['showAnnouncements', 'showQuickLinks', 'showLogoCard', 'showStats', 'showPrincipalCard', 'showTeacherCarousel', 'showProfileIntro', 'showFeaturedAreas', 'showAgenda'] as $key) {
-        $normalized[$key] = array_key_exists($key, $normalized) ? (bool) $normalized[$key] : true;
+        $settings[$key] = (bool) ($settings[$key] ?? false);
     }
-
     foreach (['heroTitle', 'heroSubtitle', 'primaryButtonLabel', 'primaryButtonUrl', 'secondaryButtonLabel', 'secondaryButtonUrl', 'profileVideoUrl', 'profileVideoTitle', 'profileVideoDescription'] as $key) {
-        $normalized[$key] = trim((string) ($normalized[$key] ?? ($defaults[$key] ?? '')));
+        $settings[$key] = trim((string) ($settings[$key] ?? ''));
     }
-    $normalized['teacherLimit'] = max(4, min(24, (int) ($normalized['teacherLimit'] ?? 12)));
-    $normalized['agendaLimit'] = max(1, min(9, (int) ($normalized['agendaLimit'] ?? 3)));
-
-    return $normalized;
+    $settings['teacherLimit'] = max(4, min(24, (int) ($settings['teacherLimit'] ?? 12)));
+    $settings['agendaLimit'] = max(1, min(9, (int) ($settings['agendaLimit'] ?? 3)));
+    return $settings;
 }
 
-function normalized_navigation(array $navigation, array $defaults): array
+function normalized_navigation(array $navigation): array
 {
-    $currentByHref = [];
+    $items = [];
     foreach ($navigation as $item) {
-        if (!empty($item['href'])) {
-            $currentByHref[$item['href']] = $item;
+        if (is_array($item) && !empty($item['href'])) {
+            $items[] = [
+                'href' => (string) $item['href'],
+                'label' => trim((string) ($item['label'] ?? '')),
+                'visible' => (bool) ($item['visible'] ?? false),
+            ];
         }
     }
-
-    $normalized = [];
-    foreach ($defaults as $default) {
-        $current = $currentByHref[$default['href']] ?? [];
-        $normalized[] = [
-            'href' => $default['href'],
-            'label' => trim($current['label'] ?? $default['label']),
-            'visible' => array_key_exists('visible', $current) ? (bool) $current['visible'] : (bool) ($default['visible'] ?? true),
-        ];
-    }
-
-    return $normalized;
+    return $items;
 }
 
 function save_site_sections(array $payload): void

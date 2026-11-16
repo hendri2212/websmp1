@@ -4,12 +4,12 @@ function gallery_items(): array
 {
     $pdo = db();
     if (!$pdo) {
-        return seed_content()['galleryItems'];
+        return [];
     }
 
     $rows = $pdo->query('SELECT * FROM gallery_items ORDER BY sort_order ASC, id DESC')->fetchAll();
     if (!$rows) {
-        return seed_content()['galleryItems'];
+        return [];
     }
 
     return array_map(static fn(array $row): array => [
@@ -30,7 +30,7 @@ function gallery_count(): int
 {
     $pdo = db();
     if (!$pdo) {
-        return count(seed_content()['galleryItems'] ?? []);
+        return 0;
     }
 
     return (int) $pdo->query('SELECT COUNT(*) FROM gallery_items')->fetchColumn();

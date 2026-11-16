@@ -184,7 +184,7 @@ function build_full_backup_zip(PDO $pdo, string $databaseName, array $tableSumma
     $fileCount += backup_add_directory_to_zip($zip, $projectRoot . '/storage/uploads', $projectRoot, 'files');
 
     $manifest = [
-        'website' => 'SMP Negeri 1 Kotabaru',
+        'website' => site_content()['schoolProfile']['name'],
         'database' => $databaseName,
         'created_at' => date('Y-m-d H:i:s'),
         'tables' => $tableSummaries,

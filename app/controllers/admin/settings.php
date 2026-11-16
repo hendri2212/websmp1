@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
         $profile['email'] = $_POST['email'] ?? $profile['email'];
         $profile['serviceHours'] = $_POST['service_hours'] ?? $profile['serviceHours'];
         $logoUpload = uploaded_image_result('school_logo_file', 'profile');
-        $profile['logoPath'] = $logoUpload['path'] ?? ($profile['logoPath'] ?? '/public/logo-sekolah.png');
+        $profile['logoPath'] = $logoUpload['path'] ?? ($profile['logoPath'] ?? '');
 
         $maintenance = [
             'enabled' => isset($_POST['maintenance_enabled']),
@@ -75,22 +75,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
             'darkColor' => normalize_hex_color($_POST['theme_dark_color'] ?? null, '#0f172a'),
         ];
         $academic = [
-            'currentYear' => trim($_POST['current_academic_year'] ?? ($content['siteAcademic']['currentYear'] ?? '2025/2026')),
+            'currentYear' => trim($_POST['current_academic_year'] ?? ($content['siteAcademic']['currentYear'] ?? '')),
         ];
-        if ($academic['currentYear'] === '') {
-            $academic['currentYear'] = '2025/2026';
-        }
 
         $home = [
             'heroTitle' => trim($_POST['home_hero_title'] ?? ($content['siteHome']['heroTitle'] ?? $profile['name'])),
             'heroSubtitle' => trim($_POST['home_hero_subtitle'] ?? ($content['siteHome']['heroSubtitle'] ?? $profile['heroDescription'])),
-            'primaryButtonLabel' => trim($_POST['home_primary_button_label'] ?? ($content['siteHome']['primaryButtonLabel'] ?? 'Lihat Profil Sekolah')),
+            'primaryButtonLabel' => trim($_POST['home_primary_button_label'] ?? ($content['siteHome']['primaryButtonLabel'] ?? '')),
             'primaryButtonUrl' => trim($_POST['home_primary_button_url'] ?? ($content['siteHome']['primaryButtonUrl'] ?? '/profil')),
-            'secondaryButtonLabel' => trim($_POST['home_secondary_button_label'] ?? ($content['siteHome']['secondaryButtonLabel'] ?? 'Informasi PPDB')),
+            'secondaryButtonLabel' => trim($_POST['home_secondary_button_label'] ?? ($content['siteHome']['secondaryButtonLabel'] ?? '')),
             'secondaryButtonUrl' => trim($_POST['home_secondary_button_url'] ?? ($content['siteHome']['secondaryButtonUrl'] ?? '/ppdb')),
             'profileVideoUrl' => trim($_POST['home_profile_video_url'] ?? ($content['siteHome']['profileVideoUrl'] ?? '')),
-            'profileVideoTitle' => trim($_POST['home_profile_video_title'] ?? ($content['siteHome']['profileVideoTitle'] ?? 'Profil sekolah dalam satu tayangan')),
-            'profileVideoDescription' => trim($_POST['home_profile_video_description'] ?? ($content['siteHome']['profileVideoDescription'] ?? 'Ruang ini disiapkan untuk menampilkan video profil resmi sekolah, mulai dari lingkungan belajar, kegiatan siswa, fasilitas, hingga budaya sekolah.')),
+            'profileVideoTitle' => trim($_POST['home_profile_video_title'] ?? ($content['siteHome']['profileVideoTitle'] ?? '')),
+            'profileVideoDescription' => trim($_POST['home_profile_video_description'] ?? ($content['siteHome']['profileVideoDescription'] ?? '')),
             'teacherLimit' => max(4, min(24, (int) ($_POST['home_teacher_limit'] ?? ($content['siteHome']['teacherLimit'] ?? 12)))),
             'agendaLimit' => max(1, min(9, (int) ($_POST['home_agenda_limit'] ?? ($content['siteHome']['agendaLimit'] ?? 3)))),
             'showAnnouncements' => isset($_POST['home_show_announcements']),
@@ -132,23 +129,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
         if ($home['heroSubtitle'] === '') {
             $home['heroSubtitle'] = $profile['heroDescription'];
         }
-        if ($home['primaryButtonLabel'] === '') {
-            $home['primaryButtonLabel'] = 'Lihat Profil Sekolah';
-        }
         if ($home['primaryButtonUrl'] === '') {
             $home['primaryButtonUrl'] = '/profil';
         }
-        if ($home['secondaryButtonLabel'] === '') {
-            $home['secondaryButtonLabel'] = 'Informasi PPDB';
-        }
         if ($home['secondaryButtonUrl'] === '') {
             $home['secondaryButtonUrl'] = '/ppdb';
-        }
-        if ($home['profileVideoTitle'] === '') {
-            $home['profileVideoTitle'] = 'Profil sekolah dalam satu tayangan';
-        }
-        if ($home['profileVideoDescription'] === '') {
-            $home['profileVideoDescription'] = 'Ruang ini disiapkan untuk menampilkan video profil resmi sekolah, mulai dari lingkungan belajar, kegiatan siswa, fasilitas, hingga budaya sekolah.';
         }
 
         $principal = $content['principalMessage'];
@@ -157,15 +142,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
         $principal['greeting'] = $_POST['principal_greeting'] ?? $principal['greeting'];
         $principal['paragraphs'] = array_values(array_filter(array_map('trim', preg_split('/\R+/', $_POST['principal_paragraphs'] ?? ''))));
         $principalPhotoUpload = uploaded_image_result('principal_photo_file', 'profile');
-        $principal['photoPath'] = $principalPhotoUpload['path'] ?? ($principal['photoPath'] ?? '/public/kepala-sekolah.jpeg');
+        $principal['photoPath'] = $principalPhotoUpload['path'] ?? ($principal['photoPath'] ?? '');
 
         $currentAccreditation = $content['schoolAccreditation'] ?? [];
         $accreditationUpload = uploaded_pdf_result('accreditation_file', 'accreditation');
-        $accreditationStatus = trim($_POST['accreditation_status'] ?? ($currentAccreditation['status'] ?? 'A'));
-        $accreditationSkNumber = trim($_POST['accreditation_sk_number'] ?? ($currentAccreditation['skNumber'] ?? '555/BAN-SM/SK/2023'));
-        $accreditationSkDate = trim($_POST['accreditation_sk_date'] ?? ($currentAccreditation['skDate'] ?? '25 Mei 2023'));
+        $accreditationStatus = trim($_POST['accreditation_status'] ?? ($currentAccreditation['status'] ?? ''));
+        $accreditationSkNumber = trim($_POST['accreditation_sk_number'] ?? ($currentAccreditation['skNumber'] ?? ''));
+        $accreditationSkDate = trim($_POST['accreditation_sk_date'] ?? ($currentAccreditation['skDate'] ?? ''));
         $accreditation = [
-            'status' => $accreditationStatus !== '' ? $accreditationStatus : 'A',
+            'status' => $accreditationStatus,
             'skNumber' => $accreditationSkNumber,
             'skDate' => $accreditationSkDate,
             'description' => trim($_POST['accreditation_description'] ?? ($currentAccreditation['description'] ?? '')),
@@ -173,9 +158,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
             'originalFilename' => $accreditationUpload['original_filename'] ?? ($currentAccreditation['originalFilename'] ?? ''),
             'fileSize' => (int) ($accreditationUpload['file_size'] ?: ($currentAccreditation['fileSize'] ?? 0)),
         ];
-        if ($accreditation['description'] === '') {
-            $accreditation['description'] = 'SMP Negeri 1 Kotabaru memiliki status akreditasi ' . $accreditation['status'] . ' sesuai dokumen resmi akreditasi sekolah.';
-        }
 
         if ($logoUpload['error']) {
             $error = $logoUpload['error'];
@@ -197,11 +179,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
             ['title' => 'Visi', 'text' => trim($_POST['vision_text'] ?? ($content['profileSections'][1]['text'] ?? ''))],
             ['title' => 'Misi', 'text' => trim($_POST['mission_text'] ?? ($content['profileSections'][2]['text'] ?? ''))],
         ];
-
-        $facilities = array_values(array_filter(array_map('trim', preg_split('/\R+/', $_POST['school_facilities'] ?? ''))));
-        if ($facilities === []) {
-            $facilities = $content['schoolFacilities'];
-        }
 
         $stats = [
             ['label' => 'Siswa', 'value' => $_POST['stat_students'] ?? $content['stats'][0]['value']],
@@ -235,12 +212,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
 
         $identity = [
             ['label' => 'Nama Sekolah', 'value' => $profile['name']],
-            ['label' => 'Status', 'value' => settings_identity_value($content['schoolIdentity'], 'Status', 'Sekolah Menengah Pertama Negeri')],
-            ['label' => 'NPSN', 'value' => settings_identity_value($content['schoolIdentity'], 'NPSN', '30303355')],
-            ['label' => 'NSS', 'value' => settings_identity_value($content['schoolIdentity'], 'NSS', '201150901001')],
+            ['label' => 'Status', 'value' => settings_identity_value($content['schoolIdentity'], 'Status', '')],
+            ['label' => 'NPSN', 'value' => settings_identity_value($content['schoolIdentity'], 'NPSN', '')],
+            ['label' => 'NSS', 'value' => settings_identity_value($content['schoolIdentity'], 'NSS', '')],
             ['label' => 'Alamat', 'value' => $profile['address']],
             ['label' => 'Akreditasi', 'value' => $accreditationSummary],
-            ['label' => 'Tahun Berdiri', 'value' => settings_identity_value($content['schoolIdentity'], 'Tahun Berdiri', '1954')],
+            ['label' => 'Tahun Berdiri', 'value' => settings_identity_value($content['schoolIdentity'], 'Tahun Berdiri', '')],
             ['label' => 'Jam Layanan', 'value' => $profile['serviceHours']],
             ['label' => 'Email Resmi', 'value' => $profile['email']],
             ['label' => 'Telepon', 'value' => $profile['phone']],
@@ -267,7 +244,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
                 'featuredAreas' => $featuredAreas,
                 'excellencePrograms' => $excellencePrograms,
                 'profileSections' => $profileSections,
-                'schoolFacilities' => $facilities,
                 'schoolIdentity' => $identity,
                 'schoolAccreditation' => $accreditation,
                 'contactChannels' => $contactChannels,

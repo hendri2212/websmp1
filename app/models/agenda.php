@@ -4,15 +4,7 @@ function agenda_items(int $limit = 0): array
 {
     $pdo = db();
     if (!$pdo) {
-        return array_map(static fn(array $item): array => [
-            'title' => $item['title'],
-            'category' => 'Agenda Sekolah',
-            'location' => 'Sekolah',
-            'description' => $item['detail'],
-            'date_label' => $item['date'],
-            'starts_at' => null,
-            'ends_at' => null,
-        ], seed_content()['schoolAgenda'] ?? []);
+        return [];
     }
 
     ensure_academic_year_columns();
@@ -112,7 +104,7 @@ function agenda_count(bool $activeOnly = false): int
 {
     $pdo = db();
     if (!$pdo) {
-        return count(seed_content()['schoolAgenda'] ?? []);
+        return 0;
     }
 
     if ($activeOnly) {

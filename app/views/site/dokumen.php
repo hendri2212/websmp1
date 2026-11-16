@@ -2,7 +2,9 @@
     <div class="container">
         <span class="eyebrow inverse">Dokumen</span>
         <h1>Download Dokumen <?= e($content['schoolProfile']['shortName']); ?></h1>
-        <p>Unduh kalender akademik, formulir, surat edaran, tata tertib, dan dokumen resmi sekolah dalam format PDF.</p>
+        <?php if (!empty($content['pageIntroductions']['dokumen'])): ?>
+        <p><?= e($content['pageIntroductions']['dokumen']); ?></p>
+        <?php endif; ?>
     </div>
 </section>
 

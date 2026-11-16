@@ -17,15 +17,11 @@ function news_items(): array
 {
     $pdo = db();
     if (!$pdo) {
-        return seed_content()['latestNews'];
+        return [];
     }
 
     ensure_news_publication_column();
     $rows = $pdo->query('SELECT * FROM news WHERE is_active = 1 ORDER BY published_at DESC, id DESC')->fetchAll();
-    if (!$rows) {
-        return seed_content()['latestNews'];
-    }
-
     return array_map(static function (array $row): array {
         return [
             'id' => (int) $row['id'],
@@ -34,7 +30,7 @@ function news_items(): array
             'date' => date('d F Y', strtotime($row['published_at'])),
             'category' => $row['category'],
             'desc' => $row['excerpt'],
-            'image_path' => $row['image_path'] ?: '/public/logo-sekolah.png',
+            'image_path' => $row['image_path'] ?: '',
             'content' => preg_split('/\R\R+/', trim($row['content'])) ?: [$row['content']],
         ];
     }, $rows);
@@ -64,7 +60,7 @@ function news_count(bool $activeOnly = true): int
 {
     $pdo = db();
     if (!$pdo) {
-        return count(seed_content()['latestNews'] ?? []);
+        return 0;
     }
 
     ensure_news_publication_column();

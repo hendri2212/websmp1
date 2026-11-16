@@ -2,7 +2,9 @@
     <div class="container">
         <span class="eyebrow inverse">FAQ</span>
         <h1>Pertanyaan Umum <?= e($content['schoolProfile']['shortName']); ?></h1>
-        <p>Temukan jawaban singkat mengenai PPDB, administrasi, akademik, layanan sekolah, dan informasi umum lainnya.</p>
+        <?php if (!empty($content['pageIntroductions']['faq'])): ?>
+        <p><?= e($content['pageIntroductions']['faq']); ?></p>
+        <?php endif; ?>
     </div>
 </section>
 

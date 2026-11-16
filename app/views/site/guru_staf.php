@@ -2,7 +2,9 @@
     <div class="container">
         <span class="eyebrow inverse">Guru & Staf</span>
         <h1>Data Guru dan Staf <?= e($content['schoolProfile']['shortName']); ?></h1>
-        <p>Informasi pendidik dan tenaga kependidikan sekolah sebagai bagian dari keterbukaan layanan pendidikan kepada peserta didik, orang tua, dan masyarakat.</p>
+        <?php if (!empty($content['pageIntroductions']['guru_staf'])): ?>
+        <p><?= e($content['pageIntroductions']['guru_staf']); ?></p>
+        <?php endif; ?>
     </div>
 </section>
 

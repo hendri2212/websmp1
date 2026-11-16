@@ -2,7 +2,9 @@
     <div class="container">
         <span class="eyebrow inverse">Prestasi</span>
         <h1>Prestasi <?= e($content['schoolProfile']['shortName']); ?></h1>
-        <p>Dokumentasi capaian peserta didik, guru, dan sekolah dalam bidang akademik maupun non-akademik.</p>
+        <?php if (!empty($content['pageIntroductions']['prestasi'])): ?>
+        <p><?= e($content['pageIntroductions']['prestasi']); ?></p>
+        <?php endif; ?>
     </div>
 </section>
 

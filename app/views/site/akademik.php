@@ -2,7 +2,9 @@
     <div class="container">
         <span class="eyebrow inverse">Akademik</span>
         <h1>Bidang Akademik <?= e($content['schoolProfile']['shortName']); ?></h1>
-        <p>Informasi mengenai kurikulum, pembelajaran, asesmen, kalender pendidikan, serta layanan pendampingan akademik bagi peserta didik dan orang tua.</p>
+        <?php if (!empty($content['pageIntroductions']['akademik'])): ?>
+        <p><?= e($content['pageIntroductions']['akademik']); ?></p>
+        <?php endif; ?>
     </div>
 </section>
 

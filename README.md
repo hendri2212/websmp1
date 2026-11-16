@@ -22,7 +22,6 @@ config/
 ├── app.php                # Konfigurasi aplikasi
 ├── database.php           # Konfigurasi database
 ├── env.php                # Pembaca .env
-└── site_data.php          # Konten default
 public/                    # CSS, gambar, dan upload publik
 storage/                   # Session, dokumen privat, dan backup
 database/                  # Schema dan script CLI
@@ -116,7 +115,7 @@ Tidak ada credential production yang disediakan repository. Untuk hosting, siapk
 
 Folder `tests/` telah dihapus karena bukan dependensi runtime website. Suite pengujian otomatis dan script pembuat paket release yang sebelumnya berada di folder tersebut tidak lagi tersedia.
 
-`database/maintenance_legacy_schema.php` bergantung pada preflight dari folder `tests/` sehingga tidak dapat dijalankan tanpa memulihkan dependensi pengujiannya. Jangan menghapus atau melewati guard tersebut untuk menjalankan maintenance. `database/seed_final_content.php` adalah script legacy yang tidak direkomendasikan untuk dijalankan. Setup database lokal tetap mengikuti bagian Setup Setelah Clone; admin awal memakai `database/initialize_admin.php` hanya pada tabel akun kosong.
+Konten publik hanya berasal dari database. File konten default dan script maintenance legacy telah dihapus. Tabel kosong menampilkan daftar kosong; runtime tidak mengisi database otomatis.
 
 ## Migration melalui CLI
 
@@ -129,6 +128,18 @@ php database/migrate.php
 Script membaca koneksi dari `.env` dan menjalankan `database/schema.sql` pada database tersebut. Script hanya berjalan lewat CLI. Tabel yang belum ada dibuat dengan `CREATE TABLE IF NOT EXISTS`; menjalankan ulang tidak menghapus tabel atau data existing.
 
 Migration ini untuk setup struktur awal. Perubahan kolom atau indeks pada tabel existing memerlukan SQL `ALTER TABLE` terpisah; mengubah `schema.sql` lalu menjalankan ulang tidak memperbarui tabel tersebut. MySQL menjalankan DDL dengan implicit commit, sehingga kegagalan di tengah proses dapat meninggalkan sebagian tabel sudah dibuat. Setelah penyebabnya diperbaiki, jalankan ulang.
+
+## Seeder Konten Teks (Opsional)
+
+Sumber seed hanya dipakai saat CLI diminta secara eksplisit; tidak dimuat runtime website. Jalankan migration terlebih dahulu. Seeder ini belum dijalankan dalam proses refactor.
+
+```bash
+php database/seed_final_content.php --seed
+```
+
+Seeder menambahkan pengaturan/konten teks ke `site_settings`, 15 fasilitas tanpa foto ke `school_facilities`, 6 ekskul tanpa foto ke `extracurriculars`, 19 informasi PPDB (termasuk 4 kriteria) ke `ppdb_entries`, 3 agenda, 2 pengumuman, dan 8 FAQ. Data seed awal perlu ditinjau, termasuk tanggal agenda. Record existing dengan kunci/judul/nama yang sama dilewati; pengaturan existing tidak ditimpa.
+
+Seeder tidak membuat guru/staf, berita, galeri, prestasi, dokumen, foto kepala sekolah, gambar, video, maupun berkas akreditasi. Data/media tersebut diisi lewat admin. Isi seed tidak muncul di website sampai disimpan ke database. Pada database kosong, menu navigasi dan teks publik juga kosong sampai diisi dari admin atau seed teks.
 
 ## Inisialisasi Admin
 
@@ -215,7 +226,7 @@ Gunakan checklist ini setelah fitur website selesai diuji dan sebelum website di
 
 ### Konten Publik
 
-- Isi konten melalui handler admin yang berotorisasi; jangan menjalankan seed_final_content.php yang tidak direkomendasikan untuk commit/run.
+- Isi konten melalui admin. Seeder teks tersedia untuk inisialisasi opsional seperti dijelaskan di atas.
 - Tambahkan data guru dan staf aktif beserta foto, jabatan, mapel/bidang, dan kontak bila perlu.
 - Tambahkan fasilitas sekolah asli beserta foto, kategori, lokasi, kapasitas, kondisi, dan deskripsi.
 - Tambahkan agenda atau kalender kegiatan sekolah yang masih berlaku.

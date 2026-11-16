@@ -21,42 +21,12 @@ function admin_ppdb_row(int $id): ?array
 
 function ppdb_sections_data(): array
 {
-    $entries = ppdb_entries();
-    if ($entries) {
-        $sections = [];
-        foreach ($entries as $entry) {
-            $section = strtolower(trim($entry['section']));
-            if ($section === '') {
-                $section = 'informasi';
-            }
-
-            $sections[$section][] = [
-                'id' => (int) $entry['id'],
-                'title' => $entry['title'],
-                'desc' => $entry['content'],
-            ];
-        }
-
-        if (empty($sections['kriteria'])) {
-            $sections['kriteria'] = site_content()['ppdbCriteria'] ?? [];
-        }
-
-        return $sections;
+    $sections = [];
+    foreach (ppdb_entries() as $entry) {
+        $section = strtolower(trim($entry['section'])) ?: 'informasi';
+        $sections[$section][] = ['id' => (int) $entry['id'], 'title' => $entry['title'], 'desc' => $entry['content']];
     }
-
-    $content = site_content();
-    return [
-        'informasi' => $content['ppdbInformation'] ?? [],
-        'kriteria' => $content['ppdbCriteria'] ?? [],
-        'persyaratan' => array_map(
-            static fn(string $item): array => ['title' => 'Persyaratan', 'desc' => $item],
-            $content['ppdbRequirements'] ?? []
-        ),
-        'catatan' => array_map(
-            static fn(string $item): array => ['title' => 'Catatan Penting', 'desc' => $item],
-            $content['ppdbNotes'] ?? []
-        ),
-    ];
+    return $sections;
 }
 
 function save_ppdb_entry(array $data): void

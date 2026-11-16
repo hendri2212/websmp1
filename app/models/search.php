@@ -9,7 +9,7 @@ function public_search_results(string $query, int $limitPerType = 8): array
 
     $pdo = db();
     if (!$pdo) {
-        return public_search_seed_results($query, $limitPerType);
+        return [];
     }
 
     ensure_news_publication_column();
@@ -102,25 +102,4 @@ function public_search_results(string $query, int $limitPerType = 8): array
     }
 
     return $results;
-}
-
-function public_search_seed_results(string $query, int $limitPerType = 8): array
-{
-    $query = strtolower($query);
-    $results = [];
-
-    foreach (news_items() as $item) {
-        $haystack = strtolower(($item['title'] ?? '') . ' ' . ($item['category'] ?? '') . ' ' . ($item['desc'] ?? ''));
-        if (str_contains($haystack, $query)) {
-            $results[] = [
-                'type' => 'Berita',
-                'title' => $item['title'],
-                'excerpt' => $item['desc'],
-                'meta' => ($item['category'] ?? 'Berita') . ' - ' . ($item['date'] ?? ''),
-                'url' => base_url('berita/' . rawurlencode($item['slug'])),
-            ];
-        }
-    }
-
-    return array_slice($results, 0, max(1, $limitPerType));
 }

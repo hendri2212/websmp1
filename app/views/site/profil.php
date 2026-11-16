@@ -2,13 +2,15 @@
     <div class="container">
         <span class="eyebrow inverse">Profil</span>
         <h1>Profil Resmi <?= e($content['schoolProfile']['name']); ?></h1>
-        <p>Halaman ini memuat gambaran umum sekolah, sejarah singkat, visi dan misi, sambutan kepala sekolah, identitas kelembagaan, serta arah pengembangan sekolah.</p>
+        <?php if (!empty($content['pageIntroductions']['profil'])): ?>
+        <p><?= e($content['pageIntroductions']['profil']); ?></p>
+        <?php endif; ?>
     </div>
 </section>
 
 <?php
 $accreditation = $content['schoolAccreditation'] ?? [];
-$accreditationStatus = trim((string) ($accreditation['status'] ?? 'A'));
+$accreditationStatus = trim((string) ($accreditation['status'] ?? ''));
 $accreditationSkNumber = trim((string) ($accreditation['skNumber'] ?? ''));
 $accreditationSkDate = trim((string) ($accreditation['skDate'] ?? ''));
 $accreditationFile = trim((string) ($accreditation['filePath'] ?? ''));
@@ -18,7 +20,7 @@ $accreditationFile = trim((string) ($accreditation['filePath'] ?? ''));
         <article class="panel accreditation-panel">
             <div class="accreditation-mark">
                 <span>Akreditasi</span>
-                <strong><?= e($accreditationStatus !== '' ? $accreditationStatus : 'A'); ?></strong>
+                <strong><?= e($accreditationStatus); ?></strong>
             </div>
             <div class="accreditation-copy">
                 <span class="eyebrow">Legalitas Mutu Sekolah</span>
@@ -38,7 +40,8 @@ $accreditationFile = trim((string) ($accreditation['filePath'] ?? ''));
     </div>
 </section>
 
-<?php $principalPhotoPath = $content['principalMessage']['photoPath'] ?? '/public/kepala-sekolah.jpeg'; ?>
+<?php if ($content['principalMessage']['name'] !== '' || $content['principalMessage']['greeting'] !== ''): ?>
+<?php $principalPhotoPath = $content['principalMessage']['photoPath'] ?? ''; ?>
 <section class="section profile-principal-section">
     <div class="container">
         <div class="section-heading">
@@ -47,7 +50,9 @@ $accreditationFile = trim((string) ($accreditation['filePath'] ?? ''));
         </div>
         <div class="two-grid narrow profile-principal-grid">
             <article class="panel photo-panel profile-photo-panel">
+                <?php if ($principalPhotoPath !== ''): ?>
                 <img class="portrait" src="<?= e(asset(ltrim($principalPhotoPath, '/'))); ?>" alt="Kepala sekolah">
+                <?php endif; ?>
                 <strong><?= e($content['principalMessage']['name']); ?></strong>
                 <span><?= e($content['principalMessage']['title']); ?></span>
             </article>
@@ -60,6 +65,8 @@ $accreditationFile = trim((string) ($accreditation['filePath'] ?? ''));
         </div>
     </div>
 </section>
+
+<?php endif; ?>
 
 <section class="section alt profile-sections-band">
     <div class="container">
@@ -115,8 +122,8 @@ $accreditationFile = trim((string) ($accreditation['filePath'] ?? ''));
                 </div>
             </div>
             <ul class="feature-list plain vertical-carousel" id="school-facilities-carousel">
-                <?php foreach ($content['schoolFacilities'] as $item): ?>
-                    <li><?= e($item); ?></li>
+                <?php foreach (school_facilities() as $item): ?>
+                    <li><?= e($item['name']); ?></li>
                 <?php endforeach; ?>
             </ul>
             <p><a class="text-link" href="<?= e(base_url('fasilitas')); ?>">Lihat detail fasilitas sekolah</a></p>

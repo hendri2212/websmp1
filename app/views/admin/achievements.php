@@ -17,7 +17,7 @@
             <form method="post" enctype="multipart/form-data" class="form-grid two-col">
                 <?= csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">
-                <input type="hidden" name="existing_image_path" value="<?= e($editRow['image_path'] ?? '/public/logo-sekolah.png'); ?>">
+                <input type="hidden" name="existing_image_path" value="<?= e($editRow['image_path'] ?? ''); ?>">
                 <label class="full"><span>Judul Prestasi</span><input type="text" name="title" value="<?= e($editRow['title'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?> required></label>
                 <label>
                     <span>Kategori</span>

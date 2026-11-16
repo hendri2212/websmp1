@@ -110,15 +110,7 @@ function media_paths_in_value(mixed $value): array
 function media_reference_paths($pdo): array
 {
     $settings = $pdo->query('SELECT setting_key, setting_value FROM site_settings')->fetchAll();
-    $defaults = seed_content();
-    foreach ($settings as $setting) {
-        // Stored sections replace defaults; an overridden default is not a live reference.
-        if ($setting['setting_value'] !== '' && $setting['setting_value'] !== null) {
-            json_decode($setting['setting_value'], true, 512, JSON_THROW_ON_ERROR);
-            unset($defaults[$setting['setting_key']]);
-        }
-    }
-    $paths = media_paths_in_value($defaults);
+    $paths = [];
     foreach (['news'=>'image_path', 'gallery_items'=>'image_path', 'staff_members'=>'photo_path',
         'school_achievements'=>'image_path', 'extracurriculars'=>'image_path',
         'school_facilities'=>'image_path', 'school_documents'=>'file_path'] as $table=>$column) {

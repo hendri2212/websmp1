@@ -98,9 +98,11 @@
                 <?php endforeach; ?>
             </div>
             <?php endif; ?>
-            <?php if ($showPrincipalCard): ?>
+            <?php if ($showPrincipalCard && $content['principalMessage']['name'] !== ''): ?>
             <div class="principal-card home-rail-item">
+                <?php if ($principalPhotoPath !== ''): ?>
                 <img src="<?= e(asset(ltrim($principalPhotoPath, '/'))); ?>" alt="Kepala sekolah">
+                <?php endif; ?>
                 <div>
                     <span class="eyebrow">Sambutan Singkat</span>
                     <h3>Mewujudkan generasi yang unggul dalam prestasi, karakter, dan pemanfaatan teknologi.</h3>
@@ -157,18 +159,18 @@
     </div>
 </section>
 
-<?php if ($homeSettings['showProfileIntro'] ?? true): ?>
+<?php if (($homeSettings['showProfileIntro'] ?? false) && $content['homeProfileIntro']['text'] !== ''): ?>
 <section class="section home-profile-section">
     <div class="container">
         <div class="section-heading">
             <span class="eyebrow">Profil Sekolah</span>
-            <h2>Ruang digital resmi untuk menampilkan identitas dan arah sekolah</h2>
-            <p>Website ini menjadi pintu masuk utama menuju halaman profil, akademik, kesiswaan, berita, galeri, PPDB, dan kontak.</p>
+            <h2><?= e($content['homeProfileIntro']['title']); ?></h2>
+            <p><?= e($content['homeProfileIntro']['description']); ?></p>
         </div>
         <div class="two-grid home-mobile-rail">
             <article class="panel home-rail-item">
-                <h3>Sekolah yang mendukung pembelajaran, karakter, dan kreativitas siswa</h3>
-                <p>SMP Negeri 1 Kotabaru berkomitmen menyelenggarakan layanan pendidikan yang mendorong perkembangan akademik, kedisiplinan, kepemimpinan, serta penguatan potensi non-akademik peserta didik.</p>
+                <h3><?= e($content['homeProfileIntro']['heading']); ?></h3>
+                <p><?= e($content['homeProfileIntro']['text']); ?></p>
             </article>
             <article class="panel dark home-rail-item">
                 <span class="eyebrow inverse">Keunggulan</span>

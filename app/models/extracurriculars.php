@@ -4,15 +4,7 @@ function extracurriculars(?string $category = null): array
 {
     $pdo = db();
     if (!$pdo) {
-        return array_map(static fn(array $item): array => [
-            'name' => $item['name'],
-            'category' => 'Umum',
-            'coach' => null,
-            'schedule_text' => null,
-            'location' => null,
-            'description' => $item['desc'],
-            'image_path' => '/public/logo-sekolah.png',
-        ], seed_content()['extracurriculars'] ?? []);
+        return [];
     }
 
     if ($category) {
@@ -23,15 +15,7 @@ function extracurriculars(?string $category = null): array
 
     $rows = $pdo->query('SELECT * FROM extracurriculars WHERE is_active = 1 ORDER BY category ASC, sort_order ASC, name ASC')->fetchAll();
     if (!$rows) {
-        return array_map(static fn(array $item): array => [
-            'name' => $item['name'],
-            'category' => 'Umum',
-            'coach' => null,
-            'schedule_text' => null,
-            'location' => null,
-            'description' => $item['desc'],
-            'image_path' => '/public/logo-sekolah.png',
-        ], seed_content()['extracurriculars'] ?? []);
+        return [];
     }
 
     return $rows;
@@ -108,7 +92,7 @@ function extracurricular_count(bool $activeOnly = false): int
 {
     $pdo = db();
     if (!$pdo) {
-        return count(seed_content()['extracurriculars'] ?? []);
+        return 0;
     }
 
     if ($activeOnly) {

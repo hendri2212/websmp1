@@ -2,7 +2,9 @@
     <div class="container">
         <span class="eyebrow inverse">Kontak</span>
         <h1>Hubungi <?= e($content['schoolProfile']['name']); ?></h1>
-        <p>Halaman kontak disediakan untuk memudahkan peserta didik, orang tua, dan masyarakat memperoleh akses ke alamat, nomor resmi, email, serta layanan informasi sekolah.</p>
+        <?php if (!empty($content['pageIntroductions']['kontak'])): ?>
+        <p><?= e($content['pageIntroductions']['kontak']); ?></p>
+        <?php endif; ?>
     </div>
 </section>
 

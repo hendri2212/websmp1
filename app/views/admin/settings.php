@@ -5,8 +5,8 @@
     <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL lebih dulu agar tombol simpan aktif.</div><?php endif; ?>
     <form method="post" enctype="multipart/form-data" class="form-grid two-col settings-form">
         <?= csrf_field(); ?>
-        <input type="hidden" name="existing_logo_path" value="<?= e($content['schoolProfile']['logoPath'] ?? '/public/logo-sekolah.png'); ?>">
-        <input type="hidden" name="existing_principal_photo_path" value="<?= e($content['principalMessage']['photoPath'] ?? '/public/kepala-sekolah.jpeg'); ?>">
+        <input type="hidden" name="existing_logo_path" value="<?= e($content['schoolProfile']['logoPath'] ?? ''); ?>">
+        <input type="hidden" name="existing_principal_photo_path" value="<?= e($content['principalMessage']['photoPath'] ?? ''); ?>">
         <input type="hidden" name="existing_accreditation_file_path" value="<?= e($content['schoolAccreditation']['filePath'] ?? ''); ?>">
         <input type="hidden" name="existing_accreditation_original_filename" value="<?= e($content['schoolAccreditation']['originalFilename'] ?? ''); ?>">
         <input type="hidden" name="existing_accreditation_file_size" value="<?= e((string) ($content['schoolAccreditation']['fileSize'] ?? 0)); ?>">
@@ -27,14 +27,16 @@
                     <span>Logo Sekolah</span>
                     <input type="file" name="school_logo_file" accept=".jpg,.jpeg,.png,.webp" <?= db_available() ? '' : 'disabled'; ?>>
                     <span class="muted"><?= e(image_upload_help_text()); ?></span>
-                    <img class="admin-preview" src="<?= e(asset(ltrim($content['schoolProfile']['logoPath'] ?? '/public/logo-sekolah.png', '/'))); ?>" alt="Preview logo sekolah">
+                    <?php if ($content['schoolProfile']['logoPath'] !== ''): ?>
+                    <img class="admin-preview" src="<?= e(asset(ltrim($content['schoolProfile']['logoPath'] ?? '', '/'))); ?>" alt="Preview logo sekolah">
+                    <?php endif; ?>
                 </label>
             </div>
             <div class="settings-subsection">
                 <span class="form-section-title">Tahun Ajaran Aktif</span>
             <label>
                 <span>Tahun Ajaran</span>
-                <input type="text" name="current_academic_year" value="<?= e($content['siteAcademic']['currentYear'] ?? '2025/2026'); ?>" placeholder="2025/2026" <?= db_available() ? '' : 'disabled'; ?>>
+                <input type="text" name="current_academic_year" value="<?= e($content['siteAcademic']['currentYear'] ?? ''); ?>" placeholder="2025/2026" <?= db_available() ? '' : 'disabled'; ?>>
             </label>
             <p class="muted">Tahun ajaran aktif ditampilkan pada informasi PPDB dan digunakan sebagai default agenda, dokumen, dan prestasi baru.</p>
             </div>
@@ -206,7 +208,9 @@
                     <span>Foto Kepala Sekolah</span>
                     <input type="file" name="principal_photo_file" accept=".jpg,.jpeg,.png,.webp" <?= db_available() ? '' : 'disabled'; ?>>
                     <span class="muted"><?= e(image_upload_help_text()); ?></span>
-                    <img class="admin-preview" src="<?= e(asset(ltrim($content['principalMessage']['photoPath'] ?? '/public/kepala-sekolah.jpeg', '/'))); ?>" alt="Preview foto kepala sekolah">
+                    <?php if ($content['principalMessage']['photoPath'] !== ''): ?>
+                    <img class="admin-preview" src="<?= e(asset(ltrim($content['principalMessage']['photoPath'] ?? '', '/'))); ?>" alt="Preview foto kepala sekolah">
+                    <?php endif; ?>
                 </label>
                 <label class="full"><span>Paragraf Sambutan (satu paragraf per baris)</span><textarea name="principal_paragraphs" <?= db_available() ? '' : 'disabled'; ?>><?= e(implode("\n", $content['principalMessage']['paragraphs'])); ?></textarea></label>
             </div>
@@ -215,18 +219,14 @@
             <summary>
                 <span>
                     <strong>Profil Sekolah</strong>
-                    <small>Sejarah, visi, misi, dan fasilitas ringkas.</small>
+                    <small>Sejarah, visi, dan misi.</small>
                 </span>
             </summary>
             <div class="form-grid two-col">
                 <label class="full"><span>Sejarah Singkat</span><textarea name="history_text" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['profileSections'][0]['text'] ?? ''); ?></textarea></label>
                 <label class="full"><span>Visi Sekolah</span><textarea name="vision_text" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['profileSections'][1]['text'] ?? ''); ?></textarea></label>
                 <label class="full"><span>Misi Sekolah</span><textarea name="mission_text" <?= db_available() ? '' : 'disabled'; ?>><?= e($content['profileSections'][2]['text'] ?? ''); ?></textarea></label>
-                <label class="full">
-                    <span>Fasilitas Sekolah Ringkas (satu fasilitas per baris)</span>
-                    <textarea name="school_facilities" <?= db_available() ? '' : 'disabled'; ?>><?= e(implode("\n", $content['schoolFacilities'])); ?></textarea>
-                    <span class="muted">Daftar ini tampil sebagai ringkasan di halaman profil. Foto fasilitas dikelola dari menu Fasilitas.</span>
-                </label>
+                <p class="muted">Ringkasan fasilitas mengikuti data pada menu Fasilitas.</p>
             </div>
         </details>
         <details class="settings-section full">
@@ -237,9 +237,9 @@
                 </span>
             </summary>
             <div class="form-grid two-col">
-                <label><span>Status Akreditasi</span><input type="text" name="accreditation_status" value="<?= e($content['schoolAccreditation']['status'] ?? 'A'); ?>" placeholder="A" <?= db_available() ? '' : 'disabled'; ?>></label>
-                <label><span>Nomor SK</span><input type="text" name="accreditation_sk_number" value="<?= e($content['schoolAccreditation']['skNumber'] ?? '555/BAN-SM/SK/2023'); ?>" placeholder="555/BAN-SM/SK/2023" <?= db_available() ? '' : 'disabled'; ?>></label>
-                <label><span>Tanggal SK</span><input type="text" name="accreditation_sk_date" value="<?= e($content['schoolAccreditation']['skDate'] ?? '25 Mei 2023'); ?>" placeholder="25 Mei 2023" <?= db_available() ? '' : 'disabled'; ?>></label>
+                <label><span>Status Akreditasi</span><input type="text" name="accreditation_status" value="<?= e($content['schoolAccreditation']['status'] ?? ''); ?>" placeholder="A" <?= db_available() ? '' : 'disabled'; ?>></label>
+                <label><span>Nomor SK</span><input type="text" name="accreditation_sk_number" value="<?= e($content['schoolAccreditation']['skNumber'] ?? ''); ?>" placeholder="555/BAN-SM/SK/2023" <?= db_available() ? '' : 'disabled'; ?>></label>
+                <label><span>Tanggal SK</span><input type="text" name="accreditation_sk_date" value="<?= e($content['schoolAccreditation']['skDate'] ?? ''); ?>" placeholder="25 Mei 2023" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label>
                     <span>Lembar Akreditasi PDF</span>
                     <input type="file" name="accreditation_file" accept=".pdf,application/pdf" <?= db_available() ? '' : 'disabled'; ?>>

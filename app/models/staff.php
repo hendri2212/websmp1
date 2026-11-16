@@ -4,12 +4,12 @@ function staff_members(): array
 {
     $pdo = db();
     if (!$pdo) {
-        return seed_content()['staffMembers'] ?? [];
+        return [];
     }
 
     $rows = $pdo->query('SELECT * FROM staff_members WHERE is_active = 1 ORDER BY sort_order ASC, name ASC')->fetchAll();
     if (!$rows) {
-        return seed_content()['staffMembers'] ?? [];
+        return [];
     }
 
     return $rows;
@@ -75,7 +75,7 @@ function staff_count(bool $activeOnly = false): int
 {
     $pdo = db();
     if (!$pdo) {
-        return count(seed_content()['staffMembers'] ?? []);
+        return 0;
     }
 
     if ($activeOnly) {

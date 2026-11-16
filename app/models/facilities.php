@@ -4,15 +4,7 @@ function school_facilities(?string $category = null): array
 {
     $pdo = db();
     if (!$pdo) {
-        return array_map(static fn(string $item): array => [
-            'name' => $item,
-            'category' => 'Fasilitas',
-            'location' => null,
-            'capacity' => null,
-            'condition_status' => 'Baik',
-            'description' => $item,
-            'image_path' => '/public/logo-sekolah.png',
-        ], seed_content()['schoolFacilities'] ?? []);
+        return [];
     }
 
     if ($category) {
@@ -23,15 +15,7 @@ function school_facilities(?string $category = null): array
 
     $rows = $pdo->query('SELECT * FROM school_facilities WHERE is_active = 1 ORDER BY category ASC, sort_order ASC, name ASC')->fetchAll();
     if (!$rows) {
-        return array_map(static fn(string $item): array => [
-            'name' => $item,
-            'category' => 'Fasilitas',
-            'location' => null,
-            'capacity' => null,
-            'condition_status' => 'Baik',
-            'description' => $item,
-            'image_path' => '/public/logo-sekolah.png',
-        ], seed_content()['schoolFacilities'] ?? []);
+        return [];
     }
 
     return $rows;
@@ -108,7 +92,7 @@ function facility_count(bool $activeOnly = false): int
 {
     $pdo = db();
     if (!$pdo) {
-        return count(seed_content()['schoolFacilities'] ?? []);
+        return 0;
     }
 
     if ($activeOnly) {

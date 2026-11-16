@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
         if ($upload['error']) {
             $error = $upload['error'];
         } elseif ($photoPath === null) {
-            $photoPath = trim($existing['photo_path'] ?? '/public/logo-sekolah.png');
+            $photoPath = trim($existing['photo_path'] ?? '');
         }
 
         $name = trim($_POST['name'] ?? '');

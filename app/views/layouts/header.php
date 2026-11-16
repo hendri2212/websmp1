@@ -1,7 +1,7 @@
 <?php
 
 $schoolProfile = $content['schoolProfile'];
-$logoPath = $schoolProfile['logoPath'] ?? '/public/logo-sekolah.png';
+$logoPath = $schoolProfile['logoPath'] ?? '';
 $pageTitle = $pageTitle ?? $schoolProfile['name'];
 $metaDescription = plain_text_excerpt($metaDescription ?? ($schoolProfile['description'] ?? ''), 160);
 $canonicalUrl = absolute_url(current_path() === '/' ? '' : ltrim(current_path(), '/'));
@@ -24,12 +24,16 @@ $faviconVersion = is_file($faviconPath) ? (string) filemtime($faviconPath) : $st
     <meta property="og:title" content="<?= e($pageTitle); ?>">
     <meta property="og:description" content="<?= e($metaDescription); ?>">
     <meta property="og:url" content="<?= e($canonicalUrl); ?>">
+    <?php if (($metaImage ?? $logoPath) !== ''): ?>
     <meta property="og:image" content="<?= e($metaImageUrl); ?>">
+    <?php endif; ?>
     <meta property="og:site_name" content="<?= e($schoolProfile['name']); ?>">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="<?= e($pageTitle); ?>">
     <meta name="twitter:description" content="<?= e($metaDescription); ?>">
+    <?php if (($metaImage ?? $logoPath) !== ''): ?>
     <meta name="twitter:image" content="<?= e($metaImageUrl); ?>">
+    <?php endif; ?>
     <link rel="icon" type="image/png" href="<?= e(asset('public/favicon.png?v=' . $faviconVersion)); ?>">
     <link rel="apple-touch-icon" href="<?= e(asset('public/favicon.png?v=' . $faviconVersion)); ?>">
     <link rel="stylesheet" href="<?= e(asset('public/assets/css/style.css?v=' . $stylesheetVersion)); ?>">
@@ -40,7 +44,9 @@ $faviconVersion = is_file($faviconPath) ? (string) filemtime($faviconPath) : $st
     <header class="site-header">
         <div class="container header-row">
             <a class="brand" href="<?= e(base_url()); ?>">
+                <?php if ($logoPath !== ''): ?>
                 <img src="<?= e(asset(ltrim($logoPath, '/'))); ?>" alt="Logo sekolah">
+                <?php endif; ?>
                 <div>
                     <strong><?= e($schoolProfile['name']); ?></strong>
                     <span>Website Resmi Sekolah</span>

@@ -15,7 +15,7 @@
             <form method="post" enctype="multipart/form-data" class="form-grid">
                 <?= csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">
-                <input type="hidden" name="existing_image_path" value="<?= e($editRow['image_path'] ?? '/public/logo-sekolah.png'); ?>">
+                <input type="hidden" name="existing_image_path" value="<?= e($editRow['image_path'] ?? ''); ?>">
                 <label><span>Slug</span><input type="text" name="slug" placeholder="judul-berita" value="<?= e($editRow['slug'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label><span>Kategori</span><input type="text" name="category" placeholder="Akademik" value="<?= e($editRow['category'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label class="full"><span>Judul</span><input type="text" name="title" value="<?= e($editRow['title'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>

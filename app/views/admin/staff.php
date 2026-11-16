@@ -17,7 +17,7 @@
             <form method="post" enctype="multipart/form-data" class="form-grid two-col">
                 <?= csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">
-                <input type="hidden" name="existing_photo_path" value="<?= e($editRow['photo_path'] ?? '/public/logo-sekolah.png'); ?>">
+                <input type="hidden" name="existing_photo_path" value="<?= e($editRow['photo_path'] ?? ''); ?>">
                 <label><span>Nama</span><input type="text" name="name" value="<?= e($editRow['name'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?> required></label>
                 <label><span>Jabatan</span><input type="text" name="position" value="<?= e($editRow['position'] ?? ''); ?>" placeholder="Guru / Kepala Sekolah / Staf TU" <?= db_available() ? '' : 'disabled'; ?> required></label>
                 <label><span>Mapel/Bidang</span><input type="text" name="subject" value="<?= e($editRow['subject'] ?? ''); ?>" placeholder="Matematika / Administrasi / BK" <?= db_available() ? '' : 'disabled'; ?> required></label>

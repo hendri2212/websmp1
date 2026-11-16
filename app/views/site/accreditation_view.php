@@ -2,7 +2,9 @@
     <div class="container">
         <span class="eyebrow inverse">Akreditasi</span>
         <h1>Lembar Akreditasi Sekolah</h1>
-        <p>Dokumen ini ditampilkan sebagai informasi resmi untuk pengunjung website.</p>
+        <?php if (!empty($content['pageIntroductions']['accreditation_view'])): ?>
+        <p><?= e($content['pageIntroductions']['accreditation_view']); ?></p>
+        <?php endif; ?>
     </div>
 </section>
 
@@ -10,7 +12,7 @@
     <div class="container">
         <article class="panel accreditation-view-panel">
             <div class="section-heading">
-                <span class="eyebrow">Status Akreditasi <?= e($status !== '' ? $status : 'A'); ?></span>
+                <span class="eyebrow">Status Akreditasi <?= e($status); ?></span>
                 <h2><?= e($content['schoolProfile']['name']); ?></h2>
                 <p><?= e($accreditation['description'] ?? 'Lembar akreditasi resmi sekolah dapat dilihat pada area pratinjau dokumen.'); ?></p>
             </div>

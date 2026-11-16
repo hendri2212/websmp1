@@ -2,7 +2,9 @@
     <div class="container">
         <span class="eyebrow inverse">Fasilitas</span>
         <h1>Fasilitas <?= e($content['schoolProfile']['shortName']); ?></h1>
-        <p>Informasi sarana dan prasarana sekolah yang mendukung proses belajar, kegiatan siswa, dan layanan pendidikan, dilengkapi foto agar kondisi fasilitas lebih mudah dilihat.</p>
+        <?php if (!empty($content['pageIntroductions']['fasilitas'])): ?>
+        <p><?= e($content['pageIntroductions']['fasilitas']); ?></p>
+        <?php endif; ?>
     </div>
 </section>
 

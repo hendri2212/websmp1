@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS `admins` (
 
 CREATE TABLE IF NOT EXISTS `agenda_items` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `academic_year` varchar(20) NOT NULL DEFAULT '2025/2026',
+  `academic_year` varchar(20) NOT NULL DEFAULT '',
   `title` varchar(255) NOT NULL,
   `category` varchar(120) NOT NULL,
   `location` varchar(180) NOT NULL,
@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS `extracurriculars` (
   `schedule_text` varchar(180) DEFAULT NULL,
   `location` varchar(180) DEFAULT NULL,
   `description` text NOT NULL,
-  `image_path` varchar(255) NOT NULL DEFAULT '/public/logo-sekolah.png',
+  `image_path` varchar(255) NOT NULL DEFAULT '',
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `sort_order` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS `news` (
   `category` varchar(100) NOT NULL,
   `excerpt` text NOT NULL,
   `content` longtext NOT NULL,
-  `image_path` varchar(255) NOT NULL DEFAULT '/public/logo-sekolah.png',
+  `image_path` varchar(255) NOT NULL DEFAULT '',
   `published_at` datetime NOT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS `news` (
 
 CREATE TABLE IF NOT EXISTS `ppdb_applications` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `academic_year` varchar(20) NOT NULL DEFAULT '2025/2026',
+  `academic_year` varchar(20) NOT NULL DEFAULT '',
   `status` enum('baru','diverifikasi','diterima','ditolak') NOT NULL DEFAULT 'baru',
   `family_card_path` varchar(255) DEFAULT NULL,
   `birth_certificate_path` varchar(255) DEFAULT NULL,
@@ -132,14 +132,14 @@ CREATE TABLE IF NOT EXISTS `ppdb_entries` (
 
 CREATE TABLE IF NOT EXISTS `school_achievements` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `academic_year` varchar(20) NOT NULL DEFAULT '2025/2026',
+  `academic_year` varchar(20) NOT NULL DEFAULT '',
   `title` varchar(255) NOT NULL,
   `level` varchar(120) NOT NULL,
   `category` varchar(120) NOT NULL,
   `achiever_name` varchar(180) NOT NULL,
   `achievement_date` date NOT NULL,
   `description` text NOT NULL,
-  `image_path` varchar(255) NOT NULL DEFAULT '/public/logo-sekolah.png',
+  `image_path` varchar(255) NOT NULL DEFAULT '',
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `sort_order` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -148,7 +148,7 @@ CREATE TABLE IF NOT EXISTS `school_achievements` (
 
 CREATE TABLE IF NOT EXISTS `school_documents` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `academic_year` varchar(20) NOT NULL DEFAULT '2025/2026',
+  `academic_year` varchar(20) NOT NULL DEFAULT '',
   `title` varchar(255) NOT NULL,
   `category` varchar(120) NOT NULL,
   `description` text NOT NULL,
@@ -170,7 +170,7 @@ CREATE TABLE IF NOT EXISTS `school_facilities` (
   `capacity` varchar(120) DEFAULT NULL,
   `condition_status` varchar(120) NOT NULL DEFAULT 'Baik',
   `description` text NOT NULL,
-  `image_path` varchar(255) NOT NULL DEFAULT '/public/logo-sekolah.png',
+  `image_path` varchar(255) NOT NULL DEFAULT '',
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `sort_order` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -194,7 +194,7 @@ CREATE TABLE IF NOT EXISTS `staff_members` (
   `bio` text NOT NULL,
   `phone` varchar(60) DEFAULT NULL,
   `email` varchar(180) DEFAULT NULL,
-  `photo_path` varchar(255) NOT NULL DEFAULT '/public/logo-sekolah.png',
+  `photo_path` varchar(255) NOT NULL DEFAULT '',
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `sort_order` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),

@@ -2,7 +2,9 @@
     <div class="container">
         <span class="eyebrow inverse">Pencarian</span>
         <h1>Cari informasi sekolah</h1>
-        <p>Temukan berita, prestasi, agenda, dokumen, fasilitas, ekstrakurikuler, dan FAQ dari satu halaman.</p>
+        <?php if (!empty($content['pageIntroductions']['cari'])): ?>
+        <p><?= e($content['pageIntroductions']['cari']); ?></p>
+        <?php endif; ?>
     </div>
 </section>
 

@@ -2,7 +2,7 @@
 $pageTitle = $pageTitle ?? 'Admin';
 $showAdminSidebar = admin_is_logged_in();
 
-$logoPath = $content['schoolProfile']['logoPath'] ?? '/public/logo-sekolah.png';
+$logoPath = $content['schoolProfile']['logoPath'] ?? '';
 $stylesheetPath = APP_ROOT . '/public/assets/css/style.css';
 $stylesheetVersion = is_file($stylesheetPath) ? (string) filemtime($stylesheetPath) : (string) time();
 $faviconPath = APP_ROOT . '/public/favicon.png';

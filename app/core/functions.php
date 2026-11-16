@@ -520,7 +520,7 @@ function image_thumbnail_path(?string $path): ?string
 function image_asset_path(?string $path, bool $preferThumbnail = true): string
 {
     $imagePath = $preferThumbnail ? image_thumbnail_path($path) : null;
-    return asset(ltrim($imagePath ?: ($path ?: '/public/logo-sekolah.png'), '/'));
+    return ($imagePath ?: $path) ? asset(ltrim($imagePath ?: $path, '/')) : '';
 }
 
 function uploaded_image_result(string $field, string $folder, int $maxBytes = IMAGE_UPLOAD_MAX_BYTES): array

@@ -2,7 +2,9 @@
     <div class="container">
         <span class="eyebrow inverse">Galeri</span>
         <h1>Dokumentasi kegiatan <?= e($content['schoolProfile']['shortName']); ?></h1>
-        <p>Halaman galeri menampilkan dokumentasi visual kegiatan sekolah sebagai bagian dari publikasi resmi lembaga.</p>
+        <?php if (!empty($content['pageIntroductions']['galeri'])): ?>
+        <p><?= e($content['pageIntroductions']['galeri']); ?></p>
+        <?php endif; ?>
     </div>
 </section>
 

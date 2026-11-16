@@ -2,7 +2,9 @@
     <div class="container">
         <span class="eyebrow inverse">Kesiswaan</span>
         <h1>Bidang Kesiswaan <?= e($content['schoolProfile']['shortName']); ?></h1>
-        <p>Informasi mengenai organisasi siswa, kegiatan ekstrakurikuler, pembinaan karakter, dan pengembangan potensi peserta didik sebagai bagian dari budaya sekolah.</p>
+        <?php if (!empty($content['pageIntroductions']['kesiswaan'])): ?>
+        <p><?= e($content['pageIntroductions']['kesiswaan']); ?></p>
+        <?php endif; ?>
     </div>
 </section>
 

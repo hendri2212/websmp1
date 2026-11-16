@@ -9,7 +9,7 @@ if (!db_available()) {
 $content = site_content();
 $pageTitle = $content['schoolProfile']['name'];
 $metaDescription = $content['schoolProfile']['description'] ?? '';
-$metaImage = $content['schoolProfile']['logoPath'] ?? '/public/logo-sekolah.png';
+$metaImage = $content['schoolProfile']['logoPath'] ?? '';
 $news = news_items();
 $gallery = gallery_items();
 $newsItem = null;
@@ -178,7 +178,7 @@ switch ($view) {
     case 'site/accreditation_view.php':
         $accreditation = $content['schoolAccreditation'] ?? [];
         $filePath = trim((string) ($accreditation['filePath'] ?? ''));
-        $status = trim((string) ($accreditation['status'] ?? 'A'));
+        $status = trim((string) ($accreditation['status'] ?? ''));
         $skNumber = trim((string) ($accreditation['skNumber'] ?? ''));
         $skDate = trim((string) ($accreditation['skDate'] ?? ''));
         break;
@@ -223,7 +223,7 @@ switch ($view) {
         break;
     case 'site/home.php':
         $school = $content['schoolProfile'];
-        $principalPhotoPath = $content['principalMessage']['photoPath'] ?? '/public/kepala-sekolah.jpeg';
+        $principalPhotoPath = $content['principalMessage']['photoPath'] ?? '';
         $homeSettings = $content['siteHome'] ?? [];
         $heroAchievements = array_slice(home_achievements(), 0, 3);
         $homeAnnouncements = ($homeSettings['showAnnouncements'] ?? true) ? active_announcements() : [];
@@ -233,16 +233,16 @@ switch ($view) {
         $homeStaffMembers = array_slice(staff_members(), 0, $teacherLimit);
         $heroTitle = trim($homeSettings['heroTitle'] ?? '') ?: $school['name'];
         $heroSubtitle = trim($homeSettings['heroSubtitle'] ?? '') ?: $school['heroDescription'];
-        $primaryButtonLabel = trim($homeSettings['primaryButtonLabel'] ?? '') ?: 'Lihat Profil Sekolah';
+        $primaryButtonLabel = trim($homeSettings['primaryButtonLabel'] ?? '') ?: '';
         $primaryButtonUrl = trim($homeSettings['primaryButtonUrl'] ?? '') ?: '/profil';
-        $secondaryButtonLabel = trim($homeSettings['secondaryButtonLabel'] ?? '') ?: 'Informasi PPDB';
+        $secondaryButtonLabel = trim($homeSettings['secondaryButtonLabel'] ?? '') ?: '';
         $secondaryButtonUrl = trim($homeSettings['secondaryButtonUrl'] ?? '') ?: '/ppdb';
         $profileVideoUrl = video_embed_url($homeSettings['profileVideoUrl'] ?? '');
         $profileYoutubeId = youtube_video_id($homeSettings['profileVideoUrl'] ?? '');
         $profileYoutubeWatchUrl = $profileYoutubeId === null ? '' : 'https://www.youtube.com/watch?v=' . $profileYoutubeId;
         $profileVideoFileUrl = video_file_url($homeSettings['profileVideoUrl'] ?? '');
-        $profileVideoTitle = trim($homeSettings['profileVideoTitle'] ?? '') ?: 'Profil sekolah dalam satu tayangan';
-        $profileVideoDescription = trim($homeSettings['profileVideoDescription'] ?? '') ?: 'Ruang ini disiapkan untuk menampilkan video profil resmi sekolah, mulai dari lingkungan belajar, kegiatan siswa, fasilitas, hingga budaya sekolah.';
+        $profileVideoTitle = trim($homeSettings['profileVideoTitle'] ?? '') ?: '';
+        $profileVideoDescription = trim($homeSettings['profileVideoDescription'] ?? '') ?: '';
         $primaryButtonHref = content_link_url($primaryButtonUrl);
         $secondaryButtonHref = content_link_url($secondaryButtonUrl);
         $showStats = $homeSettings['showStats'] ?? true;
@@ -282,7 +282,7 @@ switch ($view) {
         }
         unset($_SESSION['ppdb_receipt']);
         $ppdbSections = ppdb_sections_data();
-        $ppdbSteps = isset($ppdbSections['alur']) ? array_column($ppdbSections['alur'], 'desc') : ($content['ppdbSteps'] ?? []);
+        $ppdbSteps = isset($ppdbSections['alur']) ? array_column($ppdbSections['alur'], 'desc') : [];
         $ppdbDocuments = public_documents('PPDB');
         $ppdbContactItems = $ppdbSections['kontak'] ?? [];
         if (!$ppdbContactItems) {

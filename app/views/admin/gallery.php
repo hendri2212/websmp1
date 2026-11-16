@@ -15,7 +15,7 @@
             <form method="post" enctype="multipart/form-data" class="form-grid">
                 <?= csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">
-                <input type="hidden" name="existing_image_path" value="<?= e($editRow['image_path'] ?? '/public/logo-sekolah.png'); ?>">
+                <input type="hidden" name="existing_image_path" value="<?= e($editRow['image_path'] ?? ''); ?>">
                 <label><span>Judul</span><input type="text" name="title" value="<?= e($editRow['title'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <label>
                     <span>Upload Gambar</span>
