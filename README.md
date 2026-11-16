@@ -55,13 +55,21 @@ Untuk konfigurasi lokal yang sudah disiapkan:
 
 1. Buka MAMP, lalu aktifkan MySQL pada port `8889`.
 2. Jalankan server PHP dengan perintah pada bagian berikutnya.
-3. Buka [website](http://localhost:8080/) atau [login admin](http://localhost:8080/admin/login.php). Gunakan akun dan password dari database yang diimport.
+3. Buka [website](http://localhost:8080/) atau [login admin](http://localhost:8080/admin/login.php). Gunakan akun yang dibuat melalui `AdminsSeeder` (default `admin` / `12345`).
 
-Database lokal `website_sekolah` terakhir diisi dari `website_sekolah_test_stage3.sql`; tidak perlu import ulang setiap menjalankan aplikasi. `.env` lokal sudah disiapkan dengan `APP_ENV=local`, `APP_URL=http://localhost:8888/websmp1`, `DB_HOST=127.0.0.1`, `DB_PORT=8889`, dan `DB_DATABASE=website_sekolah`. Credential database tersimpan di `.env` privat.
+Database lokal disiapkan melalui migration dan seeder; tidak perlu menjalankannya ulang setiap membuka aplikasi. Konfigurasi database mengikuti `.env` privat. Untuk MAMP lokal, gunakan host `127.0.0.1` dan port MySQL `8889`, lalu isi `DB_DATABASE`, `DB_USERNAME`, serta `DB_PASSWORD` sesuai instance milik sendiri.
 
 Apache MAMP tidak diperlukan untuk menjalankan aplikasi. Proyek tidak lagi menyediakan `.htaccess`; gunakan server PHP lokal atau konfigurasi Nginx.
 
-Untuk clone baru pada mesin lain, ikuti **Setup Setelah Clone**, sesuaikan `.env` dengan konfigurasi database mesin tersebut. Jika memakai dump `website_sekolah.sql` milik sendiri, import ke database kosong melalui phpMyAdmin MAMP sebagai pengganti `database/schema.sql`; jangan import keduanya. Dump yang sudah berisi akun admin tidak membutuhkan inisialisasi admin baru.
+Untuk clone baru, ikuti **Setup Setelah Clone**. Dua dump SQL lama telah dihapus. Setelah database dibuat dan `.env` diisi, jalankan:
+
+```bash
+php database/migrate.php
+php database/seed.php --seed --class=AdminsSeeder
+php database/seed.php --seed
+```
+
+Migration membuat struktur tabel, `AdminsSeeder` membuat akun awal, dan perintah seed terakhir mengisi konten teks. File `database/schema.sql` tetap tersedia sebagai sumber struktur migration. Gunakan `--fresh` hanya ketika seluruh data tabel memang ingin dihapus.
 
 Jika website tidak terbuka, periksa proses server PHP atau Nginx. Jika koneksi database gagal, periksa MySQL MAMP, port, nama database, serta credential di `.env`. Jika port web diubah, sesuaikan juga URL browser dan `APP_URL`.
 

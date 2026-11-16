@@ -1,6 +1,6 @@
--- Struktur tabel mengikuti website_sekolah_test_stage3.sql.
+-- Struktur awal database aplikasi; dijalankan melalui database/migrate.php.
 -- Instalasi database kosong; tidak mengubah struktur tabel yang sudah ada.
--- Counter AUTO_INCREMENT dimulai dari awal, tanpa data dari dump testing.
+-- Counter AUTO_INCREMENT dimulai dari awal; data awal disediakan oleh seeders.
 -- Buat dan pilih database sesuai DB_DATABASE di .env sebelum import.
 -- File SQL ini tidak membaca .env dan tidak membuat atau memilih database.
 
