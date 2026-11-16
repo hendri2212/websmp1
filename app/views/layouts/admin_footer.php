@@ -2,6 +2,18 @@
 </div>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-ppdb-form]').forEach(function (form) {
+        var section = form.querySelector('[data-ppdb-section]');
+        var title = form.querySelector('[data-ppdb-title]');
+        var introduction = form.querySelector('[data-ppdb-introduction]');
+        function updateSection() {
+            var isIntroduction = section.value === 'pengantar';
+            title.hidden = isIntroduction;
+            introduction.hidden = !isIntroduction;
+        }
+        section.addEventListener('change', updateSection);
+        updateSection();
+    });
     document.querySelectorAll('[data-video-source-choice]').forEach(function (choice) {
         var form = choice.closest('form');
         if (!form) { return; }

@@ -13,7 +13,7 @@
                 </span>
             </summary>
             <p>Tambahkan pertanyaan umum yang sering ditanyakan orang tua, calon siswa, dan masyarakat.</p>
-            <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar FAQ bisa dikelola.</div><?php endif; ?>
+            <?php if (!db_available()): ?><div class="alert warning">Layanan sementara tidak tersedia. Silakan coba lagi.</div><?php endif; ?>
             <form method="post" class="form-grid two-col">
                 <?= csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">

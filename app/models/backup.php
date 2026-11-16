@@ -131,12 +131,12 @@ function build_full_backup_zip(PDO $pdo, string $databaseName, array $tableSumma
         return ['path'=>null, 'error'=>'Nama backup tidak valid.', 'files'=>0];
     }
     if (!class_exists('ZipArchive')) {
-        return ['path' => null, 'error' => 'Ekstensi PHP zip belum aktif, sehingga paket ZIP belum bisa dibuat.', 'files' => 0];
+        return ['path' => null, 'error' => 'Cadangan lengkap belum tersedia. Silakan gunakan cadangan data.', 'files' => 0];
     }
 
     $projectRoot = APP_ROOT;
     if (!$projectRoot) {
-        return ['path' => null, 'error' => 'Folder project tidak bisa dibaca.', 'files' => 0];
+        return ['path' => null, 'error' => 'Cadangan lengkap belum dapat dibuat. Silakan coba lagi.', 'files' => 0];
     }
 
     $privateDirectory = $projectRoot;

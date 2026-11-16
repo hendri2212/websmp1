@@ -4,7 +4,7 @@
     <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
     <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
     <?php if (!db_available()): ?>
-        <div class="alert warning">Database belum terhubung. Hubungkan MySQL terlebih dahulu agar password admin bisa diperbarui.</div>
+        <div class="alert warning">Kata sandi belum dapat diperbarui. Silakan coba lagi.</div>
     <?php endif; ?>
     <form method="post" class="form-grid" autocomplete="off">
         <?= csrf_field(); ?>

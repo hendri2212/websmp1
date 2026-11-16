@@ -13,7 +13,7 @@
                 </span>
             </summary>
             <p>Tambahkan fasilitas sekolah seperti ruang kelas, laboratorium, perpustakaan, lapangan, UKS, musala, dan sarana pendukung lainnya. Lengkapi foto agar pengunjung dapat melihat kondisi fasilitas secara visual.</p>
-            <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar data fasilitas bisa dikelola.</div><?php endif; ?>
+            <?php if (!db_available()): ?><div class="alert warning">Layanan sementara tidak tersedia. Silakan coba lagi.</div><?php endif; ?>
             <form method="post" enctype="multipart/form-data" class="form-grid two-col">
                 <?= csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">

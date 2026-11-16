@@ -169,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
         }
         foreach (['home_primary_button_url','home_secondary_button_url','home_profile_video_url'] as $field) {
             if (isset($_POST[$field]) && trim($_POST[$field]) !== '' && safe_content_url($_POST[$field]) === '') {
-                $error = 'URL tidak valid. Gunakan path lokal atau URL HTTP/HTTPS.';
+                $error = 'Tautan tidak valid. Periksa alamat yang Anda masukkan.';
             }
         }
 

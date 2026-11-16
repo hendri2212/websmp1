@@ -220,6 +220,8 @@ Script menggunakan konfigurasi database dari `.env`, hanya berjalan lewat CLI, d
 
 ## Fitur Admin Saat Ini
 
+Tampilan pengguna memakai pesan operasional. Status koneksi, nama tabel, detail konfigurasi, dan halaman diagnostik production tidak ditampilkan; panduan teknis tersedia di README dan pesan rinci ditangani melalui log privat.
+
 - Edit profil dan pengaturan sekolah
 - Atur tema warna website dari admin: warna utama, warna kedua, warna aksen, dan warna gelap/sidebar
 - Atur menu navigasi publik yang tampil atau disembunyikan
@@ -227,7 +229,6 @@ Script menggunakan konfigurasi database dari `.env`, hanya berjalan lewat CLI, d
 - Navigasi publik responsif dengan tombol menu/hamburger untuk tampilan mobile
 - Role admin untuk membatasi akses superadmin, editor konten, dan operator PPDB
 - Backup dan export database SQL dari panel superadmin
-- Cek kesiapan production dari panel superadmin: environment, HTTPS, database, password awal, konfigurasi Nginx, batas upload, dan permission folder
 - Dashboard ringkasan dengan kartu statistik, ringkasan konten, agenda terdekat
 - Notifikasi admin berupa badge pesan masuk baru di sidebar
 - SEO dasar: meta description, canonical URL, Open Graph, Twitter card, sitemap.xml, dan robots.txt
@@ -310,10 +311,9 @@ Gunakan checklist ini setelah fitur website selesai diuji dan sebelum website di
 - Buat akun operator sesuai role: `superadmin`, `editor`, dan `ppdb`.
 - Pastikan tidak semua operator memakai akun `superadmin`.
 - Periksa login, hak akses role, dan pengelolaan konten secara manual pada database lokal terisolasi sebelum release; suite otomatis lama sudah dihapus.
-- Buka halaman `Cek Production` dan pastikan tidak ada masalah kritis.
 - Jalankan backup database setelah semua konten asli masuk.
-- Gunakan `Backup SQL` untuk pemulihan database saja.
-- Gunakan `Paket Lengkap ZIP` untuk migrasi hosting karena berisi SQL, schema, `public/uploads`, `storage/uploads`, dan `manifest.json`.
+- Gunakan `Unduh Cadangan Data` untuk pemulihan database saja.
+- Gunakan `Unduh Cadangan Lengkap` untuk migrasi hosting karena berisi SQL, schema, `public/uploads`, `storage/uploads`, dan `manifest.json`.
 - Jika tombol paket ZIP nonaktif, aktifkan ekstensi PHP `zip` di hosting/XAMPP.
 - Atur `Tahun Ajaran Aktif` dari menu Profil & Pengaturan sebelum membuka PPDB atau mengisi agenda/dokumen/prestasi baru.
 - Gunakan status `Draft` untuk konten yang belum siap tampil dan `Publish` untuk konten yang boleh muncul di halaman publik.

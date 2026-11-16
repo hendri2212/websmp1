@@ -2,7 +2,7 @@
     <h1>Profil & Pengaturan Sekolah</h1>
     <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
     <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
-    <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL lebih dulu agar tombol simpan aktif.</div><?php endif; ?>
+    <?php if (!db_available()): ?><div class="alert warning">Layanan sementara tidak tersedia. Silakan coba lagi.</div><?php endif; ?>
     <form method="post" enctype="multipart/form-data" class="form-grid two-col settings-form">
         <?= csrf_field(); ?>
         <input type="hidden" name="existing_logo_path" value="<?= e($content['schoolProfile']['logoPath'] ?? ''); ?>">
@@ -61,7 +61,7 @@
                     <label><input type="radio" name="home_profile_video_source" value="upload" <?= $videoSource === 'upload' ? 'checked' : ''; ?> <?= db_available() ? '' : 'disabled'; ?>> Upload Video</label>
                     <label><input type="radio" name="home_profile_video_source" value="youtube" <?= $videoSource === 'youtube' ? 'checked' : ''; ?> <?= db_available() ? '' : 'disabled'; ?>> Link YouTube</label>
                 </fieldset>
-                <p class="full muted">Untuk video berukuran besar, gunakan YouTube agar tidak membebani kapasitas hosting.</p>
+                <p class="full muted">Untuk video berukuran besar, Anda dapat menggunakan tautan YouTube.</p>
                 <div class="full" data-video-source-field="upload">
                 <label><span>File Video Profil (MP4/MOV, maksimal 20 MB)</span><input type="file" name="home_profile_video_file" accept=".mp4,.mov,video/mp4,video/quicktime" <?= db_available() ? '' : 'disabled'; ?>></label>
                 <?php if (video_file_url($content['siteHome']['profileVideoUrl'] ?? '') !== ''): ?>
@@ -273,7 +273,7 @@
             <summary>
                 <span>
                     <strong>Menu Navigasi Publik</strong>
-                    <small>Atur menu yang tampil di navbar publik.</small>
+                    <small>Atur menu yang tampil di menu navigasi publik.</small>
                 </span>
             </summary>
             <div class="toggle-grid">
@@ -284,7 +284,7 @@
                     </label>
                 <?php endforeach; ?>
             </div>
-            <p class="muted">Menu yang tidak dicentang disembunyikan dari navbar publik, tetapi halamannya tetap bisa diakses langsung melalui URL.</p>
+            <p class="muted">Menu yang tidak dicentang disembunyikan dari menu navigasi publik, tetapi halamannya tetap bisa diakses langsung melalui tautan.</p>
         </details>
         <div class="settings-save-bar full"><button class="button primary" type="submit" <?= db_available() ? '' : 'disabled'; ?>>Simpan Pengaturan</button></div>
     </form>

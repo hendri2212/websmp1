@@ -3,7 +3,7 @@
     <p>Kelola pesan yang dikirim pengunjung dari halaman kontak website sekolah.</p>
     <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
     <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
-    <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar pesan masuk bisa dikelola.</div><?php endif; ?>
+    <?php if (!db_available()): ?><div class="alert warning">Layanan sementara tidak tersedia. Silakan coba lagi.</div><?php endif; ?>
 </div>
 
 <div class="admin-card">

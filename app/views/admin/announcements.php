@@ -13,7 +13,7 @@
                 </span>
             </summary>
             <p>Buat banner pengumuman yang tampil di beranda, misalnya informasi PPDB, ujian, libur, atau rapat orang tua.</p>
-            <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar pengumuman bisa dikelola.</div><?php endif; ?>
+            <?php if (!db_available()): ?><div class="alert warning">Layanan sementara tidak tersedia. Silakan coba lagi.</div><?php endif; ?>
             <form method="post" class="form-grid two-col">
                 <?= csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">

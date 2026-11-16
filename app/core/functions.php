@@ -428,7 +428,7 @@ function file_size_label(int $bytes): string
 
 function image_upload_help_text(int $maxBytes = IMAGE_UPLOAD_MAX_BYTES): string
 {
-    return 'Format JPG, PNG, atau WEBP. Maksimal ' . file_size_label($maxBytes) . '. Rekomendasi rasio 16:10 atau 4:3, minimal 1200 px lebar. Gambar besar akan dioptimalkan otomatis.';
+    return 'Format JPG, JPEG, PNG, atau WEBP. Maksimal ' . file_size_label($maxBytes) . '. Rekomendasi rasio 16:10 atau 4:3, minimal 1200 px lebar. Gambar besar akan dioptimalkan otomatis.';
 }
 
 function publication_status_label(int|string|null $isActive): string
@@ -545,7 +545,7 @@ function uploaded_image_result(string $field, string $folder, int $maxBytes = IM
     };
     $file = $_FILES[$field];
     if (!is_array($file)) {
-        return $fail('Metadata upload tidak valid.');
+        return $fail('Berkas tidak dapat diproses. Pilih ulang berkas Anda.');
     }
     $nameError = upload_filename_error($file, ['jpg', 'jpeg', 'png', 'webp']);
     if ($nameError !== '') {
@@ -562,7 +562,7 @@ function uploaded_image_result(string $field, string $folder, int $maxBytes = IM
         return $fail('Ukuran gambar melebihi batas atau file kosong.');
     }
     if (!class_exists('finfo') || !function_exists('imagecreatetruecolor')) {
-        return $fail('Validasi gambar belum tersedia pada server.');
+        return $fail('Gambar belum dapat diproses. Silakan coba lagi.');
     }
     $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
     $extensions = ['image/jpeg'=>['jpg','jpeg'], 'image/png'=>['png'], 'image/webp'=>['webp']];
@@ -578,13 +578,13 @@ function uploaded_image_result(string $field, string $folder, int $maxBytes = IM
         return $fail('Dimensi gambar tidak sesuai atau terlalu besar untuk diproses.');
     }
     if (!preg_match('/\A[a-zA-Z0-9_-]+\z/', $folder)) {
-        return $fail('Folder upload tidak valid.');
+        return $fail('Gambar belum dapat disimpan. Silakan coba lagi.');
     }
     $uploadDir = APP_ROOT . '/public/uploads/' . $folder;
     $thumbDir = $uploadDir . '/thumbs';
     if ((!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true))
         || (!is_dir($thumbDir) && !mkdir($thumbDir, 0755, true))) {
-        return $fail('Folder upload belum bisa dibuat.');
+        return $fail('Gambar belum dapat disimpan. Silakan coba lagi.');
     }
     $outputExtension = function_exists('imagewebp') ? 'webp' : $extensions[$mime][0];
     $filename = $folder . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(8)) . '.' . $outputExtension;
@@ -616,7 +616,7 @@ function uploaded_profile_video_result(string $field): array
         return array_replace($empty, ['error'=>$error]);
     };
     $file = $_FILES[$field];
-    if (!is_array($file)) { return $fail('Metadata upload video tidak valid.'); }
+    if (!is_array($file)) { return $fail('Video tidak dapat diproses. Pilih ulang berkas Anda.'); }
     $nameError = upload_filename_error($file, ['mp4', 'mov']);
     if ($nameError !== '') { return $fail($nameError); }
     if ($file['error'] === UPLOAD_ERR_NO_FILE) { return $empty; }
@@ -657,7 +657,7 @@ function uploaded_pdf_result(string $field, string $folder, int $maxBytes = 5242
     };
     $file = $_FILES[$field];
     if (!is_array($file)) {
-        return $fail('Metadata upload tidak valid.');
+        return $fail('Berkas tidak dapat diproses. Pilih ulang berkas Anda.');
     }
     $nameError = upload_filename_error($file, ['pdf']);
     if ($nameError !== '') {
@@ -678,11 +678,11 @@ function uploaded_pdf_result(string $field, string $folder, int $maxBytes = 5242
         return $fail('Konten PDF tidak valid atau rusak.');
     }
     if (!preg_match('/\A[a-zA-Z0-9_-]+\z/', $folder)) {
-        return $fail('Folder upload tidak valid.');
+        return $fail('Gambar belum dapat disimpan. Silakan coba lagi.');
     }
     $uploadDir = APP_ROOT . '/storage/uploads/' . $folder;
     if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true)) {
-        return $fail('Folder penyimpanan PDF belum bisa dibuat.');
+        return $fail('Dokumen belum dapat disimpan. Silakan coba lagi.');
     }
     $filename = $folder . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(8)) . '.pdf';
     $relative = 'storage/uploads/' . $folder . '/' . $filename;

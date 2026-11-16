@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
         $password = $_POST['password'] ?? '';
 
         if ($username === '' || $role === '') {
-            $error = 'Username dan role wajib diisi.';
+            $error = 'Nama pengguna dan peran wajib diisi.';
         } elseif (empty($_POST['id']) && $password === '') {
             $error = 'Password wajib diisi untuk akun baru.';
         }

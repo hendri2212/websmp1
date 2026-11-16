@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && db_available()) {
         if ($title === '' || $contentText === '') {
             $error = 'Judul dan isi pengumuman wajib diisi.';
         } elseif ($linkUrl !== '' && safe_content_url($linkUrl) === '') {
-            $error = 'URL pengumuman tidak valid. Gunakan path lokal atau URL HTTP/HTTPS.';
+            $error = 'Tautan pengumuman tidak valid. Periksa alamat yang Anda masukkan.';
         } else {
             save_announcement([
                 'id' => $_POST['id'] !== '' ? database_id($_POST['id']) : null,

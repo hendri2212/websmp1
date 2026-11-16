@@ -53,8 +53,7 @@ $faviconVersion = is_file($faviconPath) ? (string) filemtime($faviconPath) : $st
             ['label' => 'Sistem & Akun', 'icon' => 'M12 3v3 M12 18v3 M3 12h3 M18 12h3 M6 6l2 2 M16 16l2 2 M6 18l2-2 M16 8l2-2 M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0', 'items' => [
                 ['settings', 'settings', 'Profil & Pengaturan'],
                 ['admins', 'admins', 'Akun Admin'],
-                ['db_backup', 'db_backup', 'Backup Database'],
-                ['production_check', 'production_check', 'Cek Production'],
+                ['db_backup', 'db_backup', 'Cadangan Data'],
                 ['change_password', 'change_password', 'Ganti Password'],
             ]],
         ];

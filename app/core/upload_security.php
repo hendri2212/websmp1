@@ -5,7 +5,7 @@ function upload_filename_error(array $file, array $extensions): string
     $name = $file['name'] ?? null;
     if (!is_string($name) || !is_string($file['tmp_name'] ?? null)
         || !is_int($file['error'] ?? null) || !is_int($file['size'] ?? null)) {
-        return 'Metadata upload tidak valid.';
+        return 'Berkas tidak dapat diproses. Pilih ulang berkas Anda.';
     }
     if ($name === '' && $file['error'] === UPLOAD_ERR_NO_FILE) {
         return '';

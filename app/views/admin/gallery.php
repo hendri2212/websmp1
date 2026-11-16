@@ -11,7 +11,7 @@
                     <small>Tambah atau ubah item galeri.</small>
                 </span>
             </summary>
-            <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar CRUD galeri aktif.</div><?php endif; ?>
+            <?php if (!db_available()): ?><div class="alert warning">Layanan sementara tidak tersedia. Silakan coba lagi.</div><?php endif; ?>
             <form method="post" enctype="multipart/form-data" class="form-grid">
                 <?= csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">

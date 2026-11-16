@@ -59,12 +59,12 @@ function save_admin_user(array $data): array
     ensure_admin_role_columns();
     $pdo = db();
     if (!$pdo) {
-        return ['success' => false, 'message' => 'Database belum terhubung.'];
+        return ['success' => false, 'message' => 'Akun belum dapat disimpan. Silakan coba lagi.'];
     }
 
     $allowedRoles = ['superadmin', 'editor', 'ppdb'];
     if (!in_array($data['role'], $allowedRoles, true)) {
-        return ['success' => false, 'message' => 'Role admin tidak valid.'];
+        return ['success' => false, 'message' => 'Peran akun tidak valid.'];
     }
 
     return admin_account_transaction($pdo, static fn(): array => save_admin_user_locked($pdo, $data));
@@ -163,10 +163,4 @@ function delete_admin_user_locked(PDO $pdo, int $id): array
     }
 
     return ['success' => true, 'message' => 'Akun admin berhasil dihapus.'];
-}
-
-function active_admin_count(): int
-{
-    $pdo = db();
-    return $pdo ? (int) $pdo->query('SELECT COUNT(*) FROM admins WHERE is_active = 1')->fetchColumn() : 0;
 }

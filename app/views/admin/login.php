@@ -8,5 +8,5 @@
         <label><span>Password</span><input type="password" name="password" required></label>
         <button class="button primary" type="submit">Masuk</button>
     </form>
-    <p class="muted">Login admin hanya memakai akun yang tersimpan di database. Segera ganti password awal setelah import schema.</p>
+    <p class="muted">Gunakan akun pengelola yang telah terdaftar.</p>
 </div>

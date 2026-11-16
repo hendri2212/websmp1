@@ -112,6 +112,26 @@ function input_display_date_is_valid(string $value): bool
     return (int) $matches[3] >= 1000 && checkdate($month, (int) $matches[1], (int) $matches[3]);
 }
 
+function input_field_label(string $field): string
+{
+    return [
+        'name' => 'Nama', 'title' => 'Judul', 'question' => 'Pertanyaan',
+        'answer' => 'Jawaban', 'content' => 'Isi', 'description' => 'Deskripsi',
+        'excerpt' => 'Ringkasan', 'slug' => 'Alamat berita', 'category' => 'Kategori',
+        'position' => 'Jabatan', 'subject' => 'Bidang atau subjek', 'bio' => 'Profil singkat',
+        'email' => 'Email', 'phone' => 'Telepon', 'username' => 'Nama pengguna',
+        'full_name' => 'Nama lengkap', 'role' => 'Peran', 'password' => 'Kata sandi',
+        'current_password' => 'Kata sandi saat ini', 'new_password' => 'Kata sandi baru',
+        'confirm_password' => 'Konfirmasi kata sandi', 'academic_year' => 'Tahun ajaran',
+        'current_academic_year' => 'Tahun ajaran aktif', 'published_at' => 'Tanggal terbit',
+        'starts_at' => 'Waktu mulai', 'ends_at' => 'Waktu selesai',
+        'achievement_date' => 'Tanggal prestasi', 'achiever_name' => 'Peraih prestasi',
+        'level' => 'Tingkat', 'location' => 'Lokasi', 'sort_order' => 'Urutan',
+        'section' => 'Bagian informasi', 'backup_type' => 'Jenis cadangan',
+        'message' => 'Pesan', 'status' => 'Status',
+    ][$field] ?? 'Isian';
+}
+
 function input_validation_error(string $module, array $data, array $files = []): string
 {
     // Request fields are scalars except for the existing navigation checkbox map.
@@ -138,30 +158,31 @@ function input_validation_error(string $module, array $data, array $files = []):
         if (($rule[4] ?? false) && !array_key_exists($field, $data)) {
             continue; // Partial settings submissions retain the stored value.
         }
+        $label = input_field_label($field);
         $raw = $data[$field] ?? '';
         if (!mb_check_encoding($raw, 'UTF-8') || str_contains($raw, "\0")) {
-            return 'Encoding input tidak valid.';
+            return 'Teks tidak dapat dibaca. Ketik ulang isian Anda.';
         }
         $length = in_array($type, ['password','raw'], true) ? strlen($raw) : mb_strlen($raw, 'UTF-8');
         if ($length > $maximum || (($maximum === 65535 || $type === 'longtext') && strlen($raw) > $maximum)) {
-            return 'Panjang field ' . $field . ' tidak sesuai batas.';
+            return $label . ' tidak sesuai batas panjang yang diizinkan.';
         }
         $value = in_array($type, ['password','raw'], true) ? $raw : trim($raw);
         $blank = $value === '' || ($type !== 'raw' && preg_match('/\A[\s\p{Z}]*\z/u', $value));
         if ($type === 'password' && $raw !== '' && $blank) {
-            return 'Password tidak boleh hanya berisi whitespace.';
+            return 'Kata sandi tidak boleh hanya berisi spasi.';
         }
         if ($required && $blank) {
-            return 'Field ' . $field . ' wajib diisi.';
+            return $label . ' wajib diisi.';
         }
         if ($blank && !$required) {
             if (array_key_exists($field, $data) && in_array($type, ['checkbox','teachers','agenda_limit','color','year','backup'], true)) {
-                return 'Field ' . $field . ' tidak valid.';
+                return $label . ' tidak valid.';
             }
             continue;
         }
         if ($length < ($rule[3] ?? 1)) {
-            return 'Panjang field ' . $field . ' tidak sesuai batas.';
+            return $label . ' tidak sesuai batas panjang yang diizinkan.';
         }
         $valid = match ($type) {
             'email' => filter_var($value, FILTER_VALIDATE_EMAIL) !== false,
@@ -184,7 +205,7 @@ function input_validation_error(string $module, array $data, array $files = []):
             default => true,
         };
         if (!$valid) {
-            return 'Format field ' . $field . ' tidak valid.';
+            return 'Format ' . strtolower($label) . ' tidak valid.';
         }
         if ($type === 'links') {
             foreach (preg_split('/\R/', $raw) as $line) {
@@ -209,12 +230,12 @@ function input_validation_error(string $module, array $data, array $files = []):
     foreach ($files as $file) {
         if (!is_array($file) || !is_string($file['name'] ?? null) || !is_string($file['tmp_name'] ?? null)
             || !is_int($file['error'] ?? null) || !is_int($file['size'] ?? null)) {
-            return 'Metadata upload tidak valid.';
+            return 'Berkas tidak dapat diproses. Pilih ulang berkas Anda.';
         }
         $name = $file['name'];
         $fullPath = $file['full_path'] ?? $name;
         if (!is_string($fullPath) || $fullPath !== $name) {
-            return 'Path nama file upload tidak valid.';
+            return 'Nama berkas tidak valid. Ganti nama lalu coba lagi.';
         }
         if ($name !== '' && (!mb_check_encoding($name, 'UTF-8') || mb_strlen($name) > 255
             || preg_match('/[\x00-\x1f\x7f\/\\\\]/', $name) || in_array($name, ['.','..'], true))) {

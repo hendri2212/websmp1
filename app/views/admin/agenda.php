@@ -13,7 +13,7 @@
                 </span>
             </summary>
             <p>Tambahkan agenda kegiatan sekolah seperti ujian, rapat, lomba, kegiatan kesiswaan, dan kalender akademik.</p>
-            <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar agenda bisa dikelola.</div><?php endif; ?>
+            <?php if (!db_available()): ?><div class="alert warning">Layanan sementara tidak tersedia. Silakan coba lagi.</div><?php endif; ?>
             <form method="post" class="form-grid two-col">
                 <?= csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">

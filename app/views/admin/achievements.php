@@ -13,7 +13,7 @@
                 </span>
             </summary>
             <p>Tambahkan prestasi akademik, non-akademik, lomba, penghargaan guru, atau capaian sekolah yang akan tampil di halaman publik.</p>
-            <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar data prestasi bisa dikelola.</div><?php endif; ?>
+            <?php if (!db_available()): ?><div class="alert warning">Layanan sementara tidak tersedia. Silakan coba lagi.</div><?php endif; ?>
             <form method="post" enctype="multipart/form-data" class="form-grid two-col">
                 <?= csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">

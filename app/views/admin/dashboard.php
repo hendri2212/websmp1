@@ -8,12 +8,11 @@
         <?php if (admin_can('settings')): ?><a class="button secondary" href="<?= e(base_url('admin/settings.php')); ?>">Pengaturan</a><?php endif; ?>
         <?php if (admin_can('ppdb_content')): ?><a class="button secondary" href="<?= e(base_url('admin/ppdb.php')); ?>">Informasi PPDB</a><?php endif; ?>
         <?php if (admin_can('contact_messages')): ?><a class="button secondary" href="<?= e(base_url('admin/contact_messages.php')); ?>">Pesan</a><?php endif; ?>
-        <?php if (admin_can('production_check')): ?><a class="button secondary" href="<?= e(base_url('admin/production_check.php')); ?>">Cek Production</a><?php endif; ?>
-        <?php if (admin_can('db_backup')): ?><a class="button primary blue" href="<?= e(base_url('admin/db_backup.php')); ?>">Backup</a><?php endif; ?>
+        <?php if (admin_can('db_backup')): ?><a class="button primary blue" href="<?= e(base_url('admin/db_backup.php')); ?>">Cadangkan Data</a><?php endif; ?>
     </div>
-    <div class="alert dashboard-db-alert <?= $dbReady ? 'success' : 'warning'; ?>">
-        <?= $dbReady ? 'Database MySQL terhubung. Fitur CRUD dan laporan siap dipakai.' : 'Database belum terhubung. Website publik tetap memakai seed data, tetapi laporan admin akan lengkap setelah MySQL aktif.'; ?>
-    </div>
+    <?php if (!$dbReady): ?>
+        <div class="alert warning">Data belum dapat dimuat. Silakan coba lagi.</div>
+    <?php endif; ?>
 </div>
 
 <div class="dashboard-stat-grid">

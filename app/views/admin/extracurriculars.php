@@ -13,7 +13,7 @@
                 </span>
             </summary>
             <p>Tambahkan kegiatan ekstrakurikuler beserta pembina, jadwal, lokasi, foto, dan deskripsi kegiatan.</p>
-            <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar data ekstrakurikuler bisa dikelola.</div><?php endif; ?>
+            <?php if (!db_available()): ?><div class="alert warning">Layanan sementara tidak tersedia. Silakan coba lagi.</div><?php endif; ?>
             <form method="post" enctype="multipart/form-data" class="form-grid two-col">
                 <?= csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">

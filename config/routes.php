@@ -22,7 +22,6 @@ return [
     '/admin/ppdb_applications.php' => 'admin/ppdb_applications.php',
     '/admin/ppdb_download.php' => 'admin/ppdb_download.php',
     '/admin/ppdb_export.php' => 'admin/ppdb_export.php',
-    '/admin/production_check.php' => 'admin/production_check.php',
     '/admin/settings.php' => 'admin/settings.php',
     '/admin/staff.php' => 'admin/staff.php',
     '/admin' => 'admin/index.php',

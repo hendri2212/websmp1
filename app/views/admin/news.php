@@ -11,7 +11,7 @@
                     <small>Tambah atau ubah berita sekolah.</small>
                 </span>
             </summary>
-            <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL dan import schema agar CRUD berita aktif.</div><?php endif; ?>
+            <?php if (!db_available()): ?><div class="alert warning">Layanan sementara tidak tersedia. Silakan coba lagi.</div><?php endif; ?>
             <form method="post" enctype="multipart/form-data" class="form-grid">
                 <?= csrf_field(); ?>
                 <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">
@@ -41,7 +41,7 @@
         </details>
     </div>
     <?php if (!$rows): ?>
-        <p class="muted">Belum ada data berita di database.</p>
+        <p class="muted">Belum ada berita. Tambahkan berita pertama Anda.</p>
     <?php else: ?>
         <div class="table-wrap">
             <table class="admin-table">

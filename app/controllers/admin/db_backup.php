@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (($validationError = input_validation_error('db_backup', $_POST, $_FILES)) !== '') {
         $error = $validationError;
     } elseif (!$pdo) {
-        $error = 'Database belum terhubung sehingga backup tidak bisa dibuat.';
+        $error = 'Cadangan belum dapat dibuat. Silakan coba lagi.';
     } else {
         $backupType = $_POST['backup_type'] ?? 'sql';
         if ($backupType === 'full') {
@@ -47,5 +47,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$pageTitle = 'Backup Database';
+$pageTitle = 'Cadangan Data';
 render_view('admin/db_backup.php', get_defined_vars(), 'admin');

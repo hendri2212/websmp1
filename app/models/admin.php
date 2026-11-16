@@ -36,7 +36,7 @@ function admin_permissions(): array
 {
     return [
         'superadmin' => [
-            'dashboard', 'settings', 'admins', 'db_backup', 'production_check', 'facilities', 'agenda', 'documents', 'achievements',
+            'dashboard', 'settings', 'admins', 'db_backup', 'facilities', 'agenda', 'documents', 'achievements',
             'extracurriculars', 'staff', 'news', 'announcements', 'gallery', 'faqs', 'ppdb_content',
             'contact_messages', 'change_password',
         ],
@@ -50,7 +50,7 @@ function admin_permissions(): array
 
 function admin_sensitive_permissions(): array
 {
-    return ['settings', 'admins', 'db_backup', 'production_check'];
+    return ['settings', 'admins', 'db_backup'];
 }
 
 function admin_permission_labels(): array
@@ -58,8 +58,7 @@ function admin_permission_labels(): array
     return [
         'settings' => 'Profil & pengaturan website',
         'admins' => 'Akun admin/operator',
-        'db_backup' => 'Backup database dan file',
-        'production_check' => 'Cek production',
+        'db_backup' => 'Cadangan data dan berkas',
         'news' => 'Berita',
         'announcements' => 'Pengumuman',
         'gallery' => 'Galeri',
@@ -89,7 +88,7 @@ function admin_role_permission_label(string $role, string $permission): string
 function admin_role_descriptions(): array
 {
     return [
-        'superadmin' => 'Akses penuh termasuk pengaturan, backup, akun admin, dan cek production.',
+        'superadmin' => 'Akses penuh termasuk pengaturan, backup, akun admin.',
         'editor' => 'Mengelola konten publik dan pesan masuk tanpa akses ke fitur sensitif.',
         'ppdb' => 'Mengelola informasi PPDB tanpa pendaftaran lokal atau akses ke konten umum lain.',
     ];
@@ -202,7 +201,7 @@ function update_admin_password(string $username, string $currentPassword, string
 {
     $pdo = db();
     if (!$pdo) {
-        return ['success' => false, 'message' => 'Database belum terhubung. Fitur ganti password membutuhkan MySQL aktif.'];
+        return ['success' => false, 'message' => 'Kata sandi belum dapat diperbarui. Silakan coba lagi.'];
     }
 
     $statement = $pdo->prepare('SELECT * FROM admins WHERE username = :username LIMIT 1');
@@ -210,7 +209,7 @@ function update_admin_password(string $username, string $currentPassword, string
     $admin = $statement->fetch();
 
     if (!$admin) {
-        return ['success' => false, 'message' => 'Akun admin tidak ditemukan di database.'];
+        return ['success' => false, 'message' => 'Akun tidak ditemukan.'];
     }
 
     $currentMatches = password_verify($currentPassword, $admin['password_hash']);

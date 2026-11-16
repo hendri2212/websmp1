@@ -199,7 +199,7 @@ switch ($view) {
             $visitorMessage = trim(input_form_value($_POST, 'message'));
 
             if (!db_available()) {
-                $contactError = 'Form kontak belum aktif karena database belum terhubung.';
+                $contactError = 'Pesan belum dapat dikirim. Silakan coba lagi nanti.';
             } elseif (!csrf_token_is_valid($_POST['csrf_token'] ?? null)) {
                 $contactError = 'Sesi form sudah tidak valid. Muat ulang halaman lalu coba lagi.';
             } elseif (($validationError = input_validation_error('contact', $_POST)) !== '') {

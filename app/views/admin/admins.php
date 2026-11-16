@@ -3,14 +3,14 @@
     <p>Buat akun operator sesuai tugasnya. Superadmin memiliki akses penuh, editor mengelola konten, dan operator PPDB mengelola informasi PPDB.</p>
     <?php if ($message): ?><div class="alert success"><?= e($message); ?></div><?php endif; ?>
     <?php if ($error): ?><div class="alert error"><?= e($error); ?></div><?php endif; ?>
-    <?php if (!db_available()): ?><div class="alert warning">Sambungkan MySQL agar akun admin bisa dikelola.</div><?php endif; ?>
+    <?php if (!db_available()): ?><div class="alert warning">Layanan sementara tidak tersedia. Silakan coba lagi.</div><?php endif; ?>
     <form method="post" class="form-grid two-col" autocomplete="off">
         <?= csrf_field(); ?>
         <input type="hidden" name="id" value="<?= e($editRow['id'] ?? ''); ?>">
         <label><span>Username</span><input type="text" name="username" value="<?= e($editRow['username'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?> required></label>
         <label><span>Nama Lengkap</span><input type="text" name="full_name" value="<?= e($editRow['full_name'] ?? ''); ?>" <?= db_available() ? '' : 'disabled'; ?>></label>
         <label>
-            <span>Role</span>
+            <span>Peran</span>
             <select name="role" <?= db_available() ? '' : 'disabled'; ?> required>
                 <?php foreach ($roleOptions as $value => $label): ?>
                     <option value="<?= e($value); ?>" <?= ($editRow['role'] ?? 'editor') === $value ? 'selected' : ''; ?>><?= e($label); ?></option>
@@ -29,11 +29,11 @@
 </div>
 
 <div class="admin-card">
-    <h2>Ringkasan Hak Akses Role</h2>
+    <h2>Ringkasan Hak Akses Peran</h2>
     <p class="muted">Gunakan role paling kecil yang cukup untuk tugas operator. Fitur sensitif hanya tersedia untuk superadmin.</p>
     <div class="table-wrap">
         <table class="admin-table">
-            <thead><tr><th>Role</th><th>Keterangan</th><th>Akses Utama</th></tr></thead>
+            <thead><tr><th>Peran</th><th>Keterangan</th><th>Akses Utama</th></tr></thead>
             <tbody>
             <?php foreach ($roleOptions as $role => $label): ?>
                 <?php
@@ -63,7 +63,7 @@
     <?php else: ?>
         <div class="table-wrap">
             <table class="admin-table">
-                <thead><tr><th>Username</th><th>Nama</th><th>Role</th><th>Status</th><th>Aksi</th></tr></thead>
+                <thead><tr><th>Username</th><th>Nama</th><th>Peran</th><th>Status</th><th>Aksi</th></tr></thead>
                 <tbody>
                 <?php foreach ($rows as $row): ?>
                     <tr>
